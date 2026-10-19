@@ -47,6 +47,16 @@ final class Format
     }
 
     /**
+     * "15" or "1,234.5": a reading or cubic meters, without trailing zeros.
+     */
+    public static function quantity(string|float|int $value): string
+    {
+        $formatted = number_format((float) $value, 3);
+
+        return str_contains($formatted, '.') ? rtrim(rtrim($formatted, '0'), '.') : $formatted;
+    }
+
+    /**
      * "1,234.50" from a decimal string or number.
      */
     public static function amount(string|float|int $value): string

@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'company_id', 'account_number', 'first_name', 'last_name', 'company_name', 'email', 'phone_number', 'status',
     'account_type_id', 'charge_type_id', 'meter_type_id', 'rate_type_id', 'cluster_type_id',
+    'meter_number', 'meter_serial_number', 'meter_installed_on',
     'home_address', 'home_city_id', 'home_province_id', 'home_country_id', 'home_zip_code',
     'billing_address', 'billing_city_id', 'billing_province_id', 'billing_country_id', 'billing_zip_code',
     'latitude', 'longitude', 'photo_data', 'photo_mime_type', 'photo_file_name',
@@ -39,7 +41,68 @@ class Customer extends Model
             'status' => CustomerStatus::class,
             'latitude' => 'float',
             'longitude' => 'float',
+            'meter_installed_on' => 'date',
         ];
+    }
+
+    /**
+     * Has a meter installed, set by completing a New Installation or Meter Replacement.
+     */
+    public function hasMeter(): bool
+    {
+        return $this->meter_number !== null;
+    }
+
+    /**
+     * @return HasMany<WorkOrder, $this>
+     */
+    public function workOrders(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class);
+    }
+
+    /**
+     * @return HasMany<Invoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * @return HasMany<Payment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * @return HasMany<MeterReading, $this>
+     */
+    public function meterReadings(): HasMany
+    {
+        return $this->hasMany(MeterReading::class);
+    }
+
+    /**
+     * Where bills go: the billing address when there is one, otherwise the home address.
+     */
+    public function mailingAddress(): string
+    {
+        $prefix = $this->billing_address !== null ? 'billing' : 'home';
+
+        return collect([
+            $this->{"{$prefix}_address"},
+            City::query()->whereKey($this->{"{$prefix}_city_id"})->value('name'),
+            Province::query()->whereKey($this->{"{$prefix}_province_id"})->value('name'),
+            $this->{"{$prefix}_zip_code"},
+        ])->filter()->implode(', ');
+    }
+
+    public function fullName(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
     }
 
     /**

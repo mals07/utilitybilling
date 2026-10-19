@@ -12,6 +12,8 @@ enum Page: string
 {
     case Customers = 'customers';
     case WorkOrders = 'work-orders';
+    case Invoices = 'invoices';
+    case Payments = 'payments';
     case CompanySetup = 'company';
     case Rates = 'rates';
     case Charges = 'charges';
@@ -23,6 +25,8 @@ enum Page: string
         return match ($this) {
             self::Customers => 'Customers',
             self::WorkOrders => 'Work Orders',
+            self::Invoices => 'Invoices',
+            self::Payments => 'Payments',
             self::CompanySetup => 'Company Setup',
             self::Rates => 'Rates',
             self::Charges => 'Charges',
@@ -36,7 +40,7 @@ enum Page: string
      */
     public function group(): string
     {
-        return in_array($this, [self::Customers, self::WorkOrders], true) ? 'main' : 'settings';
+        return in_array($this, [self::Customers, self::WorkOrders, self::Invoices, self::Payments], true) ? 'main' : 'settings';
     }
 
     /**

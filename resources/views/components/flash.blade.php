@@ -13,7 +13,8 @@
             if (! detail?.message) return;
             this.flash = { message: detail.message, tone: detail.tone ?? 'success', id: Date.now() };
             clearTimeout(this.timer);
-            this.timer = setTimeout(() => (this.flash = null), this.flash.tone === 'error' ? 6000 : 4000);
+            // Errors and longer messages stay up longer so they can be read.
+            this.timer = setTimeout(() => (this.flash = null), this.flash.tone === 'error' || detail.message.length > 80 ? 8000 : 4000);
         },
         init() {
             if (this.flash) this.show(this.flash);

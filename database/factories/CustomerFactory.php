@@ -8,6 +8,7 @@ use App\Models\ChargeType;
 use App\Models\ClusterType;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\MeterType;
 use App\Models\RateType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -39,5 +40,27 @@ class CustomerFactory extends Factory
             'home_country_id' => $city->province->country_id,
             'home_zip_code' => '1000',
         ];
+    }
+
+    /**
+     * Connected, with a meter installed.
+     */
+    public function connected(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => CustomerStatus::Connected,
+            'meter_type_id' => fn (array $attributes) => MeterType::factory()->create(['company_id' => $attributes['company_id']])->id,
+            'meter_number' => 'MTR-'.fake()->unique()->numberBetween(1000, 999999),
+            'meter_serial_number' => 'SN-'.fake()->unique()->numberBetween(1000, 999999),
+            'meter_installed_on' => now()->subYear()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Disconnected, with the meter still in place.
+     */
+    public function disconnected(): static
+    {
+        return $this->connected()->state(fn (array $attributes) => ['status' => CustomerStatus::Disconnected]);
     }
 }

@@ -1,4 +1,5 @@
 @use('App\Enums\CustomerStatus')
+@use('App\Enums\Page')
 
 @php
     $updating = ! $adding;
@@ -19,7 +20,22 @@
             <x-alert tone="error" class="mx-5 mt-3 sm:mx-6">{{ $notice }}</x-alert>
         @endif
         @if ($updating && $selected)
-            <p class="px-5 pt-2.5 text-xs text-label sm:px-6">Account Number: {{ $selected->account_number }}</p>
+            <p class="px-5 pt-2.5 text-xs text-label sm:px-6">
+                Account Number: {{ $selected->account_number }}
+                ·
+                @if ($selected->hasMeter())
+                    Meter No: {{ $selected->meter_number }} · Serial No: {{ $selected->meter_serial_number ?? '—' }}
+                    @if ($selected->meter_installed_on)
+                        · Installed {{ $selected->meter_installed_on->format('m/d/Y') }}
+                    @endif
+                @else
+                    No meter installed yet
+                @endif
+                <span class="block text-placeholder">The meter is set by completing a New Installation or Meter Replacement work order.</span>
+                @if (auth()->user()->canAccessPage(Page::Invoices) || auth()->user()->canAccessPage(Page::Payments))
+                    <a href="{{ route('customers.statement', $selected) }}" target="_blank" rel="noopener" class="link-button mt-1 inline-block">Statement of account</a>
+                @endif
+            </p>
         @endif
 
         <fieldset @disabled($readOnly) class="m-0 min-w-0 border-0 p-0" wire:loading.attr="disabled" wire:target="save">

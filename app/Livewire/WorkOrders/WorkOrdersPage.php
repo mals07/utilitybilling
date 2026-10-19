@@ -3,15 +3,22 @@
 namespace App\Livewire\WorkOrders;
 
 use App\Enums\Access;
+use App\Enums\FeeBilling;
 use App\Enums\Page;
 use App\Enums\WorkOrderStatus;
 use App\Enums\WorkOrderType;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Livewire\Concerns\ParsesIds;
 use App\Models\Customer;
+use App\Models\MeterType;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderFee;
+use App\Support\ImageType;
+use App\Support\WorkOrderCompletion;
+use App\Support\WorkOrderRules;
+use DomainException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -22,16 +29,19 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 /**
- * Work Orders: the Submit Work Order form, the work orders table, and the Update/View Work Order modals.
+ * Work Orders: the Submit Work Order form, the work orders table, and the modals to update,
+ * put on hold, cancel, complete and view an order, choose the Assigned To role, and set default fees.
  */
 #[Layout('layouts.app')]
 #[Title('Work Orders')]
 class WorkOrdersPage extends Component
 {
-    use GuardsPageAccess, ParsesIds, WithPagination;
+    use GuardsPageAccess, ParsesIds, WithFileUploads, WithPagination;
 
     /**
      * Work orders shown per page of the table.
@@ -42,8 +52,6 @@ class WorkOrdersPage extends Component
      * Minimum rows drawn in the table, so an empty table keeps its shape.
      */
     public const MINIMUM_ROWS = 8;
-
-    public const ORDER_NUMBER_DIGITS = 6;
 
     /**
      * Customers listed under the Account No. field while searching.
@@ -66,7 +74,7 @@ class WorkOrdersPage extends Component
     public string $search = '';
 
     /**
-     * Only list orders still In Progress.
+     * Only list open orders (In Progress or On Hold).
      */
     #[Url(as: 'pending', except: false)]
     public bool $pendingOnly = false;
@@ -107,7 +115,40 @@ class WorkOrdersPage extends Component
 
     public ?string $notice = null;
 
-    /* --------------------------- Default role modal -------------------------- */
+    /**
+     * "hold" or "cancel" while the reason prompt is open over the Update modal.
+     */
+    public string $reasonFor = '';
+
+    public string $reason = '';
+
+    /* ------------------------------- Complete -------------------------------- */
+
+    /**
+     * The order open in the Complete Work Order modal.
+     */
+    public string $completingId = '';
+
+    /**
+     * @var array{fields: array<string, string>, checked: array<int, bool>, completedOn: string, completedById: string, remarks: string, fee: string}
+     */
+    public array $completion = [];
+
+    /**
+     * Photos picked in the Complete modal, not saved yet.
+     *
+     * @var list<TemporaryUploadedFile>
+     */
+    public array $photos = [];
+
+    /**
+     * The photos just picked, added to $photos once checked.
+     *
+     * @var list<TemporaryUploadedFile>
+     */
+    public array $newPhotos = [];
+
+    /* ------------------------ Default role / fees modals ---------------------- */
 
     public bool $choosingRole = false;
 
@@ -115,6 +156,20 @@ class WorkOrdersPage extends Component
      * The role picked in the modal; '' lists every active user.
      */
     public string $roleChoice = '';
+
+    public bool $settingFees = false;
+
+    /**
+     * @var array<string, string> Keyed by WorkOrderType value.
+     */
+    public array $fees = [];
+
+    /**
+     * How each type's fee is billed, a FeeBilling value keyed by WorkOrderType value.
+     *
+     * @var array<string, string>
+     */
+    public array $feeBilling = [];
 
     protected function page(): Page
     {
@@ -124,7 +179,8 @@ class WorkOrdersPage extends Component
     public function mount(): void
     {
         $this->values = self::emptyValues();
-        $this->edit = [...self::emptyValues(), 'status' => ''];
+        $this->edit = self::emptyValues();
+        $this->completion = self::emptyCompletion();
     }
 
     public function updatedSearch(): void
@@ -145,10 +201,26 @@ class WorkOrdersPage extends Component
         return array_fill_keys(array_keys(self::FIELDS), '');
     }
 
+    /**
+     * @return array{fields: array<string, string>, checked: array<int, bool>, completedOn: string, completedById: string, remarks: string, fee: string}
+     */
+    private static function emptyCompletion(): array
+    {
+        return ['fields' => [], 'checked' => [], 'completedOn' => '', 'completedById' => '', 'remarks' => '', 'fee' => ''];
+    }
+
     public function updated(string $property): void
     {
-        if (str_starts_with($property, 'values.') || str_starts_with($property, 'edit.')) {
-            $this->resetValidation($property);
+        foreach (['values.', 'edit.', 'completion.', 'fees.', 'feeBilling.'] as $prefix) {
+            if (str_starts_with($property, $prefix)) {
+                $this->resetValidation($property);
+            }
+        }
+        if ($property === 'values.orderType') {
+            $this->resetValidation('values.orderType');
+        }
+        if ($property === 'reason') {
+            $this->resetValidation('reason');
         }
     }
 
@@ -176,7 +248,7 @@ class WorkOrdersPage extends Component
             return collect();
         }
 
-        $query = $this->company()->customers()->select(['id', 'account_number', 'first_name', 'last_name', 'meter_type_id']);
+        $query = $this->company()->customers()->select(['id', 'account_number', 'first_name', 'last_name']);
         foreach ($words as $word) {
             $query->where(fn (Builder $query) => $query
                 ->where('account_number', 'like', "%{$word}%")
@@ -211,12 +283,18 @@ class WorkOrdersPage extends Component
         $this->customerSearch = $customer->account_number;
         unset($this->chosenCustomer, $this->customerMatches);
 
-        // Start from the meter type the customer already has.
-        if ($customer->meter_type_id !== null) {
-            $this->values['meterTypeId'] = (string) $customer->meter_type_id;
+        // Start from the customer's current meter.
+        $this->values['meterTypeId'] = (string) ($customer->meter_type_id ?? $this->values['meterTypeId']);
+        $this->values['meterNumber'] = (string) ($customer->meter_number ?? '');
+        $this->values['serialNumber'] = (string) ($customer->meter_serial_number ?? '');
+
+        // A type picked before the customer may not apply to them.
+        $type = WorkOrderType::tryFrom($this->values['orderType']);
+        if ($type !== null && WorkOrderRules::whyNot($type, $customer) !== null) {
+            $this->values['orderType'] = '';
         }
 
-        $this->resetValidation(['customerId', 'values.meterTypeId']);
+        $this->resetValidation(['customerId', 'values.orderType', 'values.meterTypeId', 'values.meterNumber', 'values.serialNumber']);
     }
 
     /* -------------------------------- Options -------------------------------- */
@@ -239,15 +317,15 @@ class WorkOrdersPage extends Component
     }
 
     /**
-     * Active users of the company, narrowed to the default role when one is chosen, plus the
-     * user an order is already assigned to.
+     * Active users of the company, narrowed to the default role when one is chosen unless
+     * $anyRole, plus the user an order is already assigned to.
      *
      * @return array<int, string>
      */
-    private function assigneeOptions(?int $keep): array
+    private function assigneeOptions(?int $keep, bool $anyRole = false): array
     {
         $company = $this->company();
-        $roleId = $company->work_order_assignee_role_id;
+        $roleId = $anyRole ? null : $company->work_order_assignee_role_id;
 
         return $company->members()
             ->where(fn (Builder $query) => $query
@@ -307,6 +385,11 @@ class WorkOrdersPage extends Component
             $errors["{$key}.assignedToId"] = 'Select a user from the list.';
         }
 
+        // Office work has no meter to note.
+        if (WorkOrderType::tryFrom($values['orderType'])?->isOfficeWork()) {
+            $values['meterTypeId'] = $values['meterNumber'] = $values['serialNumber'] = '';
+        }
+
         $attributes = [];
         foreach (self::FIELDS as $field => $column) {
             $value = $values[$field];
@@ -334,17 +417,6 @@ class WorkOrdersPage extends Component
     /* ------------------------------- Submitting ------------------------------ */
 
     /**
-     * The next order number in the company's sequence: one more than the highest so far.
-     */
-    private function nextOrderNumber(): string
-    {
-        $highest = $this->company()->workOrders()->pluck('order_number')
-            ->reduce(fn (int $max, string $number): int => max($max, (int) $number), 0);
-
-        return str_pad((string) ($highest + 1), self::ORDER_NUMBER_DIGITS, '0', STR_PAD_LEFT);
-    }
-
-    /**
      * Save the new work order as In Progress.
      */
     public function submit(): void
@@ -361,6 +433,11 @@ class WorkOrdersPage extends Component
         $errors = $checked['errors'];
         if ($customer === null) {
             $errors = ['customerId' => 'Search for a customer and pick one from the list.', ...$errors];
+        } elseif (! isset($errors['values.orderType'])) {
+            $type = WorkOrderType::from($this->values['orderType']);
+            if ($reason = WorkOrderRules::whyNot($type, $customer)) {
+                $errors['values.orderType'] = "{$type->label()} can't be submitted: {$reason}.";
+            }
         }
 
         if ($errors !== []) {
@@ -369,32 +446,25 @@ class WorkOrdersPage extends Component
             return;
         }
 
-        // Two orders submitted at the same moment may pick the same number; the unique index
-        // rejects the second, which then takes the next one.
-        for ($attempt = 0; $attempt < 3; $attempt++) {
-            $orderNumber = $this->nextOrderNumber();
-
-            try {
-                $this->company()->workOrders()->create([
-                    ...$checked['attributes'],
-                    'order_number' => $orderNumber,
-                    'customer_id' => $customer->id,
-                    'status' => WorkOrderStatus::InProgress,
-                    'requested_by_id' => $this->user()->id,
-                    'requested_at' => now(),
-                ]);
-            } catch (UniqueConstraintViolationException) {
-                continue;
-            }
-
-            $this->resetForm();
-            $this->resetPage();
-            $this->flash("Work order {$orderNumber} submitted.");
+        try {
+            $order = WorkOrder::createNumbered($this->company(), [
+                ...$checked['attributes'],
+                'customer_id' => $customer->id,
+                'status' => WorkOrderStatus::InProgress,
+                'requested_by_id' => $this->user()->id,
+                'requested_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            $this->flash("The work order couldn't be submitted. Please try again.", 'error');
 
             return;
         }
 
-        $this->flash("The work order couldn't be submitted. Please try again.", 'error');
+        $order->log($this->user(), 'submitted', 'Submitted and assigned to '.($order->assignedTo?->name ?? 'nobody').'.');
+
+        $this->resetForm();
+        $this->resetPage();
+        $this->flash("Work order {$order->order_number} submitted.");
     }
 
     private function resetForm(): void
@@ -405,7 +475,7 @@ class WorkOrdersPage extends Component
         $this->resetValidation();
     }
 
-    /* ----------------------- Update / View work order ------------------------ */
+    /* ----------------------------- Finding orders ---------------------------- */
 
     private function findOrder(string $id): ?WorkOrder
     {
@@ -428,6 +498,35 @@ class WorkOrdersPage extends Component
         return $this->findOrder($this->viewingId);
     }
 
+    #[Computed]
+    public function completing(): ?WorkOrder
+    {
+        return $this->findOrder($this->completingId);
+    }
+
+    private function gone(): void
+    {
+        $this->closeModal();
+        $this->flash('That work order no longer exists. The table has been refreshed.', 'error');
+    }
+
+    public function closeModal(): void
+    {
+        $this->editingId = '';
+        $this->viewingId = '';
+        $this->completingId = '';
+        unset($this->editing, $this->viewing, $this->completing);
+        $this->edit = self::emptyValues();
+        $this->completion = self::emptyCompletion();
+        $this->reset('notice', 'reasonFor', 'reason', 'photos', 'newPhotos');
+        $this->resetValidation();
+    }
+
+    /* ---------------------------- Update work order --------------------------- */
+
+    /**
+     * Opens an open order in the Update modal; a completed or cancelled one opens in the View modal.
+     */
     public function openEdit(int $id): void
     {
         $this->closeModal();
@@ -435,8 +534,12 @@ class WorkOrdersPage extends Component
         $order = $this->editing;
 
         if ($order === null) {
-            $this->closeModal();
-            $this->flash('That work order no longer exists. The table has been refreshed.', 'error');
+            $this->gone();
+
+            return;
+        }
+        if (! $order->status->isOpen()) {
+            $this->openView($id);
 
             return;
         }
@@ -449,8 +552,324 @@ class WorkOrdersPage extends Component
                 default => (string) $value,
             };
         }
-        $this->edit['status'] = $order->status->value;
     }
+
+    /**
+     * The open order in the Update modal, after checking the user may change it.
+     */
+    private function editableOrder(): ?WorkOrder
+    {
+        $this->notice = null;
+
+        if (! $this->allowed(Access::Edit)) {
+            return null;
+        }
+
+        unset($this->editing);
+        $order = $this->editing;
+        if ($order === null) {
+            $this->gone();
+
+            return null;
+        }
+        if (! $order->status->isOpen()) {
+            $this->closeModal();
+            $this->flash("Work order {$order->order_number} is already {$order->status->label()}.", 'error');
+
+            return null;
+        }
+
+        return $order;
+    }
+
+    /**
+     * Save the changes made in the Update Work Order modal. The order type can't change.
+     */
+    public function update(): void
+    {
+        $order = $this->editableOrder();
+        if ($order === null) {
+            return;
+        }
+
+        $this->resetValidation();
+        $this->edit['orderType'] = $order->order_type->value;
+        $checked = $this->checkValues($this->edit, 'edit', $order);
+
+        if ($checked['errors'] !== []) {
+            $this->showErrors($checked['errors']);
+            $this->notice = 'Please correct the highlighted fields.';
+
+            return;
+        }
+
+        $order->fill($checked['attributes']);
+        $changes = $this->describeEdits($order);
+        $order->save();
+
+        if ($changes !== []) {
+            $order->log($this->user(), 'edited', 'Edited: '.implode('; ', $changes).'.');
+        }
+
+        $this->closeModal();
+        $this->flash("Work order {$order->order_number} updated.");
+    }
+
+    /**
+     * "Meter No: A → B" for each field about to change.
+     *
+     * @return list<string>
+     */
+    private function describeEdits(WorkOrder $order): array
+    {
+        $labels = ['meter_type_id' => 'Meter Type', 'meter_number' => 'Meter No', 'serial_number' => 'Serial No', 'assigned_to_id' => 'Assigned To', 'description' => 'Description'];
+
+        $changes = [];
+        foreach ($labels as $column => $label) {
+            if (! $order->isDirty($column)) {
+                continue;
+            }
+            if ($column === 'description') {
+                $changes[] = 'description changed';
+
+                continue;
+            }
+            $show = fn (mixed $value): string => match (true) {
+                $value === null || $value === '' => '(none)',
+                $column === 'meter_type_id' => MeterType::withTrashed()->find($value)?->name ?? '(none)',
+                $column === 'assigned_to_id' => User::query()->find($value)?->name ?? '(none)',
+                default => (string) $value,
+            };
+            $changes[] = "{$label}: {$show($order->getOriginal($column))} → {$show($order->getAttribute($column))}";
+        }
+
+        return $changes;
+    }
+
+    /* -------------------------- Hold / resume / cancel ------------------------ */
+
+    public function askReason(string $for): void
+    {
+        if (in_array($for, ['hold', 'cancel'], true)) {
+            $this->reasonFor = $for;
+            $this->reason = '';
+            $this->resetValidation('reason');
+        }
+    }
+
+    public function closeReason(): void
+    {
+        $this->reset('reasonFor', 'reason');
+        $this->resetValidation('reason');
+    }
+
+    /**
+     * Put the order on hold or cancel it, with the reason given.
+     */
+    public function confirmReason(): void
+    {
+        $reason = trim($this->reason);
+        if ($reason === '' || mb_strlen($reason) > 255) {
+            $this->addError('reason', $reason === '' ? 'Give a reason.' : 'The reason must not be greater than 255 characters.');
+
+            return;
+        }
+
+        $order = $this->editableOrder();
+        if ($order === null) {
+            return;
+        }
+
+        if ($this->reasonFor === 'hold') {
+            if ($order->status === WorkOrderStatus::OnHold) {
+                $this->closeReason();
+
+                return;
+            }
+            $order->update(['status' => WorkOrderStatus::OnHold, 'hold_reason' => $reason]);
+            $order->log($this->user(), 'on_hold', "Put on hold: {$reason}");
+            $message = "Work order {$order->order_number} is on hold.";
+        } elseif ($this->reasonFor === 'cancel') {
+            $order->update(['status' => WorkOrderStatus::Cancelled, 'hold_reason' => null, 'cancel_reason' => $reason]);
+            $order->log($this->user(), 'cancelled', "Cancelled: {$reason}");
+            $message = "Work order {$order->order_number} was cancelled.";
+        } else {
+            return;
+        }
+
+        $this->closeModal();
+        $this->flash($message);
+    }
+
+    public function resume(): void
+    {
+        $order = $this->editableOrder();
+        if ($order === null || $order->status !== WorkOrderStatus::OnHold) {
+            return;
+        }
+
+        $order->update(['status' => WorkOrderStatus::InProgress, 'hold_reason' => null]);
+        $order->log($this->user(), 'resumed', 'Resumed.');
+
+        $this->closeModal();
+        $this->flash("Work order {$order->order_number} resumed.");
+    }
+
+    /* -------------------------------- Complete -------------------------------- */
+
+    public function openComplete(int $id): void
+    {
+        if (! $this->allowed(Access::Edit)) {
+            return;
+        }
+
+        $this->closeModal();
+        $this->completingId = (string) $id;
+        $order = $this->completing;
+
+        if ($order === null) {
+            $this->gone();
+
+            return;
+        }
+        if (! $order->status->isOpen()) {
+            $this->openView($id);
+
+            return;
+        }
+
+        $fee = $this->company()->workOrderFees()->where('order_type', $order->order_type)->value('amount');
+        $customer = $order->customer;
+        $fields = array_fill_keys(array_keys($order->order_type->completionFields()), '');
+
+        // Prefill what is already known.
+        $prefill = [
+            'meter_number' => $order->meter_number,
+            'serial_number' => $order->serial_number,
+            'meter_type_id' => $order->meter_type_id,
+            'new_meter_type_id' => $order->order_type === WorkOrderType::MeterReplacement ? null : $order->meter_type_id,
+        ];
+        foreach ($prefill as $key => $value) {
+            if (array_key_exists($key, $fields) && $value !== null) {
+                $fields[$key] = (string) $value;
+            }
+        }
+
+        $this->completion = [
+            'fields' => $fields,
+            'checked' => [],
+            'completedOn' => $this->company()->today(),
+            'completedById' => (string) ($order->assigned_to_id ?? $this->user()->id),
+            'remarks' => '',
+            'fee' => $fee === null ? '' : (string) $fee,
+        ];
+
+        // A changed customer may no longer allow this; say so before the form is filled.
+        if ($reason = WorkOrderRules::whyNot($order->order_type, $customer, $order->id)) {
+            $this->addError('completion', "This order can't be completed: {$reason}.");
+        }
+    }
+
+    public function updatedNewPhotos(): void
+    {
+        $this->resetValidation('photos');
+
+        foreach ($this->newPhotos as $file) {
+            if (count($this->photos) >= WorkOrderCompletion::MAX_PHOTOS) {
+                $this->addError('photos', 'Add no more than '.WorkOrderCompletion::MAX_PHOTOS.' photos.');
+                break;
+            }
+            if ($error = self::photoError($file)) {
+                $this->addError('photos', $error);
+
+                continue;
+            }
+            $this->photos[] = $file;
+        }
+
+        $this->newPhotos = [];
+    }
+
+    private static function photoError(TemporaryUploadedFile $file): ?string
+    {
+        $name = $file->getClientOriginalName();
+
+        if (! in_array($file->getMimeType(), WorkOrderCompletion::PHOTO_MIME_TYPES, true) || $file->getSize() === 0) {
+            return "\"{$name}\" is not a JPG, PNG or WebP image.";
+        }
+        if ($file->getSize() > WorkOrderCompletion::PHOTO_MAX_BYTES) {
+            return "\"{$name}\" is larger than 2MB.";
+        }
+
+        $detected = ImageType::detect((string) file_get_contents($file->getRealPath()));
+        if ($detected === null || ! in_array($detected, WorkOrderCompletion::PHOTO_MIME_TYPES, true)) {
+            return "\"{$name}\" is not a valid JPG, PNG or WebP image.";
+        }
+
+        return null;
+    }
+
+    public function removePhoto(int $index): void
+    {
+        array_splice($this->photos, $index, 1);
+        $this->resetValidation('photos');
+    }
+
+    public function complete(): void
+    {
+        if (! $this->allowed(Access::Edit)) {
+            return;
+        }
+
+        unset($this->completing);
+        $order = $this->completing;
+        if ($order === null) {
+            $this->gone();
+
+            return;
+        }
+        if (! $order->status->isOpen()) {
+            $this->closeModal();
+            $this->flash("Work order {$order->order_number} is already {$order->status->label()}.", 'error');
+
+            return;
+        }
+
+        $this->resetValidation();
+        $photos = array_values(array_filter($this->photos, fn ($file): bool => $file instanceof TemporaryUploadedFile && self::photoError($file) === null));
+        $result = WorkOrderCompletion::check(
+            $order,
+            $this->completion,
+            count($order->order_type->allowsPhotos() ? $photos : []),
+            $this->assigneeOptions($order->assigned_to_id, anyRole: true),
+            $this->company()->timezone,
+        );
+
+        if ($result['errors'] !== []) {
+            $this->showErrors($result['errors']);
+
+            return;
+        }
+
+        $files = $order->order_type->allowsPhotos() ? array_map(function (TemporaryUploadedFile $file): array {
+            $data = (string) file_get_contents($file->getRealPath());
+
+            return ['data' => $data, 'mime' => (string) ImageType::detect($data), 'name' => $file->getClientOriginalName()];
+        }, $photos) : [];
+
+        try {
+            $notes = WorkOrderCompletion::complete($order, $result['data'], $this->user(), $files, $this->company()->timezone);
+        } catch (DomainException $exception) {
+            $this->addError('completion', $exception->getMessage());
+
+            return;
+        }
+
+        $this->closeModal();
+        $this->flash(trim("Work order {$order->order_number} completed. ".implode(' ', $notes)));
+    }
+
+    /* ----------------------------- View work order ---------------------------- */
 
     public function openView(int $id): void
     {
@@ -458,70 +877,8 @@ class WorkOrdersPage extends Component
         $this->viewingId = (string) $id;
 
         if ($this->viewing === null) {
-            $this->closeModal();
-            $this->flash('That work order no longer exists. The table has been refreshed.', 'error');
+            $this->gone();
         }
-    }
-
-    public function closeModal(): void
-    {
-        $this->editingId = '';
-        $this->viewingId = '';
-        unset($this->editing, $this->viewing);
-        $this->edit = [...self::emptyValues(), 'status' => ''];
-        $this->notice = null;
-        $this->resetValidation(array_map(fn (string $field): string => "edit.{$field}", [...array_keys(self::FIELDS), 'status']));
-    }
-
-    /**
-     * Save the changes made in the Update Work Order modal. Completing an order stamps who completed it and when;
-     * moving it out of Completed clears that again.
-     */
-    public function update(): void
-    {
-        $this->notice = null;
-
-        if (! $this->allowed(Access::Edit)) {
-            return;
-        }
-
-        unset($this->editing);
-        $order = $this->editing;
-        if ($order === null) {
-            $this->closeModal();
-            $this->flash('That work order no longer exists. The table has been refreshed.', 'error');
-
-            return;
-        }
-
-        $this->resetValidation();
-        $checked = $this->checkValues($this->edit, 'edit', $order);
-        $errors = $checked['errors'];
-        $status = WorkOrderStatus::tryFrom($this->edit['status'] ?? '');
-        if ($status === null) {
-            $errors['edit.status'] = 'Select a status.';
-        }
-
-        if ($errors !== []) {
-            $this->showErrors($errors);
-            $this->notice = 'Please correct the highlighted fields.';
-
-            return;
-        }
-
-        $attributes = [...$checked['attributes'], 'status' => $status];
-        if ($status === WorkOrderStatus::Completed && $order->status !== WorkOrderStatus::Completed) {
-            $attributes['completed_at'] = now();
-            $attributes['completed_by_id'] = $this->user()->id;
-        } elseif ($status !== WorkOrderStatus::Completed) {
-            $attributes['completed_at'] = null;
-            $attributes['completed_by_id'] = null;
-        }
-
-        $order->update($attributes);
-
-        $this->closeModal();
-        $this->flash("Work order {$order->order_number} updated.");
     }
 
     /* --------------------------- Default user role --------------------------- */
@@ -581,7 +938,92 @@ class WorkOrdersPage extends Component
             : 'Assigned To now lists users with the '.$this->roles->firstWhere('id', $roleId)->name.' role.');
     }
 
+    /* ------------------------------ Default fees ----------------------------- */
+
+    public function openFees(): void
+    {
+        $saved = $this->company()->workOrderFees()->get()->keyBy(fn (WorkOrderFee $fee): string => $fee->order_type->value);
+
+        $this->fees = [];
+        $this->feeBilling = [];
+        foreach (WorkOrderType::cases() as $type) {
+            $row = $saved[$type->value] ?? null;
+            $this->fees[$type->value] = $row?->amount === null ? '' : (string) $row->amount;
+            $this->feeBilling[$type->value] = ($row?->billing ?? FeeBilling::defaultFor($type))->value;
+        }
+        $this->settingFees = true;
+        $this->resetValidation();
+    }
+
+    public function closeFees(): void
+    {
+        $this->settingFees = false;
+        $this->resetValidation();
+    }
+
+    /**
+     * Save the fee prefilled when completing each order type (a blank fee prefills nothing) and
+     * whether it is billed on its own invoice or on the next monthly bill.
+     */
+    public function saveFees(): void
+    {
+        if (! $this->allowed(Access::Edit)) {
+            return;
+        }
+
+        $this->resetValidation();
+        $errors = [];
+        foreach (WorkOrderType::cases() as $type) {
+            $amount = trim((string) ($this->fees[$type->value] ?? ''));
+            if ($amount !== '' && ! preg_match('/^\d{1,10}(\.\d{1,2})?$/', $amount)) {
+                $errors["fees.{$type->value}"] = 'Enter an amount such as 150 or 150.50.';
+            }
+            if (FeeBilling::tryFrom((string) ($this->feeBilling[$type->value] ?? '')) === null) {
+                $errors["feeBilling.{$type->value}"] = 'Choose how this fee is billed.';
+            }
+        }
+        if ($errors !== []) {
+            $this->showErrors($errors);
+
+            return;
+        }
+
+        $company = $this->company();
+        foreach (WorkOrderType::cases() as $type) {
+            $amount = trim((string) ($this->fees[$type->value] ?? ''));
+            $billing = FeeBilling::from($this->feeBilling[$type->value]);
+            if ($amount === '' && $billing === FeeBilling::defaultFor($type)) {
+                $company->workOrderFees()->where('order_type', $type)->delete();
+            } else {
+                $company->workOrderFees()->updateOrCreate(
+                    ['order_type' => $type],
+                    ['amount' => $amount === '' ? null : $amount, 'billing' => $billing],
+                );
+            }
+        }
+
+        $this->settingFees = false;
+        $this->flash('Default fees saved.');
+    }
+
     /* -------------------------------- Render --------------------------------- */
+
+    /**
+     * The completion form's fields and checklist for the order, given the answers so far.
+     *
+     * @return array{fields: array<string, array<string, mixed>>, checklist: array<int, string>, meterTypes: array<int, string>, completedBy: array<int, string>}
+     */
+    private function completionForm(WorkOrder $order): array
+    {
+        $answers = $this->completion['fields'] ?? [];
+
+        return [
+            'fields' => WorkOrderCompletion::visibleFields($order->order_type, $answers, $order->customer),
+            'checklist' => WorkOrderCompletion::visibleChecklist($order->order_type, $answers),
+            'meterTypes' => $this->meterTypeOptions(null),
+            'completedBy' => $this->assigneeOptions($order->assigned_to_id, anyRole: true),
+        ];
+    }
 
     public function render(): View
     {
@@ -595,8 +1037,8 @@ class WorkOrdersPage extends Component
         );
 
         $query = $company->workOrders()
-            ->with(['customer:id,account_number,first_name,last_name', 'completedBy:id,name'])
-            ->when($this->pendingOnly, fn ($query) => $query->where('status', WorkOrderStatus::InProgress))
+            ->with(['customer:id,account_number,first_name,last_name', 'completedBy:id,name', 'parent:id,order_number'])
+            ->when($this->pendingOnly, fn ($query) => $query->whereIn('status', WorkOrderStatus::openValues()))
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('order_number', 'like', "%{$search}%")
                 ->orWhereIn('order_type', $matchingTypes)
@@ -607,25 +1049,35 @@ class WorkOrdersPage extends Component
             ->orderByDesc('id');
 
         $overdueCount = $company->workOrders()
-            ->where('status', WorkOrderStatus::InProgress)
+            ->whereIn('status', WorkOrderStatus::openValues())
             ->where('requested_at', '<', WorkOrder::overdueCutoff($timezone))
             ->count();
 
-        $editing = $this->editing;
         $chosenCustomer = $this->chosenCustomer;
+        $editing = $this->editing;
+        $viewing = $this->viewing?->load([
+            'readings', 'photos:id,work_order_id,file_name', 'activities.user:id,name', 'feeInvoice:id,invoice_number',
+            'parent:id,order_number,order_type', 'followUps:id,parent_work_order_id,order_number,order_type,status',
+        ]);
+        $completing = $this->completing;
 
         return view('livewire.work-orders.work-orders-page', [
             'orders' => $this->paginateClamped($query, self::PER_PAGE),
             'overdueCount' => $overdueCount,
             'timezone' => $timezone,
+            'today' => $company->today(),
             'chosenCustomer' => $chosenCustomer,
             'customerMatches' => $this->customerMatches,
             'orderTypes' => WorkOrderType::options(),
+            'ineligibleTypes' => $chosenCustomer ? array_filter(WorkOrderRules::eligibility($chosenCustomer)) : [],
+            'chosenType' => WorkOrderType::tryFrom($this->values['orderType']),
             'meterTypes' => $this->meterTypeOptions($chosenCustomer?->meter_type_id),
             'assignees' => $this->assigneeOptions(null),
             'assigneeRole' => $company->workOrderAssigneeRole,
             'editing' => $editing,
-            'viewing' => $this->viewing,
+            'viewing' => $viewing,
+            'completing' => $completing,
+            'completionForm' => $completing ? $this->completionForm($completing) : null,
             'editMeterTypes' => $editing ? $this->meterTypeOptions($editing->meter_type_id) : [],
             'editAssignees' => $editing ? $this->assigneeOptions($editing->assigned_to_id) : [],
             'access' => $this->access,

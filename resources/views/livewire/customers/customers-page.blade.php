@@ -42,6 +42,9 @@
                                 @else
                                     <span class="text-placeholder">Not assigned</span>
                                 @endif
+                                @if ($item->meter_number)
+                                    <span class="block text-xs text-label">No. {{ $item->meter_number }}</span>
+                                @endif
                             </td>
                             <td class="cell-actions">
                                 <button type="button" class="icon-button" wire:click="openCustomer({{ $item->id }})" aria-label="Update {{ $item->first_name }} {{ $item->last_name }}">

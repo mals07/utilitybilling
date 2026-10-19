@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OverdueHandling;
 use App\Models\Concerns\DefersBinaryColumns;
 use App\Support\Format;
 use Database\Factories\CompanyFactory;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'point_person_email', 'employee_number', 'employee_title',
     'company_header_line', 'billing_header_1', 'billing_header_2', 'billing_header_3',
     'billing_footer_1', 'billing_footer_2', 'billing_footer_3', 'due_date_days', 'currency', 'timezone',
-    'work_order_assignee_role_id',
+    'work_order_assignee_role_id', 'overdue_handling',
 ])]
 class Company extends Model
 {
@@ -44,7 +45,7 @@ class Company extends Model
      */
     protected function casts(): array
     {
-        return ['due_date_days' => 'integer'];
+        return ['due_date_days' => 'integer', 'overdue_handling' => OverdueHandling::class];
     }
 
     /**
@@ -169,6 +170,38 @@ class Company extends Model
     public function workOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class);
+    }
+
+    /**
+     * @return HasMany<Invoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * @return HasMany<Payment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * @return HasMany<MeterReading, $this>
+     */
+    public function meterReadings(): HasMany
+    {
+        return $this->hasMany(MeterReading::class);
+    }
+
+    /**
+     * @return HasMany<WorkOrderFee, $this>
+     */
+    public function workOrderFees(): HasMany
+    {
+        return $this->hasMany(WorkOrderFee::class);
     }
 
     /**

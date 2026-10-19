@@ -138,7 +138,7 @@ class WorkOrdersPageTest extends TestCase
         $this->assertSame($plumbers->id, $company->fresh()->work_order_assignee_role_id);
 
         $page->call('chooseCustomer', $customer->id)
-            ->set('values.orderType', WorkOrderType::Reconnection->value)
+            ->set('values.orderType', WorkOrderType::LeakRepair->value)
             ->set('values.assignedToId', (string) $clerk->id)
             ->call('submit')
             ->assertHasErrors(['values.assignedToId']);
@@ -178,6 +178,8 @@ class WorkOrdersPageTest extends TestCase
         $late = WorkOrder::factory()->for($company)->requestedDaysAgo(6)->create();
         WorkOrder::factory()->for($company)->requestedDaysAgo(9)->completed()->create();
         $onTime = WorkOrder::factory()->for($company)->requestedDaysAgo(4)->create();
+        $heldLate = WorkOrder::factory()->for($company)->requestedDaysAgo(8)->onHold()->create();
+        $this->assertTrue($heldLate->isOverdue($company->timezone));
 
         $timezone = $company->timezone;
         $this->assertTrue($late->isOverdue($timezone));
@@ -185,7 +187,7 @@ class WorkOrdersPageTest extends TestCase
 
         Livewire::actingAs($owner)
             ->test(WorkOrdersPage::class)
-            ->assertSee('1 work order has')
+            ->assertSee('2 work orders have')
             ->assertSee('(overdue)');
     }
 
@@ -203,32 +205,121 @@ class WorkOrdersPageTest extends TestCase
             ->assertDontSee('000102');
     }
 
-    public function test_completing_an_order_records_who_completed_it_and_when(): void
+    public function test_editing_an_order_logs_what_changed_but_keeps_its_type(): void
     {
         [$owner, $company] = $this->ownerWithCompany();
-        $order = WorkOrder::factory()->for($company)->create(['assigned_to_id' => $owner->id]);
+        $order = WorkOrder::factory()->for($company)->create([
+            'order_type' => WorkOrderType::LeakRepair, 'meter_number' => 'A-1', 'assigned_to_id' => $owner->id,
+        ]);
 
-        $page = Livewire::actingAs($owner)
+        Livewire::actingAs($owner)
             ->test(WorkOrdersPage::class)
             ->call('openEdit', $order->id)
             ->assertSee("Update Work Order {$order->order_number}")
-            ->assertSet('edit.status', WorkOrderStatus::InProgress->value)
-            ->set('edit.status', WorkOrderStatus::Completed->value)
+            ->set('edit.meterNumber', 'B-2')
+            ->set('edit.orderType', WorkOrderType::PipeRepair->value)
             ->call('update')
             ->assertHasNoErrors()
             ->assertSet('editingId', '');
 
         $order->refresh();
-        $this->assertSame(WorkOrderStatus::Completed, $order->status);
-        $this->assertSame($owner->id, $order->completed_by_id);
-        $this->assertNotNull($order->completed_at);
+        $this->assertSame('B-2', $order->meter_number);
+        $this->assertSame(WorkOrderType::LeakRepair, $order->order_type);
+        $this->assertSame('Edited: Meter No: A-1 → B-2.', $order->activities()->value('description'));
+    }
+
+    public function test_orders_can_be_put_on_hold_resumed_and_cancelled_with_a_reason(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $order = WorkOrder::factory()->for($company)->create();
+
+        $page = Livewire::actingAs($owner)
+            ->test(WorkOrdersPage::class)
+            ->call('openEdit', $order->id)
+            ->call('askReason', 'hold')
+            ->call('confirmReason')
+            ->assertHasErrors(['reason'])
+            ->set('reason', 'Waiting for a 1/2" meter')
+            ->call('confirmReason')
+            ->assertHasNoErrors();
+
+        $this->assertSame(WorkOrderStatus::OnHold, $order->fresh()->status);
+        $this->assertSame('Waiting for a 1/2" meter', $order->fresh()->hold_reason);
+
+        $page->call('openEdit', $order->id)->call('resume');
+        $this->assertSame(WorkOrderStatus::InProgress, $order->fresh()->status);
 
         $page->call('openEdit', $order->id)
-            ->set('edit.status', WorkOrderStatus::InProgress->value)
-            ->call('update');
+            ->call('askReason', 'cancel')
+            ->set('reason', 'Customer withdrew the request')
+            ->call('confirmReason');
 
-        $this->assertNull($order->fresh()->completed_at);
-        $this->assertNull($order->fresh()->completed_by_id);
+        $order->refresh();
+        $this->assertSame(WorkOrderStatus::Cancelled, $order->status);
+        $this->assertSame('Customer withdrew the request', $order->cancel_reason);
+        $this->assertSame(
+            ['Put on hold: Waiting for a 1/2" meter', 'Resumed.', 'Cancelled: Customer withdrew the request'],
+            $order->activities()->orderBy('id')->pluck('description')->all(),
+        );
+
+        // Cancelled is final: the pencil opens the details instead.
+        $page->call('openEdit', $order->id)
+            ->assertSet('editingId', '')
+            ->assertSet('viewingId', (string) $order->id);
+    }
+
+    public function test_types_that_do_not_apply_to_the_customer_are_refused(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $pending = Customer::factory()->for($company)->create();
+        $connected = Customer::factory()->for($company)->connected()->create();
+        WorkOrder::factory()->forCustomer($connected, WorkOrderType::LeakRepair)->create(['order_number' => '000050']);
+
+        $page = Livewire::actingAs($owner)
+            ->test(WorkOrdersPage::class)
+            ->call('chooseCustomer', $pending->id)
+            ->assertSee('Reconnection (customer is not disconnected)')
+            ->assertSee('Meter Repair (customer has no meter yet)')
+            ->set('values.orderType', WorkOrderType::Reconnection->value)
+            ->set('values.assignedToId', (string) $owner->id)
+            ->call('submit')
+            ->assertHasErrors(['values.orderType'])
+            ->assertSee("Reconnection can't be submitted: customer is not disconnected.");
+
+        $page->set('customerSearch', '')
+            ->call('chooseCustomer', $connected->id)
+            ->assertSet('values.meterNumber', $connected->meter_number)
+            ->assertSet('values.serialNumber', $connected->meter_serial_number)
+            ->assertSee('New Installation (customer already has a meter)')
+            ->set('values.orderType', WorkOrderType::LeakRepair->value)
+            ->set('values.assignedToId', (string) $owner->id)
+            ->call('submit')
+            ->assertHasErrors(['values.orderType'])
+            ->assertSee("Leak Repair can't be submitted: work order 000050 is already open.");
+
+        $this->assertSame(1, WorkOrder::count());
+    }
+
+    public function test_default_fees_are_saved_and_prefilled_when_completing(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $customer = Customer::factory()->for($company)->disconnected()->create();
+        $order = WorkOrder::factory()->forCustomer($customer, WorkOrderType::Reconnection)->create();
+
+        Livewire::actingAs($owner)
+            ->test(WorkOrdersPage::class)
+            ->call('openFees')
+            ->set('fees.'.WorkOrderType::Reconnection->value, 'abc')
+            ->call('saveFees')
+            ->assertHasErrors(['fees.'.WorkOrderType::Reconnection->value])
+            ->set('fees.'.WorkOrderType::Reconnection->value, '250.50')
+            ->call('saveFees')
+            ->assertHasNoErrors()
+            ->assertSet('settingFees', false)
+            ->call('openComplete', $order->id)
+            ->assertSet('completion.fee', '250.50');
+
+        $this->assertSame('250.50', $company->workOrderFees()->value('amount'));
     }
 
     public function test_the_view_modal_shows_the_order_details(): void
@@ -261,9 +352,12 @@ class WorkOrdersPageTest extends TestCase
             ->call('submit')
             ->assertDispatched('flash', message: Access::Add->deniedMessage(), tone: 'error')
             ->call('openEdit', $order->id)
-            ->set('edit.status', WorkOrderStatus::Cancelled->value)
-            ->call('update')
-            ->assertDispatched('flash', message: Access::Edit->deniedMessage(), tone: 'error');
+            ->set('reason', 'No reason')
+            ->set('reasonFor', 'cancel')
+            ->call('confirmReason')
+            ->assertDispatched('flash', message: Access::Edit->deniedMessage(), tone: 'error')
+            ->call('openComplete', $order->id)
+            ->assertSet('completingId', '');
 
         $this->assertSame(WorkOrderStatus::InProgress, $order->fresh()->status);
     }

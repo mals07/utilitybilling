@@ -5,6 +5,7 @@ namespace App\Enums;
 enum WorkOrderStatus: string
 {
     case InProgress = 'in_progress';
+    case OnHold = 'on_hold';
     case Completed = 'completed';
     case Cancelled = 'cancelled';
 
@@ -12,6 +13,7 @@ enum WorkOrderStatus: string
     {
         return match ($this) {
             self::InProgress => 'In Progress',
+            self::OnHold => 'On Hold',
             self::Completed => 'Completed',
             self::Cancelled => 'Cancelled',
         };
@@ -24,16 +26,26 @@ enum WorkOrderStatus: string
     {
         return match ($this) {
             self::InProgress => 'text-ink-soft',
+            self::OnHold => 'text-warning',
             self::Completed => 'text-success',
             self::Cancelled => 'text-muted',
         };
     }
 
     /**
-     * @return array<string, string> value => label
+     * Still to be done: it can be edited, put on hold, completed or cancelled. Completed and
+     * Cancelled orders are final.
      */
-    public static function options(): array
+    public function isOpen(): bool
     {
-        return collect(self::cases())->mapWithKeys(fn (self $status): array => [$status->value => $status->label()])->all();
+        return $this === self::InProgress || $this === self::OnHold;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function openValues(): array
+    {
+        return [self::InProgress->value, self::OnHold->value];
     }
 }

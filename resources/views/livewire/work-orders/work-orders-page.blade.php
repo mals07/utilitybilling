@@ -1,3 +1,4 @@
+@use('App\Enums\WorkOrderType')
 @use('App\Livewire\WorkOrders\WorkOrdersPage')
 @use('App\Models\WorkOrder')
 @use('App\Support\Format')
@@ -87,20 +88,29 @@
                     </div>
 
                     <div class="lg:col-start-4 lg:row-start-1">
-                        @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'orderType', 'label' => 'Order Type', 'placeholder' => 'Select Order Type', 'choices' => $orderTypes, 'required' => true])
+                        @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'orderType', 'label' => 'Order Type', 'placeholder' => 'Select Order Type', 'choices' => $orderTypes, 'disabledChoices' => $ineligibleTypes, 'required' => true, 'live' => true])
+                        @if ($chosenCustomer === null)
+                            <p class="mt-1 text-xs text-placeholder">Pick a customer to see which types apply to them.</p>
+                        @endif
                     </div>
 
-                    <div class="lg:col-start-3 lg:row-start-2">
-                        @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'meterNumber', 'label' => 'Meter No', 'placeholder' => 'Meter number'])
-                    </div>
+                    @if ($chosenType?->isOfficeWork())
+                        <p class="text-xs text-label sm:col-span-2 lg:col-span-2 lg:col-start-3 lg:row-start-2">
+                            {{ $chosenType->label() }} is office work, so no meter details are needed.
+                        </p>
+                    @else
+                        <div class="lg:col-start-3 lg:row-start-2">
+                            @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'meterNumber', 'label' => 'Meter No', 'placeholder' => $chosenType === WorkOrderType::NewInstallation ? 'Planned meter (optional)' : 'Meter number'])
+                        </div>
 
-                    <div class="lg:col-start-4 lg:row-start-2">
-                        @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'meterTypeId', 'label' => 'Meter Type', 'placeholder' => 'Select Meter Type', 'choices' => $meterTypes, 'hint' => $meterTypeHint])
-                    </div>
+                        <div class="lg:col-start-4 lg:row-start-2">
+                            @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'meterTypeId', 'label' => 'Meter Type', 'placeholder' => 'Select Meter Type', 'choices' => $meterTypes, 'hint' => $meterTypeHint])
+                        </div>
 
-                    <div class="lg:col-start-3 lg:row-start-3">
-                        @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'serialNumber', 'label' => 'Serial No', 'placeholder' => '123-456-7890'])
-                    </div>
+                        <div class="lg:col-start-3 lg:row-start-3">
+                            @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'serialNumber', 'label' => 'Serial No', 'placeholder' => '123-456-7890'])
+                        </div>
+                    @endif
 
                     <div class="lg:col-start-4 lg:row-start-3">
                         @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'assignedToId', 'label' => 'Assigned To', 'placeholder' => 'Select User', 'choices' => $assignees, 'required' => true])
@@ -123,7 +133,10 @@
                         @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'description', 'label' => 'Description', 'placeholder' => 'Add notes for our delivery staff', 'rows' => 4])
                     </div>
 
-                    <div class="flex items-end justify-end sm:col-span-2 lg:col-start-3 lg:col-span-2 lg:row-start-4">
+                    <div class="flex flex-wrap items-end justify-end gap-x-4 gap-y-2 sm:col-span-2 lg:col-start-3 lg:col-span-2 lg:row-start-4">
+                        @if ($access['edit'])
+                            <button type="button" class="link-button" wire:click="openFees">Set default fees</button>
+                        @endif
                         <button type="submit" class="form-button form-button-sm min-w-40" wire:loading.attr="disabled" wire:target="submit">
                             <span wire:loading.remove wire:target="submit">Submit Work Order</span>
                             <span wire:loading wire:target="submit">Submitting…</span>
@@ -140,7 +153,7 @@
                 <x-icon name="warning" :size="18" />
                 <span>
                     <strong>{{ $overdueCount === 1 ? '1 work order has' : "{$overdueCount} work orders have" }}</strong>
-                    been in progress for more than {{ WorkOrder::OVERDUE_AFTER_DAYS }} days.
+                    been open for more than {{ WorkOrder::OVERDUE_AFTER_DAYS }} days.
                     @unless ($pendingOnly)
                         <button type="button" class="ml-1 underline underline-offset-2" wire:click="$set('pendingOnly', true)">Show pending work orders</button>
                     @endunless
@@ -175,15 +188,29 @@
                 <tbody>
                     @foreach ($orders as $order)
                         @php($overdue = $order->isOverdue($timezone))
-                        <tr wire:key="order-{{ $order->id }}" @class(['row-selected' => $order->id === ($editing?->id ?? $viewing?->id)])>
-                            <td class="whitespace-nowrap">{{ $order->order_number }}</td>
+                        <tr wire:key="order-{{ $order->id }}" @class(['row-selected' => $order->id === ($editing?->id ?? $viewing?->id ?? $completing?->id)])>
+                            <td class="whitespace-nowrap">
+                                {{ $order->order_number }}
+                                @if ($order->parent)
+                                    <span class="block text-[11px] text-label">from {{ $order->parent->order_number }}</span>
+                                @endif
+                            </td>
                             <td>{{ $order->order_type->label() }}</td>
                             <td class="whitespace-nowrap">{{ $order->customer->account_number }}</td>
                             <td>{{ $order->customer->first_name }} {{ $order->customer->last_name }}</td>
-                            <td><span class="text-[13px] whitespace-nowrap {{ $order->status->colorClass() }}">{{ $order->status->label() }}</span></td>
+                            <td>
+                                <span class="text-[13px] whitespace-nowrap {{ $order->status->colorClass() }}">{{ $order->status->label() }}</span>
+                                @if ($order->review_flag)
+                                    @if ($order->flag_resolved_at)
+                                        <span class="mt-0.5 block w-max rounded bg-success-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-success" title="{{ $order->review_flag->label() }}">Resolved · {{ $order->flag_resolution }}</span>
+                                    @else
+                                        <span class="mt-0.5 block w-max rounded bg-danger-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-danger">{{ $order->review_flag->label() }}</span>
+                                    @endif
+                                @endif
+                            </td>
                             <td @class(['whitespace-nowrap', 'bg-danger-bg font-semibold text-danger' => $overdue])>
                                 @if ($overdue)
-                                    <span class="inline-flex items-center gap-1" title="In progress for more than {{ WorkOrder::OVERDUE_AFTER_DAYS }} days">
+                                    <span class="inline-flex items-center gap-1" title="Open for more than {{ WorkOrder::OVERDUE_AFTER_DAYS }} days">
                                         <x-icon name="warning" :size="14" />
                                         {{ Format::date($order->requested_at, $timezone) }}
                                         <span class="sr-only">(overdue)</span>
@@ -195,9 +222,11 @@
                             <td class="whitespace-nowrap">{{ $order->completed_at ? Format::date($order->completed_at, $timezone) : '' }}</td>
                             <td>{{ $order->completedBy?->name }}</td>
                             <td class="cell-actions">
-                                <button type="button" class="icon-button" wire:click="openEdit({{ $order->id }})" aria-label="Update work order {{ $order->order_number }}">
-                                    <x-icon name="pencil" :size="14" />
-                                </button>
+                                @if ($order->status->isOpen())
+                                    <button type="button" class="icon-button" wire:click="openEdit({{ $order->id }})" aria-label="Update work order {{ $order->order_number }}">
+                                        <x-icon name="pencil" :size="14" />
+                                    </button>
+                                @endif
                             </td>
                             <td class="cell-actions">
                                 <button type="button" class="icon-button" wire:click="openView({{ $order->id }})" aria-label="View work order {{ $order->order_number }}">
@@ -227,7 +256,15 @@
         @include('livewire.work-orders.partials.view-modal')
     @endif
 
+    @if ($completing)
+        @include('livewire.work-orders.partials.complete-modal')
+    @endif
+
     @if ($choosingRole)
         @include('livewire.work-orders.partials.role-modal')
+    @endif
+
+    @if ($settingFees)
+        @include('livewire.work-orders.partials.fees-modal')
     @endif
 </x-page>
