@@ -1,0 +1,11 @@
+# Used only when the repository is cloned straight into public_html (or a domain's document root
+# cannot point at public/). Sends every request into the public/ folder so app code and .env are
+# never served. Laravel Herd ignores this file.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
