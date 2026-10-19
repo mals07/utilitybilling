@@ -153,6 +153,31 @@ class MeterReadingsTest extends TestCase
         $this->assertSame(0, $new->meterReadings()->count());
     }
 
+    public function test_readings_are_typed_in_the_panel_and_saved_only_after_the_usage_shows(): void
+    {
+        $first = $this->customer(['account_number' => '000001']);
+        $second = $this->customer(['account_number' => '000002']);
+
+        Livewire::actingAs($this->owner)
+            ->test(MeterReadingsPage::class)
+            ->assertDontSeeHtml('aria-label="Present reading for')
+            ->call('select', $first->id)
+            ->set('presentInput', '-5')
+            ->assertSee('Enter the reading as a number')
+            ->set('presentInput', '12')
+            ->assertSee('Usage')
+            ->assertSee('12 cu.m.')
+            ->call('saveSelected', true)
+            ->assertDispatched('flash', message: 'Reading saved.')
+            ->assertSet('selected', (string) $second->id)
+            ->assertSet('presentInput', '')
+            ->call('saveSelected', true)
+            ->assertHasErrors('presentInput');
+
+        $this->assertSame('12.000', $first->meterReadings()->sole()->present_reading);
+        $this->assertSame(0, $second->meterReadings()->count());
+    }
+
     public function test_invalid_readings_show_why_and_are_not_saved(): void
     {
         $customer = $this->customer();

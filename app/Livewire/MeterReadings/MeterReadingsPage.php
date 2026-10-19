@@ -80,6 +80,12 @@ class MeterReadingsPage extends Component
 
     public string $notes = '';
 
+    /**
+     * The present reading being typed in the side panel. It is saved only with the Save buttons,
+     * after the panel shows the usage it makes.
+     */
+    public string $presentInput = '';
+
     protected function page(): Page
     {
         return Page::MeterReadings;
@@ -126,11 +132,62 @@ class MeterReadingsPage extends Component
     {
         $this->selected = (string) $customerId;
         $this->loadNotes();
+
+        // Starts from what was typed before (or the final reading of a disconnected meter); a saved
+        // reading is retyped from blank so the reader looks at the meter again.
+        $this->presentInput = (string) ($this->entries[$customerId] ?? '');
+        $this->resetValidation('presentInput');
     }
 
     public function closePanel(): void
     {
-        $this->reset('selected', 'notes');
+        $this->reset('selected', 'notes', 'presentInput');
+    }
+
+    /**
+     * Saves the reading typed in the side panel; with $next, opens the next meter in the list.
+     */
+    public function saveSelected(bool $next = false): void
+    {
+        $id = self::idFrom($this->selected);
+        if ($id === null) {
+            return;
+        }
+
+        $this->presentInput = trim($this->presentInput);
+        if ($this->presentInput === '') {
+            $this->addError('presentInput', 'Enter the present reading.');
+
+            return;
+        }
+
+        if (! $this->save($id, $this->presentInput)) {
+            return;
+        }
+
+        $this->flash('Reading saved.');
+        $nextId = $next ? $this->nextCustomerId($id) : null;
+        if ($nextId !== null) {
+            $this->select($nextId);
+        } else {
+            $this->presentInput = '';
+        }
+    }
+
+    /**
+     * The meter after this one in the list (same month, cluster, search and filter), by account number.
+     */
+    private function nextCustomerId(int $customerId): ?int
+    {
+        $current = $this->customer($customerId);
+        if ($current === null) {
+            return null;
+        }
+
+        return $this->filtered(MeterReadings::customers($this->company(), $this->period, self::idFrom($this->clusterId), trim($this->search)))
+            ->where('account_number', '>', $current->account_number)
+            ->orderBy('account_number')
+            ->value('customers.id');
     }
 
     private function loadNotes(): void
@@ -169,41 +226,41 @@ class MeterReadingsPage extends Component
     }
 
     /**
-     * Saves a typed present reading. Typing over a saved reading replaces it.
+     * Saves a present reading (or an estimate code), replacing an unbilled one. Returns whether it
+     * was saved; if not, the reason is in $rowErrors.
      */
-    public function save(int $customerId, string $value, string $code = 'normal'): void
+    public function save(int $customerId, string $value, string $code = 'normal'): bool
     {
         $value = trim($value);
         $code = ReadingCode::tryFrom($code) ?? ReadingCode::Normal;
         $existing = $this->reading($customerId);
 
-        // Clearing the box of an unsaved row just forgets it.
         if ($value === '' && ! $code->isEstimated()) {
             unset($this->entries[$customerId], $this->rowErrors[$customerId]);
 
-            return;
+            return false;
         }
         if ($existing !== null && ! $code->isEstimated() && $existing->reading_code === $code && $existing->present_reading !== null
-            && (float) $existing->present_reading === (float) $value && preg_match(BillingRun::READING_PATTERN, $value)) {
-            return;
+            && preg_match(BillingRun::READING_PATTERN, $value) && (float) $existing->present_reading === (float) $value) {
+            return true;
         }
 
         if (! $this->allowed($existing === null ? Access::Add : Access::Edit)) {
-            return;
+            return false;
         }
 
         $customer = $this->customer($customerId);
         if ($customer === null) {
             $this->flash('That customer no longer exists. The list has been refreshed.', 'error');
 
-            return;
+            return false;
         }
 
         if ($error = $this->settingsError()) {
             $this->rowErrors[$customerId] = $error;
             $this->entries[$customerId] = $value;
 
-            return;
+            return false;
         }
 
         try {
@@ -212,10 +269,12 @@ class MeterReadingsPage extends Component
             $this->rowErrors[$customerId] = $exception->getMessage();
             $this->entries[$customerId] = $value;
 
-            return;
+            return false;
         }
 
         unset($this->entries[$customerId], $this->rowErrors[$customerId]);
+
+        return true;
     }
 
     /**
@@ -236,7 +295,8 @@ class MeterReadingsPage extends Component
      */
     public function saveRollover(int $customerId): void
     {
-        $value = $this->entries[$customerId] ?? (string) ($this->reading($customerId)?->present_reading ?? '');
+        $typed = (string) self::idFrom($this->selected) === (string) $customerId ? trim($this->presentInput) : '';
+        $value = $typed !== '' ? $typed : ($this->entries[$customerId] ?? (string) ($this->reading($customerId)?->present_reading ?? ''));
 
         $this->save($customerId, $value, ReadingCode::Rollover->value);
     }
@@ -405,7 +465,7 @@ class MeterReadingsPage extends Component
     /**
      * What the side panel shows for the selected customer: their reading, recent usage and the bill it makes.
      *
-     * @return array{customer: Customer, reading: ?MeterReading, history: list<array{label: string, usage: float, estimated: bool}>, average: ?float, maxUsage: float, previous: ?float, lines: list<array{description: string, amount: string}>, total: ?string, error: ?string, billedInvoice: ?string}|null
+     * @return array{customer: Customer, reading: ?MeterReading, history: list<array{label: string, usage: float, estimated: bool}>, average: ?float, maxUsage: float, previous: ?float, lines: list<array{description: string, amount: string}>, total: ?string, error: ?string, billedInvoice: ?string, preview: array{usage: ?float, deducted: float, flags: list<string>, error: ?string}|null}|null
      */
     private function panel(bool $periodValid, string $today): ?array
     {
@@ -466,6 +526,18 @@ class MeterReadingsPage extends Component
             }
         }
 
+        // What the reading being typed would make, shown before it is saved.
+        $preview = null;
+        $typed = trim($this->presentInput);
+        if ($typed !== '' && $periodValid && ! ($reading?->isBilled() ?? false)) {
+            try {
+                $evaluated = MeterReadings::evaluate($customer, $this->period, $typed, ReadingCode::Normal);
+                $preview = ['usage' => $evaluated['usage'], 'deducted' => $evaluated['deducted'], 'flags' => $evaluated['flags'], 'error' => null];
+            } catch (BillingException $exception) {
+                $preview = ['usage' => null, 'deducted' => 0.0, 'flags' => [], 'error' => $exception->getMessage()];
+            }
+        }
+
         return [
             'customer' => $customer,
             'reading' => $reading,
@@ -477,6 +549,7 @@ class MeterReadingsPage extends Component
             'total' => $total,
             'error' => $error,
             'billedInvoice' => $reading?->invoice?->invoice_number,
+            'preview' => $preview,
         ];
     }
 }

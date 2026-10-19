@@ -52,10 +52,55 @@
             @elseif ($reading->confirmed_at && $reading->review_reason)
                 <p class="text-[11px] text-label">Confirmed by {{ $reading->confirmedBy?->name ?? 'a user' }}: {{ $reading->review_reason }}</p>
             @endif
-        @elseif ($rowError)
+        @elseif ($rowError && $panel['preview'] === null)
             <div class="rounded-md bg-danger-bg px-3 py-2 text-[12px] text-danger" role="alert">{{ $rowError }}</div>
         @else
             <p class="text-label">Not read yet for this month.</p>
+        @endif
+
+        {{-- Enter or correct the reading: the usage it makes shows before it is saved. --}}
+        @if (! $billed && $periodLabel !== null && ($reading ? $access['edit'] : $access['add']))
+            @php($preview = $panel['preview'])
+            <form wire:submit="saveSelected(true)" class="rounded-md border border-table-line bg-panel p-3" novalidate>
+                <div class="flex items-baseline justify-between gap-2">
+                    <label for="mr-present" class="text-[11px] font-semibold text-ink-strong">{{ $reading ? 'Correct the present reading' : 'Present reading' }}</label>
+                    <span class="text-[11px] text-label">Previous {{ $panel['previous'] === null ? '—' : Format::quantity($panel['previous']) }}</span>
+                </div>
+                <input
+                    id="mr-present"
+                    type="text"
+                    inputmode="decimal"
+                    maxlength="13"
+                    autocomplete="off"
+                    wire:model.live.debounce.400ms="presentInput"
+                    x-init="$nextTick(() => $el.focus())"
+                    placeholder="{{ $reading?->present_reading !== null ? Format::quantity($reading->present_reading) : '0' }}"
+                    class="form-control mt-1 !h-11 text-right !text-lg font-semibold tabular-nums"
+                    @if ($preview['error'] ?? false) aria-invalid="true" @endif
+                    aria-describedby="mr-present-preview"
+                >
+                @error('presentInput') <p class="form-error" role="alert">{{ $message }}</p> @enderror
+
+                <div id="mr-present-preview" class="mt-2 min-h-5 text-[12px]" aria-live="polite">
+                    @if ($preview === null)
+                        <span class="text-label">Type the number on the meter. Nothing is saved until you click Save.</span>
+                    @elseif ($preview['error'])
+                        <span class="text-danger">{{ $preview['error'] }}</span>
+                    @else
+                        <p class="text-ink-strong">Usage <span class="font-semibold tabular-nums">{{ Format::quantity($preview['usage']) }} cu.m.</span>
+                            @if ($preview['deducted'] > 0) <span class="text-label">(after {{ Format::quantity($preview['deducted']) }} cu.m. already estimated)</span> @endif
+                        </p>
+                        @if ($preview['flags'] !== [])
+                            <p class="mt-1 text-warning">Will need review: {{ implode(' ', $preview['flags']) }}</p>
+                        @endif
+                    @endif
+                </div>
+
+                <div class="mt-2 flex gap-2">
+                    <button type="button" wire:click="saveSelected(false)" wire:loading.attr="disabled" wire:target="saveSelected" class="h-8 flex-1 rounded-xs border border-line bg-card text-xs text-ink-soft hover:border-line-hover" @disabled($preview === null || $preview['error'])>Save</button>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="saveSelected" class="h-8 flex-1 rounded-xs bg-button text-xs font-semibold text-white hover:bg-button-hover disabled:opacity-60" @disabled($preview === null || $preview['error'])>Save and next</button>
+                </div>
+            </form>
         @endif
 
         {{-- The reading --}}
@@ -99,7 +144,7 @@
                             class="h-7 rounded-full border border-line px-3 text-xs text-ink-soft hover:border-line-hover disabled:border-accent disabled:text-ink-strong"
                         >{{ $code->label() }}</button>
                     @endforeach
-                    @if ($canRollOver && ($rowError || $reading?->reading_code === ReadingCode::Rollover))
+                    @if ($canRollOver && ($rowError || ($panel['preview']['error'] ?? null) || $reading?->reading_code === ReadingCode::Rollover))
                         <button
                             type="button"
                             wire:click="saveRollover({{ $customer->id }})"

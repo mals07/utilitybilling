@@ -10,16 +10,7 @@
 @endphp
 
 <x-page title="Meter Readings">
-    <div
-        x-data="{
-            {{-- Enter or ↓ saves the reading (on change) and moves to the next meter; ↑ goes back. --}}
-            move(input, step) {
-                const inputs = [...$root.querySelectorAll('[data-reading-input]:not(:disabled)')];
-                const next = inputs[inputs.indexOf(input) + step];
-                if (next) { next.focus(); next.select(); } else { input.blur(); }
-            },
-        }"
-    >
+    <div>
         <x-flash class="mb-4" />
 
         {{-- Month, reading date and route --}}
@@ -123,8 +114,6 @@
                                     $reading = $row['reading'];
                                     $billed = $reading?->status === MeterReadingStatus::Billed;
                                     $error = $rowErrors[$customer->id] ?? null;
-                                    $typed = $entries[$customer->id] ?? null;
-                                    $value = $typed ?? ($reading?->present_reading !== null ? Format::quantity($reading->present_reading) : '');
                                     $isSelected = (string) $customer->id === $selected;
                                 @endphp
                                 <tr
@@ -144,32 +133,25 @@
                                     </td>
                                     <td class="px-3 py-2 text-right text-ink-soft tabular-nums">{{ $row['previous'] === null ? '—' : Format::quantity($row['previous']) }}</td>
                                     <td class="px-3 py-2 text-right">
-                                        @if ($billed)
-                                            <span class="tabular-nums text-ink-soft">{{ $reading->present_reading === null ? $reading->reading_code->label() : Format::quantity($reading->present_reading) }}</span>
-                                        @else
-                                            <input
-                                                type="text"
-                                                inputmode="decimal"
-                                                maxlength="13"
-                                                autocomplete="off"
-                                                data-reading-input
-                                                value="{{ $value }}"
-                                                aria-label="Present reading for {{ $customer->account_number }}"
-                                                placeholder="{{ $reading?->reading_code->isEstimated() ? $reading->reading_code->label() : 'Enter reading' }}"
-                                                @disabled(! $canEnter)
-                                                x-on:change="$wire.save({{ $customer->id }}, $el.value)"
-                                                x-on:keydown.enter.prevent="move($el, 1)"
-                                                x-on:keydown.arrow-down.prevent="move($el, 1)"
-                                                x-on:keydown.arrow-up.prevent="move($el, -1)"
-                                                @class([
-                                                    'form-control form-control-sm w-full text-right tabular-nums !text-[13px]',
-                                                    'placeholder:text-warning' => $reading?->reading_code->isEstimated(),
-                                                ])
-                                                @if ($error) aria-invalid="true" aria-describedby="reading-error-{{ $customer->id }}" @endif
+                                        @if ($reading?->present_reading !== null)
+                                            <span class="tabular-nums {{ $billed ? 'text-ink-soft' : 'font-medium text-ink-strong' }}">{{ Format::quantity($reading->present_reading) }}</span>
+                                        @elseif ($reading)
+                                            <span class="rounded-full bg-warning-bg px-2 py-0.5 text-[11px] text-warning">{{ $reading->reading_code->label() }}</span>
+                                        @elseif ($canEnter && $access['add'])
+                                            <button
+                                                type="button"
+                                                wire:click="select({{ $customer->id }})"
+                                                class="inline-flex h-7 items-center rounded-full border border-dashed border-line-hover px-3 text-xs text-ink-soft hover:border-accent hover:text-ink-strong"
+                                                aria-label="Enter the present reading for {{ $customer->account_number }}"
+                                                @if ($error) aria-describedby="reading-error-{{ $customer->id }}" @endif
                                             >
-                                            @if ($row['finalReading'] !== null && $reading === null)
-                                                <span class="mt-0.5 block text-[11px] text-label">Final reading at disconnection; press Enter to save</span>
-                                            @endif
+                                                Enter reading
+                                            </button>
+                                        @else
+                                            <span class="text-placeholder">—</span>
+                                        @endif
+                                        @if ($row['finalReading'] !== null && $reading === null)
+                                            <span class="mt-0.5 block text-[11px] text-label">Final reading {{ Format::quantity($row['finalReading']) }}</span>
                                         @endif
                                     </td>
                                     <td class="px-3 py-2 text-right tabular-nums">
@@ -220,7 +202,7 @@
                     </table>
                 </div>
                 @if ($canEnter && $customers->isNotEmpty())
-                    <p class="border-t border-table-line px-3 py-2 text-[11px] text-label">Type a reading and press Enter to save it and move to the next meter.</p>
+                    <p class="border-t border-table-line px-3 py-2 text-[11px] text-label">Click <em>Enter reading</em> (or a customer) to record the meter. Check the usage shown before saving.</p>
                 @endif
             </div>
 
