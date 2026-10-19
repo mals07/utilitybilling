@@ -3,17 +3,18 @@
 namespace App\Livewire\Invoices;
 
 use App\Enums\Access;
-use App\Enums\CustomerStatus;
+use App\Enums\MeterReadingStatus;
 use App\Enums\Page;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Livewire\Concerns\ParsesIds;
 use App\Models\Customer;
-use App\Support\Billing\BillCalculator;
+use App\Models\MeterReading;
 use App\Support\Billing\BillingException;
 use App\Support\Billing\BillingRun;
-use App\Support\Billing\MeterHistory;
+use App\Support\Billing\MeterReadings;
 use App\Support\Money;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -21,9 +22,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Generate Bills: the monthly billing run. Lists the customers to bill for a month with their previous
- * reading; staff enter each present reading (or mark the meter defective), see the bill worked out as
- * they go, then issue all the bills at once.
+ * Generate Bills: the monthly billing run. Lists the month's readings that are Ready to bill (entered
+ * and checked on the Meter Readings page) with the bill each makes, and issues them all at once.
  */
 #[Layout('layouts.app')]
 #[Title('Generate Bills')]
@@ -38,8 +38,6 @@ class GenerateBillsPage extends Component
 
     public string $invoiceDate = '';
 
-    public string $readOn = '';
-
     #[Url(as: 'cluster', except: '')]
     public string $clusterId = '';
 
@@ -47,18 +45,11 @@ class GenerateBillsPage extends Component
     public string $search = '';
 
     /**
-     * Readings entered, keyed by customer id.
+     * Why a reading couldn't be billed in the last run, keyed by reading id.
      *
-     * @var array<int|string, array{present: string, defective: bool}>
+     * @var array<int|string, string>
      */
-    public array $entries = [];
-
-    /**
-     * The bill worked out for each entered reading, or why it can't be issued, keyed by customer id.
-     *
-     * @var array<int|string, array{error?: string, consumption?: string, total?: string, note?: string}>
-     */
-    public array $previews = [];
+    public array $failures = [];
 
     protected function page(): Page
     {
@@ -72,12 +63,11 @@ class GenerateBillsPage extends Component
             $this->period = substr($today, 0, 7);
         }
         $this->invoiceDate = $today;
-        $this->readOn = $today;
     }
 
     public function updatedPeriod(): void
     {
-        $this->reset('entries', 'previews');
+        $this->reset('failures');
         $this->resetPage();
         $this->resetValidation('period');
     }
@@ -95,72 +85,21 @@ class GenerateBillsPage extends Component
     public function updatedInvoiceDate(): void
     {
         $this->resetValidation('invoiceDate');
-        $this->recomputeAll();
     }
 
     /**
-     * Works the row's bill out again as soon as its reading or defective tick changes.
+     * The month's readings of the chosen cluster (all of them, whatever their status).
+     *
+     * @return Builder<MeterReading>
      */
-    public function updatedEntries(mixed $value, ?string $key = null): void
+    private function readings(): Builder
     {
-        $id = $key === null ? null : self::idFrom(explode('.', $key)[0]);
-        if ($id !== null) {
-            $this->recompute($id);
-        }
-    }
+        $clusterId = self::idFrom($this->clusterId);
 
-    private function recomputeAll(): void
-    {
-        foreach (array_keys($this->entries) as $id) {
-            $this->recompute((int) $id);
-        }
-    }
-
-    private function recompute(int $customerId): void
-    {
-        $entry = $this->entries[$customerId] ?? ['present' => '', 'defective' => false];
-        $present = trim((string) ($entry['present'] ?? ''));
-        $defective = (bool) ($entry['defective'] ?? false);
-
-        if ($present === '' && ! $defective) {
-            unset($this->previews[$customerId]);
-
-            return;
-        }
-
-        $customer = $this->company()->customers()->find($customerId);
-        if ($customer === null) {
-            unset($this->entries[$customerId], $this->previews[$customerId]);
-
-            return;
-        }
-
-        try {
-            $bill = BillingRun::compute($customer, $this->period, $present, $defective, $this->validDate($this->invoiceDate));
-        } catch (BillingException $exception) {
-            $this->previews[$customerId] = ['error' => $exception->getMessage()];
-
-            return;
-        }
-
-        $notes = array_filter([
-            $bill['estimated'] ? 'Estimated (defective meter)' : null,
-            $bill['minimumApplied'] ? 'Minimum consumption billed' : null,
-            $bill['replaced'] > 0 ? 'Includes '.BillCalculator::quantity($bill['replaced']).' cu.m. on the replaced meter' : null,
-            $bill['fees']->isNotEmpty() ? 'Includes work order fees' : null,
-            $bill['overdue']->isNotEmpty() ? 'Includes overdue surcharge' : null,
-        ]);
-
-        $this->previews[$customerId] = [
-            'consumption' => BillCalculator::quantity($bill['billed']),
-            'total' => Money::fromCents($bill['totalCents']),
-            'note' => implode(' · ', $notes),
-        ];
-    }
-
-    private function validDate(string $date): string
-    {
-        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && strtotime($date) ? $date : BillingRun::today($this->company());
+        return MeterReading::query()
+            ->where('company_id', $this->company()->id)
+            ->where('billing_period', $this->period)
+            ->when($clusterId !== null, fn (Builder $query) => $query->whereHas('customer', fn (Builder $customer) => $customer->where('cluster_type_id', $clusterId)));
     }
 
     /**
@@ -174,21 +113,18 @@ class GenerateBillsPage extends Component
         if ($error = BillingRun::periodError($this->period, $today)) {
             $errors['period'] = $error;
         }
-        foreach (['invoiceDate' => 'invoice date', 'readOn' => 'reading date'] as $field => $label) {
-            $value = $this->{$field};
-            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) || ! strtotime($value)) {
-                $errors[$field] = "Enter the {$label}.";
-            } elseif ($value > $today) {
-                $errors[$field] = "The {$label} can't be in the future.";
-            }
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->invoiceDate) || ! strtotime($this->invoiceDate)) {
+            $errors['invoiceDate'] = 'Enter the invoice date.';
+        } elseif ($this->invoiceDate > $today) {
+            $errors['invoiceDate'] = "The invoice date can't be in the future.";
         }
 
         return $errors;
     }
 
     /**
-     * Issues a bill for every customer with a reading entered (or marked defective). Rows that can't
-     * be billed keep their reading and show why.
+     * Issues a bill for every reading of the month (and cluster) that is Ready to bill. Readings that
+     * can't be billed stay Ready and show why.
      */
     public function generate(): void
     {
@@ -205,32 +141,22 @@ class GenerateBillsPage extends Component
             return;
         }
 
+        $this->failures = [];
         $issued = 0;
-        $failed = 0;
-        foreach ($this->entries as $id => $entry) {
-            $present = trim((string) ($entry['present'] ?? ''));
-            $defective = (bool) ($entry['defective'] ?? false);
-            if ($present === '' && ! $defective) {
-                continue;
-            }
+        $readings = $this->readings()->where('status', MeterReadingStatus::Ready)->whereNull('invoice_id')->orderBy('id')->get();
 
-            $customer = $this->company()->customers()->find((int) $id);
-            if ($customer === null) {
-                continue;
-            }
-
+        foreach ($readings as $reading) {
             try {
-                BillingRun::generate($customer, $this->period, $present, $defective, $this->invoiceDate, $this->readOn, $this->user());
-                unset($this->entries[$id], $this->previews[$id]);
+                BillingRun::generateFor($reading, $this->invoiceDate, $this->user());
                 $issued++;
             } catch (BillingException $exception) {
-                $this->previews[$id] = ['error' => $exception->getMessage()];
-                $failed++;
+                $this->failures[$reading->id] = $exception->getMessage();
             }
         }
 
+        $failed = count($this->failures);
         if ($issued === 0 && $failed === 0) {
-            $this->flash('Enter at least one present reading (or tick Defective meter) first.', 'error');
+            $this->flash('No readings are ready to bill. Enter and check them on the Meter Readings page first.', 'error');
 
             return;
         }
@@ -244,42 +170,63 @@ class GenerateBillsPage extends Component
     public function render(): View
     {
         $company = $this->company();
-        $periodValid = BillingRun::periodError($this->period, BillingRun::today($company)) === null;
+        $today = BillingRun::today($company);
+        $periodValid = BillingRun::periodError($this->period, $today) === null;
+        $search = trim($this->search);
+        $clusterId = self::idFrom($this->clusterId);
 
-        $customers = BillingRun::candidates($company, self::idFrom($this->clusterId), trim($this->search))
-            ->with(['rateType:id,name'])
+        $statusCounts = $this->readings()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all();
+        $toRead = $periodValid ? MeterReadings::customers($company, $this->period, $clusterId, '')
+            ->whereDoesntHave('meterReadings', fn (Builder $query) => $query->where('billing_period', $this->period))
+            ->count() : 0;
+
+        $readings = $this->readings()
+            ->whereIn('status', [MeterReadingStatus::Ready, MeterReadingStatus::Billed])
+            ->when($search !== '', fn (Builder $query) => $query->whereHas('customer', fn (Builder $customer) => $customer->where(fn (Builder $customer) => $customer
+                ->where('account_number', 'like', "%{$search}%")
+                ->orWhere('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhere('meter_number', 'like', "%{$search}%"))))
+            ->with(['customer.rateType:id,name', 'invoice:id,invoice_number,total_amount'])
+            ->orderBy(Customer::query()->select('account_number')->whereColumn('customers.id', 'meter_readings.customer_id'))
             ->paginate(self::PER_PAGE);
 
-        // What each listed customer's row shows besides the entered reading.
-        $rows = [];
-        foreach ($customers as $customer) {
-            /** @var Customer $customer */
-            $billed = $periodValid ? BillingRun::existingBill($customer, $this->period) : null;
-            $history = $periodValid && $billed === null ? MeterHistory::for($customer, $this->period) : null;
-            $disconnected = $customer->status === CustomerStatus::Disconnected;
-
-            // A disconnected customer is billed up to the final reading taken at disconnection.
-            if ($history !== null && $disconnected && $history['finalReading'] !== null && ! isset($this->entries[$customer->id])) {
-                $this->entries[$customer->id] = ['present' => BillCalculator::quantity($history['finalReading']), 'defective' => false];
-                $this->recompute($customer->id);
+        // The bill each unbilled reading on this page makes, or why it can't be worked out.
+        $previews = [];
+        $date = isset($this->settingsErrors()['invoiceDate']) ? $today : $this->invoiceDate;
+        foreach ($readings as $reading) {
+            /** @var MeterReading $reading */
+            if ($reading->isBilled()) {
+                continue;
             }
-
-            $rows[$customer->id] = [
-                'billed' => $billed,
-                'previous' => $history === null ? null : BillCalculator::quantity($history['previous']),
-                'nothingToBill' => $disconnected && $history !== null && $history['finalReading'] === null,
-            ];
+            try {
+                $bill = BillingRun::bill($reading->customer, $reading->usage(), $date);
+                $notes = array_filter([
+                    $bill['minimumApplied'] ? 'Minimum consumption' : null,
+                    $bill['fees']->isNotEmpty() ? 'Work order fees' : null,
+                    $bill['overdue']->isNotEmpty() ? 'Overdue surcharge' : null,
+                    $bill['tax']['exemptCents'] > 0 ? 'Tax exempt' : null,
+                ]);
+                $previews[$reading->id] = ['total' => Money::fromCents($bill['totalCents']), 'note' => implode(' · ', $notes)];
+            } catch (BillingException $exception) {
+                $previews[$reading->id] = ['error' => $exception->getMessage()];
+            }
         }
 
         return view('livewire.invoices.generate-bills-page', [
-            'customers' => $customers,
-            'rows' => $rows,
+            'readings' => $readings,
+            'previews' => $previews,
+            'counts' => [
+                'ready' => (int) ($statusCounts[MeterReadingStatus::Ready->value] ?? 0),
+                'review' => (int) ($statusCounts[MeterReadingStatus::Review->value] ?? 0),
+                'billed' => (int) ($statusCounts[MeterReadingStatus::Billed->value] ?? 0),
+                'toRead' => $toRead,
+            ],
             'clusters' => $company->clusterTypes()->orderBy('name')->pluck('name', 'id')->all(),
             'periodLabel' => $periodValid ? BillingRun::periodLabel($this->period) : null,
             'dueDays' => $company->due_date_days ?? 0,
-            'readyCount' => count(array_filter($this->previews, fn (array $preview): bool => ! isset($preview['error']))),
-            'readyTotal' => Money::fromCents(array_sum(array_map(fn (array $preview): int => Money::toCents($preview['total'] ?? 0), $this->previews))),
-            'today' => BillingRun::today($company),
+            'today' => $today,
+            'canRead' => $this->user()->canAccessPage(Page::MeterReadings),
             'access' => $this->access,
         ]);
     }

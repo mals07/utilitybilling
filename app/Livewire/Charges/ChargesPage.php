@@ -68,6 +68,8 @@ class ChargesPage extends Component
 
     public bool $elementAfterDue = false;
 
+    public bool $elementTaxable = false;
+
     /**
      * The charge element open in the "Update Charge Element" modal.
      */
@@ -79,6 +81,8 @@ class ChargesPage extends Component
     public string $editDistribution = '';
 
     public bool $editAfterDue = false;
+
+    public bool $editTaxable = false;
 
     public ?int $setupElementId = null;
 
@@ -282,6 +286,7 @@ class ChargesPage extends Component
                 'name' => $this->elementName,
                 'distribution_type' => $this->elementDistribution,
                 'is_after_due' => $this->elementAfterDue,
+                'is_taxable' => $this->elementTaxable,
             ]);
         } catch (UniqueConstraintViolationException) {
             $this->addError('elementName', 'The charge element has already been taken.');
@@ -289,7 +294,7 @@ class ChargesPage extends Component
             return;
         }
 
-        $this->reset('elementName', 'elementDistribution', 'elementAfterDue');
+        $this->reset('elementName', 'elementDistribution', 'elementAfterDue', 'elementTaxable');
         $this->resetValidation();
         $this->flash('Charge element added.');
     }
@@ -310,6 +315,7 @@ class ChargesPage extends Component
         $this->editName = $element->name;
         $this->editDistribution = $element->distribution_type->value;
         $this->editAfterDue = $element->is_after_due;
+        $this->editTaxable = $element->is_taxable;
         $this->resetValidation();
     }
 
@@ -348,6 +354,7 @@ class ChargesPage extends Component
                 'name' => $this->editName,
                 'distribution_type' => $this->editDistribution,
                 'is_after_due' => $this->editAfterDue,
+                'is_taxable' => $this->editTaxable,
             ]);
         } catch (UniqueConstraintViolationException) {
             $this->addError('editName', 'The charge element has already been taken.');

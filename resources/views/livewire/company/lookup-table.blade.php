@@ -43,6 +43,12 @@
             <thead>
                 <tr>
                     <th scope="col" class="cell-center">{{ $config->heading() }}</th>
+                    @if ($config->tracksDialDigits())
+                        <th scope="col" class="cell-center w-14 !text-[11px] !font-medium" title="Number of dials, e.g. 4 for a meter that reads up to 9999">Dials</th>
+                    @endif
+                    @if ($config->tracksTaxExempt())
+                        <th scope="col" class="cell-center w-14 !text-[11px] !font-medium" title="Billed without tax, e.g. Government">Tax exempt</th>
+                    @endif
                     @if ($config->tracksActive())
                         <th scope="col" class="cell-center w-14 !text-[11px] !font-medium">Active</th>
                     @endif
@@ -53,6 +59,34 @@
                 @foreach ($items as $item)
                     <tr wire:key="item-{{ $item->id }}" @class(['row-inactive' => $config->tracksActive() && ! $item->is_active])>
                         <td>{{ $item->name }}</td>
+                        @if ($config->tracksDialDigits())
+                            <td class="cell-center !p-0.5">
+                                <input
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="2"
+                                    value="{{ $item->dial_digits }}"
+                                    placeholder="—"
+                                    @disabled(! $access['edit'])
+                                    x-on:change="$wire.setDialDigits({{ $item->id }}, $el.value)"
+                                    aria-label="Number of dials of {{ $item->name }}"
+                                    class="h-[22px] w-10 rounded-xs border border-transparent bg-transparent text-center text-xs hover:border-line focus:border-line-focus focus:outline-none disabled:cursor-not-allowed"
+                                >
+                            </td>
+                        @endif
+                        @if ($config->tracksTaxExempt())
+                            <td class="cell-center">
+                                <input
+                                    type="checkbox"
+                                    @checked($item->is_tax_exempt)
+                                    @disabled(! $access['edit'])
+                                    wire:click="toggleTaxExempt({{ $item->id }})"
+                                    wire:loading.attr="disabled"
+                                    aria-label="{{ $item->name }} is tax exempt"
+                                    class="size-3.5 cursor-pointer align-middle accent-accent disabled:cursor-not-allowed"
+                                >
+                            </td>
+                        @endif
                         @if ($config->tracksActive())
                             <td class="cell-center">
                                 <input
@@ -83,7 +117,7 @@
                 <x-filler-rows
                     :count="$items->count()"
                     :minimum="LookupTable::MINIMUM_ROWS"
-                    :columns="$config->tracksActive() ? 3 : 2"
+                    :columns="$config->columnCount()"
                     :text-column="0"
                     :empty-text="$searching ? 'No matches.' : 'No '.strtolower($config->plural()).' yet.'"
                 />

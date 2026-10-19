@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
- * Billing headers and footers, due-date days, currency and time zone.
+ * Billing headers and footers, due-date days, currency, time zone, tax, and when meter readings need review.
  */
 class OperationSettingsForm extends Component
 {
@@ -70,6 +70,27 @@ class OperationSettingsForm extends Component
 
     public string $timezone = '';
 
+    public bool $taxEnabled = false;
+
+    public string $taxName = 'VAT';
+
+    public string $taxRate = '12.00';
+
+    /**
+     * "exclusive": the tax is added on top of rates and charges; "inclusive": they already contain it.
+     */
+    public string $taxMode = 'exclusive';
+
+    public bool $taxOnWater = true;
+
+    public bool $taxOnFees = false;
+
+    public bool $taxOnSurcharges = false;
+
+    public string $reviewUsageMultiplier = '2.0';
+
+    public bool $reviewZeroUsage = true;
+
     protected function page(): Page
     {
         return Page::CompanySetup;
@@ -86,6 +107,16 @@ class OperationSettingsForm extends Component
         $this->currency = (string) $company->currency;
         // Asia/Manila is preselected until a time zone is saved.
         $this->timezone = $company->timezone ?? Format::DEFAULT_TIMEZONE;
+
+        $this->taxEnabled = (bool) $company->tax_enabled;
+        $this->taxName = (string) ($company->tax_name ?? 'VAT');
+        $this->taxRate = (string) ($company->tax_rate ?? '12.00');
+        $this->taxMode = $company->tax_inclusive ? 'inclusive' : 'exclusive';
+        $this->taxOnWater = (bool) ($company->tax_on_water ?? true);
+        $this->taxOnFees = (bool) $company->tax_on_fees;
+        $this->taxOnSurcharges = (bool) $company->tax_on_surcharges;
+        $this->reviewUsageMultiplier = (string) ($company->review_usage_multiplier ?? '2.0');
+        $this->reviewZeroUsage = (bool) ($company->review_zero_usage ?? true);
     }
 
     /**
@@ -106,11 +137,18 @@ class OperationSettingsForm extends Component
             $this->{$field} = trim($this->{$field});
         }
         $this->dueDateDays = trim($this->dueDateDays);
+        $this->taxName = trim($this->taxName);
+        $this->taxRate = trim($this->taxRate);
+        $this->reviewUsageMultiplier = trim($this->reviewUsageMultiplier);
 
         $rules = [
             'dueDateDays' => ['bail', 'required', 'regex:/^\d+$/', 'integer', 'max:'.self::MAX_DUE_DATE_DAYS],
             'currency' => ['bail', 'required', Rule::in(array_keys(self::CURRENCIES))],
             'timezone' => ['bail', 'required', Rule::in(DateTimeZone::listIdentifiers())],
+            'taxName' => ['bail', 'required', 'max:30'],
+            'taxMode' => ['required', Rule::in(['exclusive', 'inclusive'])],
+            'taxRate' => ['bail', 'required', 'regex:/^\d{1,3}(\.\d{1,2})?$/', 'numeric', 'min:0', 'max:100'],
+            'reviewUsageMultiplier' => ['bail', 'required', 'regex:/^\d{1,2}(\.\d)?$/', 'numeric', 'min:0'],
         ];
         $messages = [
             'dueDateDays.required' => 'The default # of days for due date field is required.',
@@ -121,6 +159,19 @@ class OperationSettingsForm extends Component
             'currency.in' => 'The selected currency is invalid.',
             'timezone.required' => 'The time zone field is required.',
             'timezone.in' => 'The time zone must be a valid time zone.',
+            'taxName.required' => 'The tax name field is required.',
+            'taxName.max' => 'The tax name must not be greater than 30 characters.',
+            'taxMode.required' => 'Choose whether your rates include the tax.',
+            'taxMode.in' => 'Choose whether your rates include the tax.',
+            'taxRate.required' => 'The tax rate field is required.',
+            'taxRate.regex' => 'The tax rate must be a number with up to 2 decimals, such as 12 or 12.5.',
+            'taxRate.numeric' => 'The tax rate must be a number with up to 2 decimals, such as 12 or 12.5.',
+            'taxRate.min' => 'The tax rate must not be negative.',
+            'taxRate.max' => 'The tax rate must not be greater than 100%.',
+            'reviewUsageMultiplier.required' => 'Enter how many times the average usage needs review (0 turns it off).',
+            'reviewUsageMultiplier.regex' => 'Enter a number such as 2 or 2.5 (0 turns it off).',
+            'reviewUsageMultiplier.numeric' => 'Enter a number such as 2 or 2.5 (0 turns it off).',
+            'reviewUsageMultiplier.min' => 'Enter a number such as 2 or 2.5 (0 turns it off).',
         ];
         foreach (self::TEXT_FIELDS as $field => $label) {
             $rules[$field] = ['nullable', 'max:255'];
@@ -133,6 +184,15 @@ class OperationSettingsForm extends Component
             'due_date_days' => (int) $this->dueDateDays,
             'currency' => $this->currency,
             'timezone' => $this->timezone,
+            'tax_enabled' => $this->taxEnabled,
+            'tax_name' => $this->taxName,
+            'tax_rate' => $this->taxRate,
+            'tax_inclusive' => $this->taxMode === 'inclusive',
+            'tax_on_water' => $this->taxOnWater,
+            'tax_on_fees' => $this->taxOnFees,
+            'tax_on_surcharges' => $this->taxOnSurcharges,
+            'review_usage_multiplier' => $this->reviewUsageMultiplier,
+            'review_zero_usage' => $this->reviewZeroUsage,
         ];
         foreach (array_keys(self::TEXT_FIELDS) as $field) {
             $attributes[self::column($field)] = $this->{$field} === '' ? null : $this->{$field};

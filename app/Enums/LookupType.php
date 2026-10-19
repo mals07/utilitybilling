@@ -54,6 +54,30 @@ enum LookupType: string
     }
 
     /**
+     * Account types have a Tax exempt checkbox (e.g. Government accounts are billed without tax).
+     */
+    public function tracksTaxExempt(): bool
+    {
+        return $this === self::AccountTypes;
+    }
+
+    /**
+     * Meter types have a number of dials, so a meter that rolls over past 9999 can be billed.
+     */
+    public function tracksDialDigits(): bool
+    {
+        return $this === self::MeterTypes;
+    }
+
+    /**
+     * Number of columns of the lookup table, the actions column included.
+     */
+    public function columnCount(): int
+    {
+        return 2 + (int) $this->tracksActive() + (int) $this->tracksTaxExempt() + (int) $this->tracksDialDigits();
+    }
+
+    /**
      * @return class-string<AccountType|MeterType|ClusterType|Department>
      */
     public function modelClass(): string

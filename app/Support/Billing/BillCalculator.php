@@ -20,7 +20,7 @@ use App\Support\Money;
  * - Charge elements of the customer's charge type: Credit adds to the bill, Debit deducts from it.
  *   A percentage is of the water charge; after-due elements (e.g. Surcharge) are of the overdue amount.
  *
- * @phpstan-type Line array{kind: InvoiceLineKind, description: string, quantity: ?string, rate: ?string, cents: int, charge_element_id?: ?int, work_order_id?: ?int, source_invoice_id?: ?int}
+ * @phpstan-type Line array{kind: InvoiceLineKind, description: string, quantity: ?string, rate: ?string, cents: int, charge_element_id?: ?int, work_order_id?: ?int, source_invoice_id?: ?int, taxable?: bool}
  */
 final class BillCalculator
 {
@@ -119,6 +119,7 @@ final class BillCalculator
                 'rate' => null,
                 'cents' => $cents,
                 'charge_element_id' => $element->id,
+                'taxable' => (bool) $element->is_taxable,
             ];
         }
 

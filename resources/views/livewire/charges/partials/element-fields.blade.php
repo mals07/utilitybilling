@@ -1,6 +1,6 @@
 @use('App\Enums\DistributionType')
 
-{{-- Name, "after due" flag and distribution type; used by the add form and the update modal. --}}
+{{-- Name, "after due" and "taxable" flags and distribution type; used by the add form and the update modal. --}}
 <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
     <div class="min-w-0 flex-1 sm:max-w-80">
         <label for="{{ $prefix }}-name" class="form-label">Charge Element</label>
@@ -19,6 +19,10 @@
         <label class="check mt-2 italic">
             <input type="checkbox" wire:model="{{ $afterDueField }}">
             Is this an after due Charges? (Ex: Surcharge)
+        </label>
+        <label class="check mt-1 italic">
+            <input type="checkbox" wire:model="{{ $taxableField }}">
+            Taxable? (included in the amount the tax is computed on)
         </label>
     </div>
 

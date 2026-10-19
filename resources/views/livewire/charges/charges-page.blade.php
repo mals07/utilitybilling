@@ -115,6 +115,7 @@
                     'nameField' => 'elementName',
                     'distributionField' => 'elementDistribution',
                     'afterDueField' => 'elementAfterDue',
+                    'taxableField' => 'elementTaxable',
                 ])
                 @if ($access['add'])
                     <div class="form-actions">
@@ -137,6 +138,7 @@
                             <th scope="col" class="cell-center">Charge Elements</th>
                             <th scope="col" class="cell-center w-24">Type</th>
                             <th scope="col" class="cell-center w-20">After Due</th>
+                            <th scope="col" class="cell-center w-20">Taxable</th>
                             <th scope="col" class="cell-actions"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
@@ -147,6 +149,7 @@
                                 <td>{{ $element->name }}</td>
                                 <td class="cell-center cell-muted">{{ $element->distribution_type->label() }}</td>
                                 <td class="cell-center cell-muted">{{ $element->is_after_due ? 'Yes' : 'No' }}</td>
+                                <td class="cell-center cell-muted">{{ $element->is_taxable ? 'Yes' : 'No' }}</td>
                                 <td class="cell-actions">
                                     @if ($access['edit'])
                                         <button type="button" class="icon-button" wire:click="editElement({{ $element->id }})" aria-label="Edit {{ $element->name }}">
@@ -159,7 +162,7 @@
                         <x-filler-rows
                             :count="$chargeElements->count()"
                             :minimum="ChargesPage::MINIMUM_ROWS"
-                            :columns="5"
+                            :columns="6"
                             :empty-text="trim($elementSearch) === '' ? 'No charge elements yet.' : 'No charge elements match your search.'"
                         />
                     </tbody>
@@ -179,6 +182,7 @@
                     'nameField' => 'editName',
                     'distributionField' => 'editDistribution',
                     'afterDueField' => 'editAfterDue',
+                    'taxableField' => 'editTaxable',
                     'autofocus' => true,
                 ])
                 <div class="form-actions">

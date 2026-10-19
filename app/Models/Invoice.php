@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'company_id', 'invoice_number', 'customer_id', 'kind', 'billing_period', 'meter_reading_id', 'work_order_id',
     'invoice_date', 'due_date', 'total_amount', 'amount_paid', 'balance', 'previous_balance', 'status',
     'surcharged_at', 'surcharged_on_invoice_id', 'void_reason', 'voided_at', 'voided_by_id', 'created_by_id',
+    'tax_name', 'tax_rate', 'tax_inclusive', 'taxable_amount', 'tax_amount', 'tax_exempt_amount',
 ])]
 class Invoice extends Model
 {
@@ -38,6 +39,11 @@ class Invoice extends Model
             'amount_paid' => 'decimal:2',
             'balance' => 'decimal:2',
             'previous_balance' => 'decimal:2',
+            'tax_rate' => 'decimal:2',
+            'tax_inclusive' => 'boolean',
+            'taxable_amount' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'tax_exempt_amount' => 'decimal:2',
             'surcharged_at' => 'datetime',
             'voided_at' => 'datetime',
         ];

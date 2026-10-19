@@ -7,21 +7,16 @@
         <a href="{{ route('invoices') }}" class="link-button">← Back to Invoices</a>
 
         <ol class="mt-3 grid gap-2 rounded-xs bg-panel px-4 py-3 text-[13px] text-ink-soft sm:grid-cols-3">
-            <li><span class="font-semibold text-ink-strong">1.</span> Choose the billing month (and a cluster to work through one route at a time).</li>
-            <li><span class="font-semibold text-ink-strong">2.</span> Type each customer's present reading, or tick <em>Defective meter</em>. The bill is worked out as you go.</li>
-            <li><span class="font-semibold text-ink-strong">3.</span> Click <em>Generate Bills</em>. Rows left blank are skipped; you can come back for them.</li>
+            <li><span class="font-semibold text-ink-strong">1.</span> Enter the month's readings on the <em>Meter Readings</em> page.</li>
+            <li><span class="font-semibold text-ink-strong">2.</span> Confirm or re-read the readings that need review there. Only Ready readings are billed.</li>
+            <li><span class="font-semibold text-ink-strong">3.</span> Choose the invoice date and click <em>Generate Bills</em>. Readings entered later can be billed in another run.</li>
         </ol>
 
-        <div class="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
                 <label for="bill-period" class="mb-1 block text-xs font-semibold text-ink-strong">Billing month</label>
                 <input id="bill-period" type="month" max="{{ substr($today, 0, 7) }}" wire:model.live="period" class="form-control !h-[34px] !text-[13px]" @error('period') aria-invalid="true" @enderror>
                 @error('period') <p class="form-error" role="alert">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label for="bill-read-on" class="mb-1 block text-xs font-semibold text-ink-strong">Reading date</label>
-                <input id="bill-read-on" type="date" max="{{ $today }}" wire:model="readOn" class="form-control !h-[34px] !text-[13px]" @error('readOn') aria-invalid="true" @enderror>
-                @error('readOn') <p class="form-error" role="alert">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="bill-invoice-date" class="mb-1 block text-xs font-semibold text-ink-strong">Invoice date</label>
@@ -42,9 +37,20 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <x-search-box label="Search customers to bill" :width="200" wire:model.live.debounce.300ms="search" />
+                <x-search-box label="Search readings to bill" :width="200" wire:model.live.debounce.300ms="search" />
             </div>
         </div>
+
+        @if ($periodLabel && ($counts['review'] > 0 || $counts['toRead'] > 0))
+            <x-alert tone="info" class="mt-4">
+                {{ $periodLabel }}:
+                @if ($counts['toRead'] > 0) {{ Format::integer($counts['toRead']) }} meter{{ $counts['toRead'] === 1 ? '' : 's' }} not read yet. @endif
+                @if ($counts['review'] > 0) {{ Format::integer($counts['review']) }} reading{{ $counts['review'] === 1 ? '' : 's' }} need review and won't be billed until confirmed. @endif
+                @if ($canRead)
+                    <a href="{{ route('meter-readings', ['period' => $period, 'cluster' => $clusterId ?: null, 'show' => $counts['review'] > 0 ? 'review' : 'unread']) }}">Open Meter Readings</a>
+                @endif
+            </x-alert>
+        @endif
 
         <div class="table-scroller mt-4">
             <table class="data-table [&_th]:text-ink-strong [&_tbody_tr]:h-11">
@@ -52,80 +58,56 @@
                     <tr>
                         <th scope="col">Account No</th>
                         <th scope="col">Customer</th>
-                        <th scope="col">Meter No</th>
                         <th scope="col">Rate</th>
                         <th scope="col" class="cell-right">Previous</th>
-                        <th scope="col" class="w-32">Present Reading</th>
-                        <th scope="col" class="cell-center">Defective</th>
+                        <th scope="col" class="cell-right">Present</th>
                         <th scope="col" class="cell-right">Cu.m.</th>
                         <th scope="col" class="cell-right">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($customers as $customer)
+                    @forelse ($readings as $reading)
                         @php
-                            $row = $rows[$customer->id];
-                            $preview = $previews[$customer->id] ?? null;
-                            $locked = $row['billed'] !== null || $row['nothingToBill'] || $periodLabel === null || ! $access['add'];
+                            $customer = $reading->customer;
+                            $preview = $previews[$reading->id] ?? null;
+                            $failure = $failures[$reading->id] ?? null;
                         @endphp
-                        <tr wire:key="bill-row-{{ $customer->id }}-{{ $period }}">
+                        <tr wire:key="bill-row-{{ $reading->id }}">
                             <td class="whitespace-nowrap">{{ $customer->account_number }}</td>
                             <td>
                                 {{ $customer->first_name }} {{ $customer->last_name }}
-                                <span class="block text-[11px] {{ $customer->status->colorClass() }}">{{ $customer->status->label() }}</span>
+                                <span class="block text-[11px] text-label">{{ $reading->meter_number }}</span>
                             </td>
-                            <td class="whitespace-nowrap">{{ $customer->meter_number }}</td>
                             <td>{{ $customer->rateType?->name ?? '—' }}</td>
-                            <td class="cell-right">{{ $row['previous'] ?? '—' }}</td>
-                            @if ($row['billed'])
-                                <td colspan="4" class="text-[13px] text-success">
-                                    Billed — invoice {{ $row['billed']->invoice_number }} ({{ Format::amount($row['billed']->total_amount) }})
+                            <td class="cell-right">{{ Format::quantity($reading->previous_reading) }}</td>
+                            <td class="cell-right">{{ $reading->present_reading === null ? $reading->reading_code->label() : Format::quantity($reading->present_reading) }}</td>
+                            <td class="cell-right">
+                                {{ Format::quantity($reading->usage()) }}
+                                @if ($reading->reading_code->isEstimated()) <span class="text-[11px] text-label">est.</span> @endif
+                            </td>
+                            @if ($reading->isBilled())
+                                <td class="cell-right text-[13px] text-success">
+                                    Billed — invoice {{ $reading->invoice?->invoice_number }}
+                                    <span class="block">{{ Format::amount($reading->invoice?->total_amount ?? 0) }}</span>
                                 </td>
-                            @elseif ($row['nothingToBill'])
-                                <td colspan="4" class="text-[13px] text-placeholder">Disconnected — final reading already billed</td>
+                            @elseif ($failure || isset($preview['error']))
+                                <td class="text-[12px] text-danger">{{ $failure ?? $preview['error'] }}</td>
                             @else
-                                <td>
-                                    <input
-                                        type="text"
-                                        inputmode="decimal"
-                                        maxlength="13"
-                                        aria-label="Present reading for {{ $customer->account_number }}"
-                                        wire:model.blur="entries.{{ $customer->id }}.present"
-                                        @disabled($locked || ($entries[$customer->id]['defective'] ?? false))
-                                        placeholder="{{ ($entries[$customer->id]['defective'] ?? false) ? 'Estimated' : '0' }}"
-                                        class="form-control !h-[30px] text-right !text-[13px]"
-                                        @if (isset($preview['error'])) aria-invalid="true" @endif
-                                    >
+                                <td class="cell-right font-semibold">
+                                    {{ Format::amount($preview['total'] ?? 0) }}
+                                    @if ($preview['note'] ?? '')
+                                        <span class="block text-[11px] font-normal text-label">{{ $preview['note'] }}</span>
+                                    @endif
                                 </td>
-                                <td class="cell-center">
-                                    <input
-                                        type="checkbox"
-                                        aria-label="Defective meter for {{ $customer->account_number }}"
-                                        wire:model.live="entries.{{ $customer->id }}.defective"
-                                        @disabled($locked)
-                                        class="size-4 accent-accent"
-                                    >
-                                </td>
-                                @if (isset($preview['error']))
-                                    <td colspan="2" class="text-[12px] text-danger">{{ $preview['error'] }}</td>
-                                @elseif ($preview)
-                                    <td class="cell-right">{{ $preview['consumption'] }}</td>
-                                    <td class="cell-right font-semibold">
-                                        {{ Format::amount($preview['total']) }}
-                                        @if ($preview['note'])
-                                            <span class="block text-[11px] font-normal text-label">{{ $preview['note'] }}</span>
-                                        @endif
-                                    </td>
-                                @else
-                                    <td class="cell-right text-placeholder">—</td>
-                                    <td class="cell-right text-placeholder">—</td>
-                                @endif
                             @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="cell-empty py-6 text-center">
-                                No customers to bill. Customers appear here once they are Connected with a meter (complete a New Installation work order).
+                            <td colspan="7" class="cell-empty py-6 text-center">
+                                No readings ready to bill for this month.
+                                @if ($canRead)
+                                    Enter them on the <a href="{{ route('meter-readings', ['period' => $period]) }}" class="font-semibold underline">Meter Readings</a> page.
+                                @endif
                             </td>
                         </tr>
                     @endforelse
@@ -133,17 +115,17 @@
             </table>
         </div>
 
-        <x-pagination :paginator="$customers" />
+        <x-pagination :paginator="$readings" />
 
         @if ($access['add'])
             <div class="sticky bottom-0 mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-card py-3">
                 <p class="text-[13px] text-ink-soft">
-                    <span class="font-semibold text-ink-strong">{{ $readyCount }}</span> bill{{ $readyCount === 1 ? '' : 's' }} ready
+                    <span class="font-semibold text-ink-strong">{{ Format::integer($counts['ready']) }}</span> reading{{ $counts['ready'] === 1 ? '' : 's' }} ready to bill
                     @if ($periodLabel) for {{ $periodLabel }} @endif
-                    · Total <span class="font-semibold text-ink-strong">{{ Format::amount($readyTotal) }}</span>
+                    · {{ Format::integer($counts['billed']) }} billed
                 </p>
-                <button type="button" class="form-button min-w-[160px]" wire:click="generate" wire:loading.attr="disabled" wire:target="generate" @disabled($readyCount === 0)>
-                    <span wire:loading.remove wire:target="generate">Generate Bills</span>
+                <button type="button" class="form-button min-w-[160px]" wire:click="generate" wire:loading.attr="disabled" wire:target="generate" @disabled($counts['ready'] === 0)>
+                    <span wire:loading.remove wire:target="generate">Generate {{ $counts['ready'] > 0 ? Format::integer($counts['ready']).' ' : '' }}Bill{{ $counts['ready'] === 1 ? '' : 's' }}</span>
                     <span wire:loading wire:target="generate">Generating…</span>
                 </button>
             </div>

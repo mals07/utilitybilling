@@ -41,19 +41,21 @@ final class WorkOrderBilling
         }
 
         $customer = $order->customer;
-        $invoice = BillingRun::issue($order->company, $customer, [
-            'kind' => InvoiceKind::WorkOrder,
-            'work_order_id' => $order->id,
-            'invoice_date' => $invoiceDate,
-            'previous_balance' => Money::fromCents(Ledger::summary($customer)['owed']),
-        ], [[
+        $tax = Tax::apply($order->company, $customer, [[
             'kind' => InvoiceLineKind::WorkOrderFee,
             'description' => "{$order->order_type->label()} fee (work order {$order->order_number})",
             'quantity' => null,
             'rate' => null,
             'cents' => Money::toCents($order->fee_amount),
             'work_order_id' => $order->id,
-        ]], $actor);
+        ]]);
+        $invoice = BillingRun::issue($order->company, $customer, [
+            'kind' => InvoiceKind::WorkOrder,
+            'work_order_id' => $order->id,
+            'invoice_date' => $invoiceDate,
+            'previous_balance' => Money::fromCents(Ledger::summary($customer)['owed']),
+            ...Tax::invoiceAttributes($tax['summary']),
+        ], $tax['lines'], $actor);
 
         $order->update(['fee_invoice_id' => $invoice->id, 'fee_billed_at' => now()]);
         Ledger::settle($customer);

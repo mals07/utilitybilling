@@ -13,4 +13,6 @@ enum InvoiceLineKind: string
     case Surcharge = 'surcharge';
     /** A credit memo (negative), a debit memo (positive), or the reversal of a voided memo. */
     case Adjustment = 'adjustment';
+    /** Tax on the taxable lines of the bill, e.g. "VAT (12%)". */
+    case Tax = 'tax';
 }

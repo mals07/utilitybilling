@@ -83,14 +83,92 @@
                 @enderror
             </div>
 
-            @if ($canEdit)
-                <div class="flex justify-end">
-                    <button type="submit" class="form-button w-full md:w-[88px]" wire:loading.attr="disabled" wire:target="save">
-                        <span wire:loading.remove wire:target="save">Save</span>
-                        <span wire:loading wire:target="save">Saving…</span>
-                    </button>
-                </div>
-            @endif
         </div>
     </div>
+
+    <div class="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {{-- Tax --}}
+        <fieldset class="min-w-0 rounded-xs border border-line bg-card px-4 pt-2 pb-4">
+            <legend class="px-1 text-[13px] font-semibold text-ink-strong">Tax</legend>
+
+            <label class="check !text-[13px] !text-ink">
+                <input type="checkbox" wire:model.live="taxEnabled" @disabled(! $canEdit)>
+                Charge tax on bills (e.g. 12% VAT)
+            </label>
+
+            <div @class(['mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_140px]', 'opacity-60' => ! $taxEnabled])>
+                <div>
+                    <label class="float">
+                        <span class="float-label">Tax name (shown on the bill)</span>
+                        <input type="text" wire:model="taxName" maxlength="30" placeholder=" " @disabled(! $canEdit || ! $taxEnabled) class="float-control" @error('taxName') aria-invalid="true" aria-describedby="ops-taxName-error" @enderror>
+                    </label>
+                    @error('taxName') <p id="ops-taxName-error" class="form-error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="float">
+                        <span class="float-label">Rate (%)</span>
+                        <input type="text" inputmode="decimal" wire:model="taxRate" placeholder=" " @disabled(! $canEdit || ! $taxEnabled) class="float-control text-right" @error('taxRate') aria-invalid="true" aria-describedby="ops-taxRate-error" @enderror>
+                    </label>
+                    @error('taxRate') <p id="ops-taxRate-error" class="form-error" role="alert">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <div @class(['mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2', 'opacity-60' => ! $taxEnabled])>
+                <fieldset class="min-w-0">
+                    <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Your rates and charges are</legend>
+                    <label class="check !text-[13px]">
+                        <input type="radio" wire:model="taxMode" value="exclusive" @disabled(! $canEdit || ! $taxEnabled) class="check-square">
+                        Before tax: add the tax on top
+                    </label>
+                    <label class="check mt-1 !text-[13px]">
+                        <input type="radio" wire:model="taxMode" value="inclusive" @disabled(! $canEdit || ! $taxEnabled) class="check-square">
+                        Tax included: only show it on the bill
+                    </label>
+                </fieldset>
+                <fieldset class="min-w-0">
+                    <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Tax applies to</legend>
+                    <label class="check !text-[13px]"><input type="checkbox" wire:model="taxOnWater" @disabled(! $canEdit || ! $taxEnabled)> Water consumption</label>
+                    <label class="check mt-1 !text-[13px]"><input type="checkbox" wire:model="taxOnFees" @disabled(! $canEdit || ! $taxEnabled)> Work order fees</label>
+                    <label class="check mt-1 !text-[13px]"><input type="checkbox" wire:model="taxOnSurcharges" @disabled(! $canEdit || ! $taxEnabled)> Overdue surcharges</label>
+                </fieldset>
+            </div>
+
+            <p class="mt-3 text-xs text-label">
+                Also taxed: charge elements ticked <em>Taxable</em> on the Charges page. Customers of an account type ticked <em>Tax exempt</em> below (e.g. Government) are billed without tax.
+                Check the rate and what is taxable with your accountant.
+            </p>
+        </fieldset>
+
+        {{-- Meter reading review --}}
+        <fieldset class="min-w-0 rounded-xs border border-line bg-card px-4 pt-2 pb-4">
+            <legend class="px-1 text-[13px] font-semibold text-ink-strong">Meter reading review</legend>
+            <p class="text-xs text-label">Readings that look wrong wait in <em>Needs review</em> on the Meter Readings page until someone confirms them.</p>
+
+            <div class="mt-3">
+                <label class="float">
+                    <span class="float-label">Review when usage is above (× 3-month average)</span>
+                    <input type="text" inputmode="decimal" wire:model="reviewUsageMultiplier" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('reviewUsageMultiplier') aria-invalid="true" aria-describedby="ops-reviewUsageMultiplier-error" @enderror>
+                </label>
+                @error('reviewUsageMultiplier')
+                    <p id="ops-reviewUsageMultiplier-error" class="form-error" role="alert">{{ $message }}</p>
+                @else
+                    <p class="mt-1 text-xs text-label">2 means double the usual usage. 0 turns this check off.</p>
+                @enderror
+            </div>
+
+            <label class="check mt-3 !text-[13px]">
+                <input type="checkbox" wire:model="reviewZeroUsage" @disabled(! $canEdit)>
+                Review readings with no usage
+            </label>
+        </fieldset>
+    </div>
+
+    @if ($canEdit)
+        <div class="mt-4 flex justify-end">
+            <button type="submit" class="form-button w-full md:w-[88px]" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save">Save</span>
+                <span wire:loading wire:target="save">Saving…</span>
+            </button>
+        </div>
+    @endif
 </form>

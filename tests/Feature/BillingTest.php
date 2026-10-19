@@ -10,8 +10,10 @@ use App\Enums\DistributionType;
 use App\Enums\InvoiceKind;
 use App\Enums\InvoiceLineKind;
 use App\Enums\InvoiceStatus;
+use App\Enums\MeterReadingStatus;
 use App\Enums\OverdueHandling;
 use App\Enums\Page;
+use App\Enums\ReadingCode;
 use App\Enums\ReadingKind;
 use App\Enums\WorkOrderFlag;
 use App\Enums\WorkOrderStatus;
@@ -31,6 +33,7 @@ use App\Models\WorkOrderReading;
 use App\Support\Billing\Adjustments;
 use App\Support\Billing\BillingRun;
 use App\Support\Billing\Ledger;
+use App\Support\Billing\MeterReadings;
 use App\Support\Billing\WorkOrderBilling;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -132,22 +135,23 @@ class BillingTest extends TestCase
         $this->assertSame(0, $invoice->lines()->where('kind', InvoiceLineKind::Surcharge)->count());
     }
 
-    public function test_the_billing_run_page_works_out_and_issues_bills(): void
+    public function test_the_billing_run_page_issues_bills_for_ready_readings(): void
     {
         $customer = $this->customer();
-        $other = $this->customer(['meter_number' => 'MTR-2']);
+        $flagged = $this->customer(['meter_number' => 'MTR-2']);
         $period = now()->format('Y-m');
+        $today = now()->toDateString();
+        MeterReadings::save($customer, $period, '15', ReadingCode::Normal, $today, $this->owner);
+        // No usage since the last reading needs review, so it isn't billed yet.
+        MeterReadings::save($flagged, $period, '0', ReadingCode::Normal, $today, $this->owner);
 
         Livewire::actingAs($this->owner)
             ->test(GenerateBillsPage::class)
             ->assertSee($customer->account_number)
-            ->set("entries.{$customer->id}.present", '15')
-            ->assertSet("previews.{$customer->id}.total", '225.00')
-            ->set("entries.{$other->id}.present", 'abc')
-            ->assertSee('Enter the reading as a number')
+            ->assertSee('225.00')
+            ->assertSee('1 reading need review')
             ->call('generate')
-            ->assertDispatched('flash', fn (string $name, array $params): bool => str_contains($params['message'], '1 bill generated')
-                && str_contains($params['message'], '1 could not be billed'));
+            ->assertDispatched('flash', fn (string $name, array $params): bool => str_contains($params['message'], '1 bill generated'));
 
         $invoice = $customer->invoices()->sole();
         $this->assertSame(InvoiceKind::Monthly, $invoice->kind);
@@ -155,9 +159,11 @@ class BillingTest extends TestCase
         $this->assertSame('225.00', $invoice->balance);
         $this->assertSame(now()->addDays(15)->toDateString(), $invoice->due_date->toDateString());
         $this->assertSame('15.000', $invoice->meterReading->present_reading);
-        $this->assertSame(0, $other->invoices()->count());
+        $this->assertSame(MeterReadingStatus::Billed, $invoice->meterReading->status);
+        $this->assertSame(0, $flagged->invoices()->count());
+        $this->assertSame(MeterReadingStatus::Review, $flagged->meterReadings()->sole()->status);
 
-        // Billed customers show as billed and can't be billed twice for the month.
+        // Billed readings show as billed and can't be billed twice for the month.
         Livewire::actingAs($this->owner)->test(GenerateBillsPage::class)->assertSee("invoice {$invoice->invoice_number}");
         $this->expectExceptionMessage('Already billed for this period');
         $this->bill($customer, $period, '20');
@@ -382,7 +388,6 @@ class BillingTest extends TestCase
 
         Livewire::actingAs($viewer)
             ->test(GenerateBillsPage::class)
-            ->set("entries.{$customer->id}.present", '20')
             ->call('generate')
             ->assertDispatched('flash', message: Access::Add->deniedMessage(), tone: 'error');
 

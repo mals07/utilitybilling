@@ -22,6 +22,7 @@ use App\Livewire\Customers\CustomersPage;
 use App\Livewire\Dashboard;
 use App\Livewire\Invoices\GenerateBillsPage;
 use App\Livewire\Invoices\InvoicesPage;
+use App\Livewire\MeterReadings\MeterReadingsPage;
 use App\Livewire\Payments\PaymentsPage;
 use App\Livewire\Rates\RatesPage;
 use App\Livewire\Roles\RolesPage;
@@ -60,6 +61,7 @@ Route::middleware(['auth', 'verified.email'])->group(function () {
         Route::livewire('/dashboard', Dashboard::class)->name('dashboard');
         Route::livewire('/customers', CustomersPage::class)->middleware('page:'.Page::Customers->value)->name('customers');
         Route::livewire('/work-orders', WorkOrdersPage::class)->middleware('page:'.Page::WorkOrders->value)->name('work-orders');
+        Route::livewire('/meter-readings', MeterReadingsPage::class)->middleware('page:'.Page::MeterReadings->value)->name('meter-readings');
         Route::livewire('/invoices', InvoicesPage::class)->middleware('page:'.Page::Invoices->value)->name('invoices');
         Route::livewire('/invoices/generate', GenerateBillsPage::class)->middleware('page:'.Page::Invoices->value)->name('invoices.generate');
         Route::get('/invoices/{invoice}/print', InvoicePrintController::class)

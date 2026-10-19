@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'name', 'distribution_type', 'is_after_due'])]
+#[Fillable(['company_id', 'name', 'distribution_type', 'is_after_due', 'is_taxable'])]
 class ChargeElement extends Model
 {
     /** @use HasFactory<ChargeElementFactory> */
@@ -25,6 +25,8 @@ class ChargeElement extends Model
             'distribution_type' => DistributionType::class,
             // Charged only after the due date, e.g. a surcharge.
             'is_after_due' => 'boolean',
+            // Part of the amount the tax is computed on.
+            'is_taxable' => 'boolean',
         ];
     }
 

@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'company_header_line', 'billing_header_1', 'billing_header_2', 'billing_header_3',
     'billing_footer_1', 'billing_footer_2', 'billing_footer_3', 'due_date_days', 'currency', 'timezone',
     'work_order_assignee_role_id', 'overdue_handling',
+    'tax_enabled', 'tax_name', 'tax_rate', 'tax_inclusive', 'tax_on_water', 'tax_on_fees', 'tax_on_surcharges',
+    'review_usage_multiplier', 'review_zero_usage',
 ])]
 class Company extends Model
 {
@@ -45,7 +47,18 @@ class Company extends Model
      */
     protected function casts(): array
     {
-        return ['due_date_days' => 'integer', 'overdue_handling' => OverdueHandling::class];
+        return [
+            'due_date_days' => 'integer',
+            'overdue_handling' => OverdueHandling::class,
+            'tax_enabled' => 'boolean',
+            'tax_rate' => 'decimal:2',
+            'tax_inclusive' => 'boolean',
+            'tax_on_water' => 'boolean',
+            'tax_on_fees' => 'boolean',
+            'tax_on_surcharges' => 'boolean',
+            'review_usage_multiplier' => 'decimal:1',
+            'review_zero_usage' => 'boolean',
+        ];
     }
 
     /**

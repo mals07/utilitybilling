@@ -3,6 +3,7 @@
 namespace App\Support\Billing;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\MeterReadingStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\MeterReading;
@@ -216,7 +217,8 @@ final class Ledger
                 $memo->workOrder?->update(['flag_resolved_at' => null, 'flag_resolution' => null]);
             }
 
-            MeterReading::query()->where('invoice_id', $invoice->id)->update(['invoice_id' => null]);
+            // Its reading can be corrected on the Meter Readings page and billed again.
+            MeterReading::query()->where('invoice_id', $invoice->id)->update(['invoice_id' => null, 'status' => MeterReadingStatus::Ready]);
             WorkOrder::query()->where('fee_invoice_id', $invoice->id)->update(['fee_invoice_id' => null, 'fee_billed_at' => null]);
 
             // Overdue bills surcharged on this invoice can be surcharged again; surcharge lines on an

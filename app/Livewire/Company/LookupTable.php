@@ -7,6 +7,7 @@ use App\Enums\LookupType;
 use App\Enums\Page;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Models\CompanyLookup;
+use App\Models\MeterType;
 use App\Support\Format;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,7 +16,8 @@ use Livewire\Component;
 
 /**
  * A company lookup list (account, meter and cluster types, departments): add, search,
- * toggle active, remove, and restore removed entries.
+ * toggle active, remove, and restore removed entries. Account types also have a Tax exempt
+ * flag, and meter types their number of dials.
  */
 class LookupTable extends Component
 {
@@ -112,6 +114,55 @@ class LookupTable extends Component
         }
 
         $item->update(['is_active' => ! $item->is_active]);
+    }
+
+    /**
+     * Turn an account type's tax exempt flag on or off.
+     */
+    public function toggleTaxExempt(int $id): void
+    {
+        $this->rowError = null;
+
+        if (! $this->lookupType()->tracksTaxExempt() || ! $this->allowed(Access::Edit)) {
+            return;
+        }
+
+        $item = $this->entries()->whereNull('deleted_at')->find($id);
+        if ($item === null) {
+            $this->rowError = 'That entry no longer exists. The list has been refreshed.';
+
+            return;
+        }
+
+        $item->update(['is_tax_exempt' => ! $item->is_tax_exempt]);
+    }
+
+    /**
+     * Set the number of dials of a meter type; blank clears it.
+     */
+    public function setDialDigits(int $id, string $value): void
+    {
+        $this->rowError = null;
+
+        if (! $this->lookupType()->tracksDialDigits() || ! $this->allowed(Access::Edit)) {
+            return;
+        }
+
+        $item = $this->entries()->whereNull('deleted_at')->find($id);
+        if ($item === null) {
+            $this->rowError = 'That entry no longer exists. The list has been refreshed.';
+
+            return;
+        }
+
+        $value = trim($value);
+        if ($value !== '' && (! preg_match('/^\d{1,2}$/', $value) || (int) $value < MeterType::MIN_DIGITS || (int) $value > MeterType::MAX_DIGITS)) {
+            $this->rowError = 'The number of dials must be a whole number from '.MeterType::MIN_DIGITS.' to '.MeterType::MAX_DIGITS.'.';
+
+            return;
+        }
+
+        $item->update(['dial_digits' => $value === '' ? null : (int) $value]);
     }
 
     /**

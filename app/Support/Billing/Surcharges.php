@@ -38,8 +38,10 @@ final class Surcharges
                     return 0;
                 }
 
-                $chargeType = $invoice->customer->chargeType?->load('elements.chargeElement');
-                $lines = BillCalculator::surcharges($chargeType, Money::toCents($invoice->balance), '(overdue)', null);
+                $customer = $invoice->customer;
+                $chargeType = $customer->chargeType?->load('elements.chargeElement');
+                $tax = Tax::apply($invoice->company, $customer, BillCalculator::surcharges($chargeType, Money::toCents($invoice->balance), '(overdue)', null));
+                $lines = $tax['lines'];
                 $sort = (int) $invoice->lines()->max('sort') + 1;
 
                 foreach ($lines as $line) {
@@ -53,9 +55,18 @@ final class Surcharges
                 }
 
                 $added = array_sum(array_column($lines, 'cents'));
+                $summary = $tax['summary'];
                 $invoice->update([
                     'total_amount' => Money::fromCents(max(Money::toCents($invoice->total_amount) + $added, 0)),
                     'surcharged_at' => now(),
+                    ...($summary['taxableCents'] + $summary['taxCents'] + $summary['exemptCents'] === 0 ? [] : [
+                        'tax_name' => $invoice->tax_name ?? $summary['name'],
+                        'tax_rate' => $invoice->tax_rate ?? $summary['rate'],
+                        'tax_inclusive' => $summary['inclusive'],
+                        'taxable_amount' => Money::fromCents(Money::toCents($invoice->taxable_amount) + $summary['taxableCents']),
+                        'tax_amount' => Money::fromCents(Money::toCents($invoice->tax_amount) + $summary['taxCents']),
+                        'tax_exempt_amount' => Money::fromCents(Money::toCents($invoice->tax_exempt_amount) + $summary['exemptCents']),
+                    ]),
                 ]);
                 Ledger::refresh($invoice);
                 Ledger::settle($invoice->customer);

@@ -2,11 +2,12 @@
 
 namespace App\Support\Billing;
 
-use App\Enums\CustomerStatus;
 use App\Enums\InvoiceKind;
 use App\Enums\InvoiceLineKind;
 use App\Enums\InvoiceStatus;
+use App\Enums\MeterReadingStatus;
 use App\Enums\OverdueHandling;
+use App\Enums\ReadingCode;
 use App\Enums\WorkOrderStatus;
 use App\Models\Company;
 use App\Models\Customer;
@@ -16,40 +17,19 @@ use App\Models\User;
 use App\Models\WorkOrder;
 use App\Support\Format;
 use App\Support\Money;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The monthly billing run: works out each customer's bill from their reading and issues it.
+ * The monthly billing run: works out each customer's bill from their saved reading and issues it.
  *
  * @phpstan-import-type Line from BillCalculator
+ * @phpstan-import-type TaxSummary from Tax
  */
 final class BillingRun
 {
     public const READING_PATTERN = '/^\d{1,9}(\.\d{1,3})?$/';
-
-    /**
-     * Customers to bill for the period: Connected with a meter, or Disconnected with a final reading
-     * not billed yet. Those already billed for the period are included and shown as billed.
-     *
-     * @return Builder<Customer>
-     */
-    public static function candidates(Company $company, ?int $clusterId, string $search): Builder
-    {
-        return Customer::query()
-            ->where('company_id', $company->id)
-            ->whereNotNull('meter_number')
-            ->whereIn('status', [CustomerStatus::Connected, CustomerStatus::Disconnected])
-            ->when($clusterId !== null, fn (Builder $query) => $query->where('cluster_type_id', $clusterId))
-            ->when($search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query
-                ->where('account_number', 'like', "%{$search}%")
-                ->orWhere('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%")
-                ->orWhere('meter_number', 'like', "%{$search}%")))
-            ->orderBy('account_number');
-    }
 
     /**
      * The customer's monthly bill for the period that is not void, if any.
@@ -64,40 +44,40 @@ final class BillingRun
     }
 
     /**
-     * Works out the bill without saving anything.
+     * Works out the bill for a reading without saving anything.
      *
-     * @return array{previous: float, present: ?float, replaced: float, consumption: float, billed: float, minimumApplied: bool, estimated: bool, lines: list<Line>, totalCents: int, previousBalanceCents: int, overdue: Collection<int, Invoice>, fees: Collection<int, WorkOrder>}
+     * @return array{previous: float, present: ?float, replaced: float, consumption: float, billed: float, minimumApplied: bool, estimated: bool, lines: list<Line>, tax: TaxSummary, totalCents: int, previousBalanceCents: int, overdue: Collection<int, Invoice>, fees: Collection<int, WorkOrder>}
      *
      * @throws BillingException
      */
     public static function compute(Customer $customer, string $period, string $present, bool $defective, string $invoiceDate): array
     {
-        $customer->loadMissing(['rateType.ranges', 'rateType.setup', 'chargeType.elements.chargeElement', 'company']);
+        $reading = MeterReadings::evaluate($customer, $period, $present, $defective ? ReadingCode::Defective : ReadingCode::Normal);
+
+        return [
+            'previous' => $reading['previous'],
+            'present' => $reading['present'],
+            'replaced' => $reading['replaced'],
+            'consumption' => $reading['usage'],
+            'estimated' => $reading['estimated'],
+            ...self::bill($customer, $reading['usage'], $invoiceDate),
+        ];
+    }
+
+    /**
+     * Works out the bill for a month's usage (before the minimum consumption) without saving anything:
+     * water, charges, work order fees, overdue surcharges and tax.
+     *
+     * @return array{billed: float, minimumApplied: bool, lines: list<Line>, tax: TaxSummary, totalCents: int, previousBalanceCents: int, overdue: Collection<int, Invoice>, fees: Collection<int, WorkOrder>}
+     *
+     * @throws BillingException
+     */
+    public static function bill(Customer $customer, float $usage, string $invoiceDate): array
+    {
+        $customer->loadMissing(['rateType.ranges', 'rateType.setup', 'chargeType.elements.chargeElement', 'accountType', 'company']);
         $rate = $customer->rateType ?? throw new BillingException('The customer has no rate. Set one on the Customers page.');
-        $history = MeterHistory::for($customer, $period);
-        $previous = $history['previous'];
-        $replaced = $history['replacedConsumption'];
-        $estimated = false;
 
-        if ($defective) {
-            $presentValue = null;
-            $consumption = self::defectiveEstimate($customer, $history['recentConsumptions']) + $replaced;
-            $estimated = true;
-        } else {
-            if ($present === '') {
-                throw new BillingException('Enter the present reading, or tick Defective meter.');
-            }
-            if (! preg_match(self::READING_PATTERN, $present)) {
-                throw new BillingException('Enter the reading as a number, such as 1234 or 1234.5.');
-            }
-            $presentValue = (float) $present;
-            if ($presentValue < $previous) {
-                throw new BillingException('The present reading ('.BillCalculator::quantity($presentValue).') is lower than the previous reading ('.BillCalculator::quantity($previous).'). Check the reading, or tick Defective meter.');
-            }
-            $consumption = $presentValue - $previous + $replaced;
-        }
-
-        $water = BillCalculator::water($rate, $consumption);
+        $water = BillCalculator::water($rate, $usage);
         $waterCents = array_sum(array_column($water['lines'], 'cents'));
         $lines = [...$water['lines'], ...BillCalculator::charges($customer->chargeType, $waterCents)];
 
@@ -126,40 +106,18 @@ final class BillingRun
             }
         }
 
+        $tax = Tax::apply($customer->company, $customer, $lines);
+
         return [
-            'previous' => $previous,
-            'present' => $presentValue,
-            'replaced' => $replaced,
-            'consumption' => $consumption,
             'billed' => $water['billed'],
             'minimumApplied' => $water['minimumApplied'],
-            'estimated' => $estimated,
-            'lines' => $lines,
-            'totalCents' => max(array_sum(array_column($lines, 'cents')), 0),
+            'lines' => $tax['lines'],
+            'tax' => $tax['summary'],
+            'totalCents' => max(array_sum(array_column($tax['lines'], 'cents')), 0),
             'previousBalanceCents' => Money::toCents($customer->invoices()->whereIn('status', InvoiceStatus::openValues())->sum('balance')),
             'overdue' => $overdue,
             'fees' => $fees,
         ];
-    }
-
-    /**
-     * Consumption billed for a defective meter: the average of the last three billed months when the
-     * rate allows it and there is history, otherwise the rate's minimum consumption.
-     *
-     * @param  list<float>  $recent
-     */
-    private static function defectiveEstimate(Customer $customer, array $recent): float
-    {
-        $setup = $customer->rateType->setup;
-
-        if ($setup?->defective_uses_three_month_average && $recent !== []) {
-            return round(array_sum($recent) / count($recent), 3);
-        }
-        if ($setup?->defective_uses_minimum_consumption && $setup->minimum_consumption !== null) {
-            return (float) $setup->minimum_consumption;
-        }
-
-        throw new BillingException("The {$customer->rateType->name} rate has no defective-meter computation for this customer. Set one on the Rates page, or enter a reading.");
     }
 
     /**
@@ -194,36 +152,49 @@ final class BillingRun
     }
 
     /**
-     * Issues the customer's bill for the period.
+     * Saves the reading as entered (accepted, even when it would need review) and issues the
+     * customer's bill for the period in one step.
      *
      * @throws BillingException
      */
     public static function generate(Customer $customer, string $period, string $present, bool $defective, string $invoiceDate, string $readOn, User $actor): Invoice
     {
         return DB::transaction(function () use ($customer, $period, $present, $defective, $invoiceDate, $readOn, $actor): Invoice {
-            $customer = Customer::query()->lockForUpdate()->findOrFail($customer->id);
+            $reading = MeterReadings::save($customer, $period, $present, $defective ? ReadingCode::Defective : ReadingCode::Normal, $readOn, $actor, confirmed: true);
+
+            return self::generateFor($reading, $invoiceDate, $actor);
+        });
+    }
+
+    /**
+     * Issues the bill for a saved reading that is Ready to bill.
+     *
+     * @throws BillingException
+     */
+    public static function generateFor(MeterReading $reading, string $invoiceDate, User $actor): Invoice
+    {
+        return DB::transaction(function () use ($reading, $invoiceDate, $actor): Invoice {
+            $customer = Customer::query()->lockForUpdate()->findOrFail($reading->customer_id);
+            $reading = MeterReading::query()->lockForUpdate()->findOrFail($reading->id);
+            $period = $reading->billing_period;
 
             if ($existing = self::existingBill($customer, $period)) {
                 throw new BillingException("Already billed for this period (invoice {$existing->invoice_number}).");
             }
+            if ($reading->isBilled()) {
+                throw new BillingException('This reading is already billed.');
+            }
+            if ($reading->status === MeterReadingStatus::Review) {
+                throw new BillingException('The reading needs review. Confirm it on the Meter Readings page first.');
+            }
+            if ($reading->meter_number !== $customer->meter_number) {
+                throw new BillingException('The meter was changed after this reading was taken. Read the new meter on the Meter Readings page.');
+            }
 
-            $bill = self::compute($customer, $period, $present, $defective, $invoiceDate);
+            // Worked out again from the saved reading, in case an earlier month was billed or voided since.
+            $evaluated = MeterReadings::evaluate($customer, $period, (string) ($reading->present_reading ?? ''), $reading->reading_code);
+            $bill = self::bill($customer, $evaluated['usage'], $invoiceDate);
             $company = $customer->company;
-
-            $reading = MeterReading::query()->updateOrCreate(
-                ['customer_id' => $customer->id, 'billing_period' => $period],
-                [
-                    'company_id' => $company->id,
-                    'meter_number' => $customer->meter_number,
-                    'previous_reading' => $bill['previous'],
-                    'present_reading' => $bill['present'],
-                    'consumption' => round($bill['billed'], 3),
-                    'replaced_meter_consumption' => $bill['replaced'],
-                    'is_defective' => $defective,
-                    'read_on' => $readOn,
-                    'created_by_id' => $actor->id,
-                ],
-            );
 
             $invoice = self::issue($company, $customer, [
                 'kind' => InvoiceKind::Monthly,
@@ -231,9 +202,18 @@ final class BillingRun
                 'meter_reading_id' => $reading->id,
                 'invoice_date' => $invoiceDate,
                 'previous_balance' => Money::fromCents($bill['previousBalanceCents']),
+                ...Tax::invoiceAttributes($bill['tax']),
             ], $bill['lines'], $actor);
 
-            $reading->update(['invoice_id' => $invoice->id]);
+            $reading->update([
+                'status' => MeterReadingStatus::Billed,
+                'invoice_id' => $invoice->id,
+                'previous_reading' => $evaluated['previous'],
+                'consumption' => round($bill['billed'], 3),
+                'actual_consumption' => $evaluated['usage'],
+                'replaced_meter_consumption' => $evaluated['replaced'],
+                'estimate_deducted' => $evaluated['deducted'],
+            ]);
 
             WorkOrder::query()->whereIn('id', $bill['fees']->pluck('id'))->update(['fee_invoice_id' => $invoice->id, 'fee_billed_at' => now()]);
             Invoice::query()->whereIn('id', $bill['overdue']->pluck('id'))->update(['surcharged_at' => now(), 'surcharged_on_invoice_id' => $invoice->id]);

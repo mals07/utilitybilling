@@ -115,7 +115,7 @@
                                     @if (request()->routeIs($page->value)) aria-current="page" @endif
                                     x-bind:title="collapsed ? @js($page->label()) : null"
                                 >
-                                    <x-icon :name="match ($page) { Page::Customers => 'user', Page::WorkOrders => 'stack', Page::Invoices => 'receipt', Page::Payments => 'cash', default => 'home' }" />
+                                    <x-icon :name="match ($page) { Page::Customers => 'user', Page::WorkOrders => 'stack', Page::MeterReadings => 'gauge', Page::Invoices => 'receipt', Page::Payments => 'cash', default => 'home' }" />
                                     <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">{{ $page->label() }}</span>
                                 </a>
                             @endforeach

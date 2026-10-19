@@ -14,7 +14,7 @@ use App\Models\WorkOrderReading;
 final class MeterHistory
 {
     /**
-     * @return array{previous: float, replacedConsumption: float, finalReading: ?float, recentConsumptions: list<float>}
+     * @return array{previous: float, replacedConsumption: float, finalReading: ?float, recentConsumptions: list<float>, estimatedSince: float}
      */
     public static function for(Customer $customer, string $period): array
     {
@@ -60,11 +60,22 @@ final class MeterHistory
             ->where('reading', '>', $previous)
             ->max('reading');
 
+        // Usage estimated (no access, defective meter) and billed since the last actual reading. The meter
+        // kept counting meanwhile, so the next actual reading includes it and it is deducted then.
+        $estimatedSince = 0.0;
+        foreach ($billed as $reading) {
+            if ($reading->present_reading !== null) {
+                break;
+            }
+            $estimatedSince += $reading->usage();
+        }
+
         return [
             'previous' => $previous,
             'replacedConsumption' => $replaced,
             'finalReading' => $final === null ? null : (float) $final,
-            'recentConsumptions' => $billed->take(3)->map(fn (MeterReading $reading): float => (float) $reading->consumption)->values()->all(),
+            'recentConsumptions' => $billed->take(3)->map(fn (MeterReading $reading): float => $reading->usage())->values()->all(),
+            'estimatedSince' => round($estimatedSince, 3),
         ];
     }
 }
