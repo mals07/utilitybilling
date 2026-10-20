@@ -7,11 +7,14 @@
 # APP_KEY, APP_URL, DB_* and MAIL_*). The frontend is committed prebuilt in public/build, so run
 # `npm run build` locally and commit the result whenever the CSS or JS changes.
 #
-# If your host keeps PHP 8.4 or Composer elsewhere, change PHP_BIN / COMPOSER_BIN.
+# Composer is downloaded once to ~/composer.phar, so it works whether or not the host provides it.
+# If your host keeps PHP 8.4 elsewhere, change PHP_BIN.
 deployment:
   tasks:
     - export PHP_BIN=/opt/cpanel/ea-php84/root/usr/bin/php
-    - export COMPOSER_BIN=/opt/cpanel/composer/bin/composer
+    - export COMPOSER_BIN=$HOME/composer.phar
+    - export COMPOSER_HOME=$HOME/.composer
+    - if [ ! -s $COMPOSER_BIN ]; then curl -sSL https://getcomposer.org/download/latest-stable/composer.phar -o $COMPOSER_BIN; fi
     - $PHP_BIN $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction --prefer-dist
     - if [ -f .env ]; then $PHP_BIN artisan migrate --force; fi
     - if [ -f .env ] && [ ! -e public/storage ]; then $PHP_BIN artisan storage:link; fi
