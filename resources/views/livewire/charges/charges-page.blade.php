@@ -3,7 +3,7 @@
 
 @php($canSubmitType = $type !== '' ? $access['edit'] : $access['add'])
 
-<x-page title="Charges">
+<x-page title="Charges" guide="charges">
     <x-flash class="mb-4" />
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-8">

@@ -11,7 +11,7 @@
     $lastRangeId = $selected?->ranges->last()?->id;
 @endphp
 
-<x-page title="Rates">
+<x-page title="Rates" guide="rates">
     <x-flash class="mb-4" />
 
     <div class="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)]">

@@ -8,7 +8,7 @@
     $describe = fn (array $flags): string => collect(Access::cases())->filter(fn (Access $type) => $flags[$type->value])->map->label()->implode(', ');
 @endphp
 
-<x-page title="Roles">
+<x-page title="Roles" guide="roles">
     <x-flash class="mb-4" />
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-8">

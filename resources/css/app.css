@@ -1160,6 +1160,117 @@
         border: 0;
     }
 
+    /* ------------------------------- Setup wizard ------------------------------- */
+
+    .setup-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 14px;
+        border: 0;
+        background: none;
+        color: var(--color-label);
+        font-size: 13px;
+        text-align: left;
+    }
+
+    .setup-nav-item[data-state='done'] {
+        color: var(--color-ink-soft);
+    }
+
+    .setup-nav-item[data-state='done']:hover {
+        background: var(--color-hover);
+        color: var(--color-ink-strong);
+    }
+
+    .setup-nav-item[data-state='current'] {
+        background: var(--color-row-selected);
+        color: var(--color-ink-strong);
+        font-weight: 600;
+    }
+
+    .setup-nav-mark {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--color-line);
+        border-radius: 9999px;
+        background: var(--color-card);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .setup-nav-item[data-state='done'] .setup-nav-mark {
+        border-color: var(--color-success);
+        background: var(--color-success);
+        color: #ffffff;
+    }
+
+    .setup-nav-item[data-state='current'] .setup-nav-mark {
+        border-color: var(--color-button);
+        background: var(--color-button);
+        color: #ffffff;
+    }
+
+    /* A whole app page shown inside a wizard step (its title row hides itself there). */
+    .setup-embed [data-page] {
+        max-width: none;
+        padding: 20px 16px;
+    }
+
+    @media (min-width: 640px) {
+        .setup-embed [data-page] {
+            padding: 20px 24px;
+        }
+    }
+
+    /* -------------------------------- Page guide -------------------------------- */
+
+    /* The spotlight: a clear box over the target whose huge shadow dims everything else. Clicks pass through. */
+    .guide-spot {
+        position: fixed;
+        z-index: 70;
+        border-radius: 6px;
+        box-shadow: 0 0 0 3px #ffffff, 0 0 0 9999px rgba(17, 24, 39, 0.55);
+        pointer-events: none;
+        transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+    }
+
+    .guide-dim {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        background: rgba(17, 24, 39, 0.55);
+        pointer-events: none;
+    }
+
+    .guide-card {
+        position: fixed;
+        z-index: 71;
+        width: min(380px, calc(100vw - 32px));
+        padding: 16px 18px;
+        border-radius: var(--radius);
+        background: var(--color-card);
+        box-shadow: var(--shadow-dialog);
+    }
+
+    /* No target on screen: the note sits in the middle. */
+    .guide-card[data-placement='center'] {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .guide-spot {
+            transition: none;
+        }
+    }
+
     /* ------------------------------ Onboarding tour ----------------------------- */
 
     .tour-card {

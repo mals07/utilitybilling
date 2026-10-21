@@ -13,7 +13,7 @@
     };
 @endphp
 
-<x-page title="Disconnections">
+<x-page title="Disconnections" guide="disconnections">
     <div>
         <x-flash class="mb-4" />
 

@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -145,6 +146,24 @@ class PaymentsPage extends Component
         }
 
         return ['applied' => $applied, 'advance' => $remaining];
+    }
+
+    /**
+     * The setup wizard's example: the customer with the newest open bill, with what they owe as the amount.
+     */
+    #[On('setup-example')]
+    public function useSetupExample(): void
+    {
+        $customerId = $this->company()->invoices()->whereIn('status', InvoiceStatus::openValues())->latest('id')->value('customer_id');
+
+        if ($customerId === null) {
+            $this->flash('There is no open bill to pay yet.', 'error');
+
+            return;
+        }
+
+        $this->chooseCustomer($customerId);
+        $this->method = 'cash';
     }
 
     public function record(): void

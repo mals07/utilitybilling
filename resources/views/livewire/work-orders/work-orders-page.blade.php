@@ -5,7 +5,7 @@
 
 @php($meterTypeHint = 'Add meter types in Company Setup → Operation Setup.')
 
-<x-page title="Work Orders">
+<x-page title="Work Orders" guide="work-orders">
     <div class="max-w-[1100px]">
         <x-flash class="mb-4" />
 

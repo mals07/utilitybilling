@@ -16,10 +16,12 @@ use App\Support\ImageType;
 use App\Support\Locations;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -192,6 +194,33 @@ class CustomersPage extends Component
                 default => (string) $value,
             };
         }
+    }
+
+    /**
+     * The setup wizard's example: the Add Customer form filled with a sample Pending customer at the company's address.
+     */
+    #[On('setup-example')]
+    public function useSetupExample(): void
+    {
+        $company = $this->company();
+        $first = fn (Relation $query, string $preferred): string => (string) ((clone $query)->where('name', $preferred)->value('id') ?? (clone $query)->orderBy('id')->value('id') ?? '');
+
+        $this->openAdd();
+        $this->values = [
+            ...$this->values,
+            'firstName' => 'Maria',
+            'lastName' => 'Santos',
+            'status' => CustomerStatus::Pending->value,
+            'accountTypeId' => $first($company->accountTypes()->where('is_active', true), 'Residential'),
+            'rateTypeId' => $first($company->rateTypes(), 'Residential'),
+            'chargeTypeId' => $first($company->chargeTypes(), 'Standard'),
+            'clusterTypeId' => $first($company->clusterTypes()->where('is_active', true), 'Zone 1'),
+            'homeAddress' => (string) $company->address,
+            'homeCityId' => (string) $company->city_id,
+            'homeProvinceId' => (string) $company->province_id,
+            'homeCountryId' => (string) $company->country_id,
+            'homeZipCode' => (string) $company->zip_code,
+        ];
     }
 
     /* ------------------------------- Locations ------------------------------- */

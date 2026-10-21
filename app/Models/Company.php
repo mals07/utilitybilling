@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'tax_enabled', 'tax_name', 'tax_rate', 'tax_inclusive', 'tax_on_water', 'tax_on_fees', 'tax_on_surcharges',
     'review_usage_multiplier', 'review_zero_usage',
     'disconnection_overdue_bills', 'disconnection_notice_days', 'disconnection_skip_days',
+    'setup_step', 'setup_completed_at',
 ])]
 class Company extends Model
 {
@@ -61,6 +62,7 @@ class Company extends Model
             'review_zero_usage' => 'boolean',
             'disconnection_overdue_bills' => 'integer',
             'disconnection_notice_days' => 'integer',
+            'setup_completed_at' => 'datetime',
         ];
     }
 
@@ -260,6 +262,14 @@ class Company extends Model
         }
 
         return route('company.asset', ['asset' => $kind, 'v' => $this->updated_at?->getTimestamp()]);
+    }
+
+    /**
+     * Whether the setup wizard is finished, which opens the rest of the app.
+     */
+    public function isSetUp(): bool
+    {
+        return $this->setup_completed_at !== null;
     }
 
     /**

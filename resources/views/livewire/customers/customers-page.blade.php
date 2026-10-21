@@ -1,6 +1,6 @@
 @use('App\Livewire\Customers\CustomersPage')
 
-<x-page title="Customers">
+<x-page title="Customers" guide="customers">
     <div class="max-w-[960px]">
         <x-flash class="mb-4" />
 

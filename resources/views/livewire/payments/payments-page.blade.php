@@ -2,7 +2,7 @@
 @use('App\Support\Format')
 @use('App\Support\Money')
 
-<x-page title="Payments">
+<x-page title="Payments" guide="payments">
     <div class="max-w-[1100px]">
         <x-flash class="mb-4" />
 

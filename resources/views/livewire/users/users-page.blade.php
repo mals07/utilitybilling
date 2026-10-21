@@ -4,7 +4,7 @@
 @use('App\Support\Format')
 @use('App\Support\SpecialAccess')
 
-<x-page title="Users">
+<x-page title="Users" guide="users">
     <div class="max-w-[960px]">
         <x-flash class="mb-4" />
         @if ($devLink)

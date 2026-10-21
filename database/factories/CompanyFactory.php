@@ -37,7 +37,16 @@ class CompanyFactory extends Factory
             'point_person_email' => fake()->safeEmail(),
             'due_date_days' => 5,
             'timezone' => 'Asia/Manila',
+            'setup_completed_at' => now(),
         ];
+    }
+
+    /**
+     * Still in the setup wizard, at the given step.
+     */
+    public function inSetup(string $step = 'billing'): static
+    {
+        return $this->state(fn (array $attributes) => ['currency' => null, 'setup_step' => $step, 'setup_completed_at' => null]);
     }
 
     /**

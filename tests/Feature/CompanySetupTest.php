@@ -59,7 +59,7 @@ class CompanySetupTest extends TestCase
             ->set('logo', UploadedFile::fake()->image('logo.png', 40, 40))
             ->call('save')
             ->assertHasNoErrors()
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('setup'));
 
         $company = $user->fresh()->company;
         $this->assertNotNull($company);

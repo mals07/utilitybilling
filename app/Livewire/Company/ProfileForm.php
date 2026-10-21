@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -379,6 +380,28 @@ class ProfileForm extends Component
         $this->{$kind === 'logo' ? 'removeLogo' : 'removeIcon'} = $this->user()->company?->{"{$kind}_file_name"} !== null;
     }
 
+    /**
+     * The setup wizard's example: the signed-in user as the point person, where still blank.
+     */
+    #[On('setup-example')]
+    public function useSetupExample(): void
+    {
+        $user = $this->user();
+        $defaults = [
+            'pointPersonFirstName' => $user->first_name,
+            'pointPersonLastName' => $user->last_name,
+            'pointPersonEmail' => $user->email,
+            'email' => $user->email,
+            'headOfCompany' => $user->name,
+        ];
+
+        foreach ($defaults as $field => $value) {
+            if (trim($this->values[$field] ?? '') === '') {
+                $this->values[$field] = (string) $value;
+            }
+        }
+    }
+
     /* --------------------------------- Save ---------------------------------- */
 
     public function save(): void
@@ -432,7 +455,7 @@ class ProfileForm extends Component
 
         if ($this->onboarding) {
             session()->flash('flash', ['message' => 'Company profile saved.', 'tone' => 'success']);
-            $this->redirectRoute('dashboard');
+            $this->redirectRoute('setup');
 
             return;
         }

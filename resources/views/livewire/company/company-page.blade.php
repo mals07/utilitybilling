@@ -1,7 +1,13 @@
 @use('App\Enums\LookupType')
 
 <div class="mx-auto max-w-[1400px] px-4 pt-4 pb-8 sm:px-6 sm:pt-5 sm:pb-10">
-    <h1 class="mb-2.5 text-lg font-bold text-ink sm:text-xl">Company Setup</h1>
+    <div class="mb-2.5 flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-lg font-bold text-ink sm:text-xl">Company Setup</h1>
+        <button type="button" class="link-button inline-flex items-center gap-1.5 text-sm" x-data x-on:click="$dispatch('guide-start', 'company')">
+            <x-icon name="document" :size="16" />
+            Guide me
+        </button>
+    </div>
 
     @if ($onboarding)
         <x-alert :tone="$justVerified ? 'success' : 'info'" class="mb-3">

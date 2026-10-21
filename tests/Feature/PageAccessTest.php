@@ -25,12 +25,12 @@ class PageAccessTest extends TestCase
         }
     }
 
-    public function test_users_without_a_company_are_sent_to_company_setup(): void
+    public function test_users_without_a_company_are_sent_to_the_setup_wizard(): void
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->get(route('rates'))->assertRedirect(route('company'));
-        $this->actingAs($user)->get(route('company'))->assertOk()->assertSee('Set up your company profile');
+        $this->actingAs($user)->get(route('rates'))->assertRedirect(route('setup'));
+        $this->actingAs($user)->get(route('company'))->assertRedirect(route('setup'));
     }
 
     public function test_pages_outside_the_role_show_access_denied(): void

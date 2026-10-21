@@ -9,6 +9,7 @@ use App\Support\Format;
 use DateTimeZone;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -143,6 +144,24 @@ class OperationSettingsForm extends Component
     private static function column(string $field): string
     {
         return strtolower((string) preg_replace('/(?<!^)([A-Z]|\d)/', '_$1', $field));
+    }
+
+    /**
+     * The setup wizard's recommended settings; tax and review settings keep their defaults.
+     */
+    #[On('setup-example')]
+    public function useSetupExample(): void
+    {
+        $this->currency = 'PHP';
+        $this->timezone = 'Asia/Manila';
+        $this->dueDateDays = '15';
+        if (trim($this->companyHeaderLine) === '') {
+            $this->companyHeaderLine = (string) $this->company()->company_name;
+        }
+        if (trim($this->billingFooter1) === '') {
+            $this->billingFooter1 = 'Please pay on or before the due date to avoid surcharges.';
+        }
+        $this->resetValidation();
     }
 
     public function save(): void

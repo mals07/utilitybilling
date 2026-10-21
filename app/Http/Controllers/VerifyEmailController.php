@@ -26,9 +26,9 @@ class VerifyEmailController extends Controller
 
         User::query()->whereKey($userId)->whereNull('email_verified_at')->update(['email_verified_at' => now()]);
 
-        // Signed in as this user: continue straight to company setup.
+        // Signed in as this user: continue straight to the setup wizard.
         if ($currentUser?->id === $userId) {
-            return redirect()->route('company', ['verified' => 1]);
+            return redirect()->route('setup', ['verified' => 1]);
         }
 
         return redirect()->route('login', ['verified' => 1]);

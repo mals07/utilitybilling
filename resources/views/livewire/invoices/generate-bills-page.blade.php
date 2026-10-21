@@ -1,6 +1,6 @@
 @use('App\Support\Format')
 
-<x-page title="Generate Bills">
+<x-page title="Generate Bills" guide="generate-bills">
     <div class="max-w-[1100px]">
         <x-flash class="mb-4" />
 

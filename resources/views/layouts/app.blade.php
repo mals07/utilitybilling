@@ -170,6 +170,8 @@
                                 </button>
                             @endif
 
+                            <x-restart-onboarding class="mt-2 h-9 w-full px-2 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0" />
+
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button
@@ -194,6 +196,8 @@
         @if ($company)
             <livewire:onboarding.tour />
         @endif
+
+        <x-guide />
 
         @livewireScripts
     </body>

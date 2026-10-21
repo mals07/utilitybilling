@@ -344,7 +344,171 @@ function photoCropper({ model }) {
     };
 }
 
+/* ------------------------------- Page Guide ------------------------------- */
+
+const GUIDE_PADDING = 6;
+const GUIDE_GAP = 12;
+const GUIDE_TICK_MS = 400;
+
+/** A selector from App\Support\Guides: plain names are data-guide markers. */
+function guideSelector(target) {
+    return /^[a-z0-9-]+$/.test(target) ? `[data-guide="${target}"]` : target;
+}
+
+/** The first matching element that is on screen (not hidden), or null. */
+function guideElement(target) {
+    if (!target) {
+        return null;
+    }
+    try {
+        return [...document.querySelectorAll(guideSelector(target))].find((el) => el.getClientRects().length > 0) ?? null;
+    } catch {
+        return null;
+    }
+}
+
+function guideCount(selector) {
+    try {
+        return document.querySelectorAll(guideSelector(selector)).length;
+    } catch {
+        return 0;
+    }
+}
+
+/**
+ * Spotlights one part of the page at a time with a note beside it, for the guides in
+ * App\Support\Guides, fetched from urlTemplate with __GUIDE__ replaced by the guide's name. Started
+ * with a "guide-start" window event naming the guide; a step moves on when its "grows" selector
+ * gains matches or its "until" selector appears, or on Next.
+ */
+function pageGuide(urlTemplate) {
+    return {
+        guides: {},
+        key: null,
+        index: 0,
+        open: false,
+        spot: null,
+        bubble: { top: 0, left: 0, placement: 'center' },
+        startCount: 0,
+        timer: null,
+
+        init() {
+            // Scrolling inside a modal or table doesn't reach window listeners, so follow it while capturing.
+            document.addEventListener('scroll', () => this.open && this.place(), { capture: true, passive: true });
+        },
+
+        get guide() {
+            return this.guides[this.key] ?? null;
+        },
+        get step() {
+            return this.guide?.steps[this.index] ?? null;
+        },
+        get last() {
+            return this.guide !== null && this.index === this.guide.steps.length - 1;
+        },
+
+        async start(key) {
+            if (!this.guides[key]) {
+                const response = await fetch(urlTemplate.replace('__GUIDE__', encodeURIComponent(key)), {
+                    headers: { Accept: 'application/json' },
+                });
+                if (!response.ok) {
+                    return;
+                }
+                this.guides[key] = await response.json();
+            }
+            this.key = key;
+            this.index = 0;
+            this.open = true;
+            this.enter();
+            clearInterval(this.timer);
+            this.timer = setInterval(() => this.tick(), GUIDE_TICK_MS);
+        },
+
+        go(by) {
+            const next = this.index + by;
+            if (next < 0) {
+                return;
+            }
+            if (next >= this.guide.steps.length) {
+                this.close();
+                return;
+            }
+            this.index = next;
+            this.enter();
+        },
+
+        close() {
+            this.open = false;
+            this.spot = null;
+            clearInterval(this.timer);
+        },
+
+        enter() {
+            this.startCount = this.step.grows ? guideCount(this.step.grows) : 0;
+            guideElement(this.step.target)?.scrollIntoView({ block: 'center' });
+            this.$nextTick(() => this.place());
+        },
+
+        /** Follows the target as the page changes and moves on once the step's action is done. */
+        tick() {
+            if (!this.open) {
+                return;
+            }
+            const { grows, until } = this.step;
+            if ((grows && guideCount(grows) > this.startCount) || (until && guideElement(until))) {
+                this.go(1);
+                return;
+            }
+            this.place();
+        },
+
+        place() {
+            const el = guideElement(this.step?.target);
+            const card = this.$refs.card;
+            if (!el || !card) {
+                this.spot = null;
+                this.bubble = { top: 0, left: 0, placement: 'center' };
+                return;
+            }
+
+            const rect = el.getBoundingClientRect();
+            this.spot = {
+                top: rect.top - GUIDE_PADDING,
+                left: rect.left - GUIDE_PADDING,
+                width: rect.width + GUIDE_PADDING * 2,
+                height: rect.height + GUIDE_PADDING * 2,
+            };
+
+            // Below the target when it fits, else above, else pinned to the bottom of the screen.
+            const width = card.offsetWidth;
+            const height = card.offsetHeight;
+            const left = Math.min(Math.max(rect.left, 16), window.innerWidth - width - 16);
+            const below = rect.bottom + GUIDE_PADDING + GUIDE_GAP;
+            const above = rect.top - GUIDE_PADDING - GUIDE_GAP - height;
+            if (below + height <= window.innerHeight - 16) {
+                this.bubble = { top: below, left, placement: 'below' };
+            } else if (above >= 16) {
+                this.bubble = { top: above, left, placement: 'above' };
+            } else {
+                this.bubble = { top: window.innerHeight - height - 16, left, placement: 'pinned' };
+            }
+        },
+
+        spotStyle() {
+            return this.spot
+                ? `top:${this.spot.top}px;left:${this.spot.left}px;width:${this.spot.width}px;height:${this.spot.height}px`
+                : '';
+        },
+
+        cardStyle() {
+            return this.bubble.placement === 'center' ? '' : `top:${this.bubble.top}px;left:${this.bubble.left}px`;
+        },
+    };
+}
+
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('mapLocation', mapLocation);
     window.Alpine.data('photoCropper', photoCropper);
+    window.Alpine.data('pageGuide', pageGuide);
 });

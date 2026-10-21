@@ -9,7 +9,7 @@
     $canEnter = $periodLabel !== null && ($access['add'] || $access['edit']);
 @endphp
 
-<x-page title="Meter Readings">
+<x-page title="Meter Readings" guide="meter-readings">
     <div>
         <x-flash class="mb-4" />
 

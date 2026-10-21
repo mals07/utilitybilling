@@ -4,10 +4,12 @@ use App\Enums\Page;
 use App\Http\Controllers\CompanyAssetController;
 use App\Http\Controllers\CustomerPhotoController;
 use App\Http\Controllers\DisconnectionNoticePrintController;
+use App\Http\Controllers\GuideController;
 use App\Http\Controllers\InvoicePrintController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\MemoPrintController;
 use App\Http\Controllers\ReceiptPrintController;
+use App\Http\Controllers\RestartOnboardingController;
 use App\Http\Controllers\StatementController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Http\Controllers\WorkOrderPhotoController;
@@ -28,6 +30,7 @@ use App\Livewire\MeterReadings\MeterReadingsPage;
 use App\Livewire\Payments\PaymentsPage;
 use App\Livewire\Rates\RatesPage;
 use App\Livewire\Roles\RolesPage;
+use App\Livewire\Setup\SetupWizard;
 use App\Livewire\Users\UsersPage;
 use App\Livewire\WorkOrders\WorkOrdersPage;
 use Illuminate\Http\Request;
@@ -51,15 +54,21 @@ Route::middleware('auth')->group(function () {
     Route::livewire('/verify-email', VerifyEmail::class)->name('verify-email');
     Route::post('/logout', LogoutController::class)->name('logout');
 
+    Route::get('/guides/{guide}', GuideController::class)->where('guide', '[a-z-]+')->name('guides.show');
+
+    // Temporary, local only: try the setup wizard as a brand-new account.
+    Route::post('/dev/restart-onboarding', RestartOnboardingController::class)->name('dev.restart-onboarding');
+
     Route::get('/company-profile/{asset}', CompanyAssetController::class)
         ->whereIn('asset', ['logo', 'icon'])
         ->name('company.asset');
 });
 
 Route::middleware(['auth', 'verified.email'])->group(function () {
-    Route::livewire('/company', CompanyPage::class)->middleware('page:'.Page::CompanySetup->value)->name('company');
+    Route::livewire('/setup', SetupWizard::class)->name('setup');
 
     Route::middleware('company')->group(function () {
+        Route::livewire('/company', CompanyPage::class)->middleware('page:'.Page::CompanySetup->value)->name('company');
         Route::livewire('/dashboard', Dashboard::class)->name('dashboard');
         Route::livewire('/customers', CustomersPage::class)->middleware('page:'.Page::Customers->value)->name('customers');
         Route::livewire('/work-orders', WorkOrdersPage::class)->middleware('page:'.Page::WorkOrders->value)->name('work-orders');

@@ -2,7 +2,7 @@
 @use('App\Livewire\Invoices\InvoicesPage')
 @use('App\Support\Format')
 
-<x-page title="Invoices">
+<x-page title="Invoices" guide="invoices">
     <div class="max-w-[1100px]">
         <x-flash class="mb-4" />
 

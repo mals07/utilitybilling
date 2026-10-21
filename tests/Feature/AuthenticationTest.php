@@ -76,7 +76,7 @@ class AuthenticationTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('auth.verify', ['token' => $token]))
-            ->assertRedirect(route('company', ['verified' => 1]));
+            ->assertRedirect(route('setup', ['verified' => 1]));
 
         $this->assertNotNull($user->fresh()->email_verified_at);
 
@@ -111,7 +111,7 @@ class AuthenticationTest extends TestCase
             ->set('login', 'OWNER@example.com')
             ->set('password', 'password1')
             ->call('authenticate')
-            ->assertRedirect(route('company'));
+            ->assertRedirect(route('setup'));
         $this->assertAuthenticatedAs($user);
 
         Auth::logout();

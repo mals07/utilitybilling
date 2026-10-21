@@ -3,6 +3,7 @@
 namespace App\Livewire\WorkOrders;
 
 use App\Enums\Access;
+use App\Enums\CustomerStatus;
 use App\Enums\FeeBilling;
 use App\Enums\Page;
 use App\Enums\WorkOrderStatus;
@@ -27,6 +28,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -223,6 +225,59 @@ class WorkOrdersPage extends Component
         if ($property === 'reason') {
             $this->resetValidation('reason');
         }
+    }
+
+    /**
+     * The setup wizard's example: a New Installation for the newest Pending customer, or the
+     * completion form of the open New Installation with its checklist ticked.
+     */
+    #[On('setup-example')]
+    public function useSetupExample(string $step = 'work-order'): void
+    {
+        $company = $this->company();
+
+        if ($step === 'complete-order') {
+            $order = $company->workOrders()
+                ->where('order_type', WorkOrderType::NewInstallation)
+                ->whereIn('status', [WorkOrderStatus::InProgress, WorkOrderStatus::OnHold])
+                ->latest('id')
+                ->first();
+            if ($order === null) {
+                $this->flash('Submit a New Installation work order first.', 'error');
+
+                return;
+            }
+
+            $this->openComplete($order->id);
+            $fields = $this->completion['fields'];
+            $fields['meter_number'] = ($fields['meter_number'] ?? '') !== '' ? $fields['meter_number'] : 'MTR-0001';
+            $fields['serial_number'] = ($fields['serial_number'] ?? '') !== '' ? $fields['serial_number'] : 'SN-0001';
+            $fields['meter_type_id'] = ($fields['meter_type_id'] ?? '') !== '' ? $fields['meter_type_id'] : (string) $company->meterTypes()->orderBy('id')->value('id');
+            $fields['initial_reading'] = '0';
+            $this->completion['fields'] = $fields;
+            $this->completion['checked'] = array_fill_keys(array_keys($order->order_type->checklist()), true);
+            if ($this->completion['fee'] === '') {
+                $this->completion['fee'] = '1500.00';
+            }
+
+            return;
+        }
+
+        $customer = $company->customers()->where('status', CustomerStatus::Pending)->latest('id')->first();
+        if ($customer === null) {
+            $this->flash('Add a Pending customer first.', 'error');
+
+            return;
+        }
+
+        $this->chooseCustomer($customer->id);
+        $this->values['orderType'] = WorkOrderType::NewInstallation->value;
+        if ($this->values['meterTypeId'] === '') {
+            $this->values['meterTypeId'] = (string) $company->meterTypes()->where('is_active', true)->orderBy('id')->value('id');
+        }
+        $assignees = $this->assigneeOptions(null);
+        $this->values['assignedToId'] = (string) (array_key_exists($this->user()->id, $assignees) ? $this->user()->id : (array_key_first($assignees) ?? ''));
+        $this->values['description'] = 'Install a new water meter for the customer.';
     }
 
     /* ------------------------------- Customers ------------------------------- */
