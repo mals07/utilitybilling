@@ -157,19 +157,6 @@
                         <div class="border-t border-line px-3 py-4 lg:sidebar-collapsed:px-2">
                             <p class="truncate px-2 text-xs font-medium text-label lg:sidebar-collapsed:sr-only">{{ $user->name }}</p>
 
-                            @if ($company)
-                                <button
-                                    type="button"
-                                    data-tour="tour"
-                                    x-bind:title="collapsed ? 'Take the tour' : null"
-                                    x-on:click="mobileOpen = false; $dispatch('start-tour')"
-                                    class="mt-2 flex h-9 w-full items-center gap-3 rounded-xs px-2 text-sm text-ink-soft hover:bg-hover hover:text-ink-strong lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0"
-                                >
-                                    <x-icon name="document" />
-                                    <span class="lg:sidebar-collapsed:sr-only">Take the tour</span>
-                                </button>
-                            @endif
-
                             <x-restart-onboarding class="mt-2 h-9 w-full px-2 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0" />
 
                             <form method="POST" action="{{ route('logout') }}">

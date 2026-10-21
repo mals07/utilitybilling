@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 /**
- * The tour of the app: starts on its own until the user finishes or skips it, and again from "Take the tour".
+ * The tour of the app: starts on its own until the user finishes or skips it.
  */
 class Tour extends Component
 {

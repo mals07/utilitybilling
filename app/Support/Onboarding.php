@@ -303,8 +303,8 @@ final class Onboarding
         $stops[] = [
             'key' => 'finish',
             'title' => "You're all set",
-            'body' => 'You can take this tour again anytime from "Take the tour" at the bottom of the sidebar.',
-            'target' => 'tour',
+            'body' => 'Need help on a page? Click "Guide me" next to its title for a step-by-step walkthrough.',
+            'target' => null,
             'url' => null,
         ];
 
