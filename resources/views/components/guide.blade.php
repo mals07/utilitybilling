@@ -22,6 +22,8 @@
                 class="guide-card"
                 x-bind:data-placement="bubble.placement"
                 x-bind:style="cardStyle()"
+                x-on:pointerenter="hovering = true"
+                x-on:pointerleave="hovering = false"
             >
                 <div class="flex items-start justify-between gap-3">
                     <p class="text-xs font-medium tracking-wide text-label uppercase">

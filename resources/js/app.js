@@ -392,6 +392,7 @@ function pageGuide(urlTemplate) {
         bubble: { top: 0, left: 0, placement: 'center' },
         startCount: 0,
         timer: null,
+        hovering: false,
 
         init() {
             // Scrolling inside a modal or table doesn't reach window listeners, so follow it while capturing.
@@ -442,6 +443,7 @@ function pageGuide(urlTemplate) {
 
         close() {
             this.open = false;
+            this.hovering = false;
             this.spot = null;
             clearInterval(this.timer);
         },
@@ -449,7 +451,7 @@ function pageGuide(urlTemplate) {
         enter() {
             this.startCount = this.step.grows ? guideCount(this.step.grows) : 0;
             guideElement(this.step.target)?.scrollIntoView({ block: 'center' });
-            this.$nextTick(() => this.place());
+            this.$nextTick(() => this.place(true));
         },
 
         /** Follows the target as the page changes and moves on once the step's action is done. */
@@ -472,7 +474,8 @@ function pageGuide(urlTemplate) {
             this.place();
         },
 
-        place() {
+        /** Moves the spotlight, and the note too unless the pointer is on it (or the step just changed). */
+        place(newStep = false) {
             const el = guideElement(this.step?.target);
             const card = this.$refs.card;
             if (!el || !card) {
@@ -488,6 +491,11 @@ function pageGuide(urlTemplate) {
                 width: rect.width + GUIDE_PADDING * 2,
                 height: rect.height + GUIDE_PADDING * 2,
             };
+
+            // A note that moves while the user reaches for Next makes the click land elsewhere.
+            if (this.hovering && !newStep) {
+                return;
+            }
 
             const width = card.offsetWidth;
             const height = card.offsetHeight;
