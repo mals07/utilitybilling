@@ -9,12 +9,13 @@ namespace App\Support;
  * Each step's target is a CSS selector, or a data-guide name. A step moves on by itself when
  * "grows" matches more elements than when the step began (e.g. a new table row), or when "until"
  * matches anything (e.g. a form that opens); otherwise the user clicks Next. A step whose target
- * isn't on the page shows its text without a spotlight.
+ * isn't on the page shows its text without a spotlight. A step whose "requires" disappears (its
+ * modal was closed) goes back to the last step before it without one, e.g. "Click Add Customer".
  */
 final class Guides
 {
     /**
-     * @return array<string, array{title: string, steps: list<array{target: ?string, title: string, body: string, grows?: string, until?: string}>}>
+     * @return array<string, array{title: string, steps: list<array{target: ?string, title: string, body: string, grows?: string, until?: string, requires?: string}>}>
      */
     public static function all(): array
     {
@@ -217,6 +218,7 @@ final class Guides
                         'title' => 'Add an element to the charge type',
                         'body' => 'Pick a charge element, choose Fixed Amount or Percentage, and enter the value, e.g. 2 for 2%. Its distribution type shows by itself. Click ADD, and repeat for each element.',
                         'grows' => '[wire\:key^="setup-row-"]',
+                        'requires' => '[wire\:submit="addSetupElement"]',
                     ],
                     [
                         'target' => '.modal-dialog table',
@@ -275,26 +277,32 @@ final class Guides
                         'target' => '#customer-firstName',
                         'title' => 'Name and contact',
                         'body' => "Enter the customer's first and last name. Company, email and phone are optional; the email receives notices.",
+                        'requires' => '#customer-firstName',
                     ],
                     [
                         'target' => ':has(> div > #customer-accountTypeId)',
                         'title' => 'How they are billed',
                         'body' => 'Account type, rate and charge type decide how the customer is billed; the cluster groups them by area. A new customer stays Pending until their meter is installed.',
+                        'requires' => '#customer-firstName',
                     ],
                     [
                         'target' => 'section[aria-labelledby="customer-home-heading"]',
                         'title' => 'Home address',
                         'body' => 'Where the meter is. If bills go to the same place, click "Same as Home Address" in the billing address.',
+                        'requires' => '#customer-firstName',
                     ],
                     [
                         'target' => '[aria-labelledby="customer-location-label"]',
                         'title' => 'Map location (optional)',
                         'body' => 'Search the map or drag the pin onto the house, so field staff can find the meter.',
+                        'requires' => '#customer-firstName',
                     ],
                     [
                         'target' => '[wire\:submit="save"] [type="submit"]',
                         'title' => 'Save the customer',
                         'body' => 'Click Submit. The customer appears in the table with an account number. Click the pencil on their row later to update them.',
+                        'grows' => '[wire\:click^="openCustomer("]',
+                        'requires' => '#customer-firstName',
                     ],
                 ],
             ],
@@ -316,21 +324,25 @@ final class Guides
                         'title' => 'Click Complete',
                         'body' => 'Use Complete once the job is done in the field.',
                         'until' => '[wire\:submit="complete"]',
+                        'requires' => '[wire\:click^="openComplete("], [wire\:submit="complete"]',
                     ],
                     [
                         'target' => '[wire\:model="completion.fields.meter_number"]',
                         'title' => 'What was done',
                         'body' => 'Enter the meter number and serial number of the meter installed, its type, and the reading on its dials now (usually 0). The fee is filled in from your work order fees.',
+                        'requires' => '[wire\:submit="complete"]',
                     ],
                     [
                         'target' => 'fieldset fieldset:has([wire\:model^="completion.checked"])',
                         'title' => 'Checklist',
                         'body' => 'Tick every item to confirm the work was done properly.',
+                        'requires' => '[wire\:submit="complete"]',
                     ],
                     [
                         'target' => 'fieldset fieldset:has([wire\:model="newPhotos"])',
                         'title' => 'Photo',
                         'body' => 'Attach a photo of the installed meter; New Installations need one.',
+                        'requires' => '[wire\:submit="complete"]',
                     ],
                     [
                         'target' => '[wire\:submit="complete"] [type="submit"]',

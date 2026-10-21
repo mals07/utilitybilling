@@ -379,7 +379,8 @@ function guideCount(selector) {
  * Spotlights one part of the page at a time with a note beside it, for the guides in
  * App\Support\Guides, fetched from urlTemplate with __GUIDE__ replaced by the guide's name. Started
  * with a "guide-start" window event naming the guide; a step moves on when its "grows" selector
- * gains matches or its "until" selector appears, or on Next.
+ * gains matches or its "until" selector appears, or on Next. A step whose "requires" selector
+ * disappears (its modal was closed) goes back to the last step before it without one.
  */
 function pageGuide(urlTemplate) {
     return {
@@ -395,6 +396,7 @@ function pageGuide(urlTemplate) {
         init() {
             // Scrolling inside a modal or table doesn't reach window listeners, so follow it while capturing.
             document.addEventListener('scroll', () => this.open && this.place(), { capture: true, passive: true });
+            document.addEventListener('focusin', () => this.open && this.place());
         },
 
         get guide() {
@@ -455,9 +457,16 @@ function pageGuide(urlTemplate) {
             if (!this.open) {
                 return;
             }
-            const { grows, until } = this.step;
+            const { grows, until, requires } = this.step;
             if ((grows && guideCount(grows) > this.startCount) || (until && guideElement(until))) {
                 this.go(1);
+                return;
+            }
+            // The form this step is about was closed: go back to the step that opens it.
+            if (requires && !guideElement(requires)) {
+                const opener = this.guide.steps.findLastIndex((step, i) => i < this.index && !step.requires);
+                this.index = Math.max(opener, 0);
+                this.enter();
                 return;
             }
             this.place();
@@ -480,19 +489,38 @@ function pageGuide(urlTemplate) {
                 height: rect.height + GUIDE_PADDING * 2,
             };
 
-            // Below the target when it fits, else above, else pinned to the bottom of the screen.
             const width = card.offsetWidth;
             const height = card.offsetHeight;
-            const left = Math.min(Math.max(rect.left, 16), window.innerWidth - width - 16);
-            const below = rect.bottom + GUIDE_PADDING + GUIDE_GAP;
-            const above = rect.top - GUIDE_PADDING - GUIDE_GAP - height;
-            if (below + height <= window.innerHeight - 16) {
-                this.bubble = { top: below, left, placement: 'below' };
-            } else if (above >= 16) {
-                this.bubble = { top: above, left, placement: 'above' };
-            } else {
-                this.bubble = { top: window.innerHeight - height - 16, left, placement: 'pinned' };
+            const maxTop = window.innerHeight - height - 16;
+            const maxLeft = window.innerWidth - width - 16;
+            const left = Math.min(Math.max(rect.left, 16), maxLeft);
+
+            // Places to try, best first: beside a modal (so its other fields stay visible), below or
+            // above the target, then the bottom or top of the screen.
+            const spots = [];
+            const dialog = el.closest('.modal-dialog')?.getBoundingClientRect();
+            if (dialog) {
+                const top = Math.min(Math.max(rect.top, 16), maxTop);
+                spots.push({ top, left: dialog.right + GUIDE_GAP, placement: 'side' });
+                spots.push({ top, left: dialog.left - GUIDE_GAP - width, placement: 'side' });
             }
+            spots.push({ top: rect.bottom + GUIDE_PADDING + GUIDE_GAP, left, placement: 'below' });
+            spots.push({ top: rect.top - GUIDE_PADDING - GUIDE_GAP - height, left, placement: 'above' });
+            spots.push({ top: maxTop, left: maxLeft, placement: 'pinned' });
+            spots.push({ top: 16, left: maxLeft, placement: 'pinned' });
+
+            // Never cover the field being typed in.
+            const field = document.activeElement?.matches('input, select, textarea') && !card.contains(document.activeElement)
+                ? document.activeElement.getBoundingClientRect()
+                : null;
+            const fits = (spot) => spot.top >= 16 && spot.top <= maxTop && spot.left >= 16 && spot.left <= maxLeft;
+            const covers = (spot, box) => box !== null
+                && spot.left < box.right && spot.left + width > box.left
+                && spot.top < box.bottom && spot.top + height > box.top;
+
+            this.bubble = spots.find((spot) => fits(spot) && !covers(spot, field))
+                ?? spots.find(fits)
+                ?? spots.at(-2);
         },
 
         spotStyle() {
