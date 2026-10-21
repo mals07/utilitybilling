@@ -163,6 +163,50 @@
         </fieldset>
     </div>
 
+    {{-- Disconnection --}}
+    <fieldset class="mt-3 min-w-0 rounded-xs border border-line bg-card px-4 pt-2 pb-4">
+        <legend class="px-1 text-[13px] font-semibold text-ink-strong">Disconnection for non-payment</legend>
+        <p class="text-xs text-label">Customers with this many overdue bills are listed on the Disconnections page, where staff issue the notices and create the work orders.</p>
+
+        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[200px_200px_minmax(0,1fr)]">
+            <div>
+                <label class="float">
+                    <span class="float-label">Flag at # of overdue bills</span>
+                    <input type="number" min="1" max="{{ OperationSettingsForm::MAX_DISCONNECTION_OVERDUE_BILLS }}" step="1" inputmode="numeric" wire:model="disconnectionOverdueBills" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('disconnectionOverdueBills') aria-invalid="true" aria-describedby="ops-disconnectionOverdueBills-error" @enderror>
+                </label>
+                @error('disconnectionOverdueBills')
+                    <p id="ops-disconnectionOverdueBills-error" class="form-error" role="alert">{{ $message }}</p>
+                @else
+                    <p class="mt-1 text-xs text-label">Paying until fewer are overdue clears the notice.</p>
+                @enderror
+            </div>
+            <div>
+                <label class="float">
+                    <span class="float-label">Notice gives # working days</span>
+                    <input type="number" min="1" max="{{ OperationSettingsForm::MAX_DISCONNECTION_NOTICE_DAYS }}" step="1" inputmode="numeric" wire:model="disconnectionNoticeDays" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('disconnectionNoticeDays') aria-invalid="true" aria-describedby="ops-disconnectionNoticeDays-error" @enderror>
+                </label>
+                @error('disconnectionNoticeDays')
+                    <p id="ops-disconnectionNoticeDays-error" class="form-error" role="alert">{{ $message }}</p>
+                @else
+                    <p class="mt-1 text-xs text-label">Time to pay before disconnection.</p>
+                @enderror
+            </div>
+            <fieldset class="min-w-0 sm:col-span-2 lg:col-span-1">
+                <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Days not counted as working days</legend>
+                <div class="flex flex-wrap gap-x-4 gap-y-1">
+                    @foreach ([1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun'] as $day => $label)
+                        <label class="check !text-[13px]" wire:key="skip-day-{{ $day }}">
+                            <input type="checkbox" wire:model="disconnectionSkipDays" value="{{ $day }}" @disabled(! $canEdit)>
+                            {{ $label }}
+                        </label>
+                    @endforeach
+                </div>
+                @error('disconnectionSkipDays') <p class="form-error" role="alert">{{ $message }}</p> @enderror
+                @error('disconnectionSkipDays.*') <p class="form-error" role="alert">{{ $message }}</p> @enderror
+            </fieldset>
+        </div>
+    </fieldset>
+
     @if ($canEdit)
         <div class="mt-4 flex justify-end">
             <button type="submit" class="form-button w-full md:w-[88px]" wire:loading.attr="disabled" wire:target="save">

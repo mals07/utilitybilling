@@ -76,6 +76,7 @@ final class WorkOrderRules
             $type === WorkOrderType::NewInstallation && $customer->status !== CustomerStatus::Pending => 'customer is not pending',
             $type === WorkOrderType::Disconnection && $customer->status !== CustomerStatus::Connected => 'customer is not connected',
             $type === WorkOrderType::Reconnection && $customer->status !== CustomerStatus::Disconnected => 'customer is not disconnected',
+            $type === WorkOrderType::Reconnection && ($overdue = Disconnections::overdueCount($customer)) > 0 => "customer still has {$overdue} overdue bill(s) to pay",
             $type->needsMeter() && ! $customer->hasMeter() => 'customer has no meter yet',
             default => null,
         };

@@ -37,6 +37,10 @@ class OperationSettingsForm extends Component
      */
     public const MAX_DUE_DATE_DAYS = 365;
 
+    public const MAX_DISCONNECTION_OVERDUE_BILLS = 24;
+
+    public const MAX_DISCONNECTION_NOTICE_DAYS = 60;
+
     /**
      * Optional text fields: property => label used in messages.
      */
@@ -91,6 +95,17 @@ class OperationSettingsForm extends Component
 
     public bool $reviewZeroUsage = true;
 
+    public string $disconnectionOverdueBills = '2';
+
+    public string $disconnectionNoticeDays = '5';
+
+    /**
+     * ISO weekdays (as strings) not counted as working days for a notice's deadline.
+     *
+     * @var list<string>
+     */
+    public array $disconnectionSkipDays = ['6', '7'];
+
     protected function page(): Page
     {
         return Page::CompanySetup;
@@ -117,6 +132,9 @@ class OperationSettingsForm extends Component
         $this->taxOnSurcharges = (bool) $company->tax_on_surcharges;
         $this->reviewUsageMultiplier = (string) ($company->review_usage_multiplier ?? '2.0');
         $this->reviewZeroUsage = (bool) ($company->review_zero_usage ?? true);
+        $this->disconnectionOverdueBills = (string) ($company->disconnection_overdue_bills ?? 2);
+        $this->disconnectionNoticeDays = (string) ($company->disconnection_notice_days ?? 5);
+        $this->disconnectionSkipDays = array_map('strval', $company->disconnectionSkipDays());
     }
 
     /**
@@ -140,6 +158,8 @@ class OperationSettingsForm extends Component
         $this->taxName = trim($this->taxName);
         $this->taxRate = trim($this->taxRate);
         $this->reviewUsageMultiplier = trim($this->reviewUsageMultiplier);
+        $this->disconnectionOverdueBills = trim($this->disconnectionOverdueBills);
+        $this->disconnectionNoticeDays = trim($this->disconnectionNoticeDays);
 
         $rules = [
             'dueDateDays' => ['bail', 'required', 'regex:/^\d+$/', 'integer', 'max:'.self::MAX_DUE_DATE_DAYS],
@@ -172,7 +192,20 @@ class OperationSettingsForm extends Component
             'reviewUsageMultiplier.regex' => 'Enter a number such as 2 or 2.5 (0 turns it off).',
             'reviewUsageMultiplier.numeric' => 'Enter a number such as 2 or 2.5 (0 turns it off).',
             'reviewUsageMultiplier.min' => 'Enter a number such as 2 or 2.5 (0 turns it off).',
+            'disconnectionOverdueBills.required' => 'Enter how many overdue bills flag a customer for disconnection.',
+            'disconnectionNoticeDays.required' => 'Enter how many working days a notice gives the customer to pay.',
+            'disconnectionSkipDays.max' => 'Leave at least one working day in the week.',
+            'disconnectionSkipDays.*.in' => 'Choose days of the week from the list.',
         ];
+        $rules['disconnectionOverdueBills'] = ['bail', 'required', 'regex:/^\d+$/', 'integer', 'min:1', 'max:'.self::MAX_DISCONNECTION_OVERDUE_BILLS];
+        $rules['disconnectionNoticeDays'] = ['bail', 'required', 'regex:/^\d+$/', 'integer', 'min:1', 'max:'.self::MAX_DISCONNECTION_NOTICE_DAYS];
+        $rules['disconnectionSkipDays'] = ['array', 'max:6'];
+        $rules['disconnectionSkipDays.*'] = [Rule::in(['1', '2', '3', '4', '5', '6', '7'])];
+        foreach (['regex', 'integer', 'min', 'max'] as $rule) {
+            $messages["disconnectionOverdueBills.{$rule}"] = 'Enter a whole number of overdue bills from 1 to '.self::MAX_DISCONNECTION_OVERDUE_BILLS.'.';
+            $messages["disconnectionNoticeDays.{$rule}"] = 'Enter a whole number of working days from 1 to '.self::MAX_DISCONNECTION_NOTICE_DAYS.'.';
+        }
+
         foreach (self::TEXT_FIELDS as $field => $label) {
             $rules[$field] = ['nullable', 'max:255'];
             $messages["{$field}.max"] = "The {$label} must not be greater than 255 characters.";
@@ -193,6 +226,9 @@ class OperationSettingsForm extends Component
             'tax_on_surcharges' => $this->taxOnSurcharges,
             'review_usage_multiplier' => $this->reviewUsageMultiplier,
             'review_zero_usage' => $this->reviewZeroUsage,
+            'disconnection_overdue_bills' => (int) $this->disconnectionOverdueBills,
+            'disconnection_notice_days' => (int) $this->disconnectionNoticeDays,
+            'disconnection_skip_days' => collect($this->disconnectionSkipDays)->map(fn (string $day): int => (int) $day)->unique()->sort()->implode(','),
         ];
         foreach (array_keys(self::TEXT_FIELDS) as $field) {
             $attributes[self::column($field)] = $this->{$field} === '' ? null : $this->{$field};

@@ -632,7 +632,10 @@
 
     /* --------------------------------- Tables -------------------------------- */
 
+    /* Positioned so absolutely placed children (e.g. sr-only header labels) stay
+       inside the scroll box instead of widening the page on narrow screens. */
     .table-scroller {
+        position: relative;
         overflow-x: auto;
     }
 
@@ -1155,5 +1158,58 @@
     .map-pin {
         background: none;
         border: 0;
+    }
+
+    /* ------------------------------ Onboarding tour ----------------------------- */
+
+    .tour-card {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        left: 16px;
+        z-index: 55;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+        border: 1px solid var(--color-table-line);
+        border-radius: var(--radius);
+        background: var(--color-card);
+        box-shadow: var(--shadow-dialog);
+    }
+
+    @media (min-width: 640px) {
+        .tour-card {
+            left: auto;
+            width: 420px;
+        }
+    }
+
+    .tour-image {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        object-position: top left;
+        border-bottom: 1px solid var(--color-table-line);
+        background: var(--color-panel);
+    }
+
+    /* The sidebar link the current tour stop is about */
+    [data-tour-active] {
+        outline: 2px solid var(--color-button);
+        outline-offset: -2px;
+        background: var(--color-hover);
+        animation: tour-pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes tour-pulse {
+        50% {
+            outline-color: transparent;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        [data-tour-active] {
+            animation: none;
+        }
     }
 }

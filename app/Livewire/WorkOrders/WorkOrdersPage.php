@@ -15,6 +15,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderFee;
+use App\Support\Disconnections;
 use App\Support\ImageType;
 use App\Support\WorkOrderCompletion;
 use App\Support\WorkOrderRules;
@@ -692,6 +693,7 @@ class WorkOrdersPage extends Component
         } elseif ($this->reasonFor === 'cancel') {
             $order->update(['status' => WorkOrderStatus::Cancelled, 'hold_reason' => null, 'cancel_reason' => $reason]);
             $order->log($this->user(), 'cancelled', "Cancelled: {$reason}");
+            Disconnections::workOrderCancelled($order, $reason, $this->user());
             $message = "Work order {$order->order_number} was cancelled.";
         } else {
             return;

@@ -15,6 +15,7 @@ enum Page: string
     case MeterReadings = 'meter-readings';
     case Invoices = 'invoices';
     case Payments = 'payments';
+    case Disconnections = 'disconnections';
     case CompanySetup = 'company';
     case Rates = 'rates';
     case Charges = 'charges';
@@ -29,6 +30,7 @@ enum Page: string
             self::MeterReadings => 'Meter Readings',
             self::Invoices => 'Invoices',
             self::Payments => 'Payments',
+            self::Disconnections => 'Disconnections',
             self::CompanySetup => 'Company Setup',
             self::Rates => 'Rates',
             self::Charges => 'Charges',
@@ -42,7 +44,7 @@ enum Page: string
      */
     public function group(): string
     {
-        return in_array($this, [self::Customers, self::WorkOrders, self::MeterReadings, self::Invoices, self::Payments], true) ? 'main' : 'settings';
+        return in_array($this, [self::Customers, self::WorkOrders, self::MeterReadings, self::Invoices, self::Payments, self::Disconnections], true) ? 'main' : 'settings';
     }
 
     /**

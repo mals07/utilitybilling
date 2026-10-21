@@ -27,4 +27,6 @@
             </a>
         @endif
     </section>
+
+    <livewire:onboarding.getting-started />
 </x-page>

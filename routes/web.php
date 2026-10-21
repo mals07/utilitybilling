@@ -3,6 +3,7 @@
 use App\Enums\Page;
 use App\Http\Controllers\CompanyAssetController;
 use App\Http\Controllers\CustomerPhotoController;
+use App\Http\Controllers\DisconnectionNoticePrintController;
 use App\Http\Controllers\InvoicePrintController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\MemoPrintController;
@@ -20,6 +21,7 @@ use App\Livewire\Charges\ChargesPage;
 use App\Livewire\Company\CompanyPage;
 use App\Livewire\Customers\CustomersPage;
 use App\Livewire\Dashboard;
+use App\Livewire\Disconnections\DisconnectionsPage;
 use App\Livewire\Invoices\GenerateBillsPage;
 use App\Livewire\Invoices\InvoicesPage;
 use App\Livewire\MeterReadings\MeterReadingsPage;
@@ -77,6 +79,10 @@ Route::middleware(['auth', 'verified.email'])->group(function () {
             ->whereNumber('payment')
             ->middleware('page:'.Page::Payments->value)
             ->name('payments.receipt');
+        Route::livewire('/disconnections', DisconnectionsPage::class)->middleware('page:'.Page::Disconnections->value)->name('disconnections');
+        Route::get('/disconnections/notices/print', DisconnectionNoticePrintController::class)
+            ->middleware('page:'.Page::Disconnections->value)
+            ->name('disconnections.print');
         Route::get('/customers/{customer}/statement', StatementController::class)
             ->whereNumber('customer')
             ->name('customers.statement');

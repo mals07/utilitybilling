@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'work_order_assignee_role_id', 'overdue_handling',
     'tax_enabled', 'tax_name', 'tax_rate', 'tax_inclusive', 'tax_on_water', 'tax_on_fees', 'tax_on_surcharges',
     'review_usage_multiplier', 'review_zero_usage',
+    'disconnection_overdue_bills', 'disconnection_notice_days', 'disconnection_skip_days',
 ])]
 class Company extends Model
 {
@@ -58,6 +59,8 @@ class Company extends Model
             'tax_on_surcharges' => 'boolean',
             'review_usage_multiplier' => 'decimal:1',
             'review_zero_usage' => 'boolean',
+            'disconnection_overdue_bills' => 'integer',
+            'disconnection_notice_days' => 'integer',
         ];
     }
 
@@ -215,6 +218,26 @@ class Company extends Model
     public function workOrderFees(): HasMany
     {
         return $this->hasMany(WorkOrderFee::class);
+    }
+
+    /**
+     * @return HasMany<DisconnectionNotice, $this>
+     */
+    public function disconnectionNotices(): HasMany
+    {
+        return $this->hasMany(DisconnectionNotice::class);
+    }
+
+    /**
+     * ISO weekdays (1 = Monday … 7 = Sunday) that don't count as working days for a notice's deadline.
+     *
+     * @return list<int>
+     */
+    public function disconnectionSkipDays(): array
+    {
+        $days = array_map('intval', array_filter(explode(',', (string) $this->disconnection_skip_days), 'is_numeric'));
+
+        return array_values(array_unique(array_filter($days, fn (int $day): bool => $day >= 1 && $day <= 7)));
     }
 
     /**

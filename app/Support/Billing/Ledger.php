@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\PaymentAllocation;
 use App\Models\User;
 use App\Models\WorkOrder;
+use App\Support\Disconnections;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
@@ -35,6 +36,8 @@ final class Ledger
                 ->get();
 
             if ($payments->isEmpty()) {
+                Disconnections::review($customer);
+
                 return;
             }
 
@@ -62,6 +65,9 @@ final class Ledger
 
                 self::refresh($invoice);
             }
+
+            // Paying the overdue bills settles a notice of disconnection.
+            Disconnections::review($customer);
         });
     }
 

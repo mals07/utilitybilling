@@ -101,6 +101,7 @@
                             <a
                                 href="{{ route('dashboard') }}"
                                 class="nav-item"
+                                data-tour="dashboard"
                                 @if (request()->routeIs('dashboard')) aria-current="page" @endif
                                 x-bind:title="collapsed ? 'Dashboard' : null"
                             >
@@ -112,10 +113,11 @@
                                 <a
                                     href="{{ route($page->value) }}"
                                     class="nav-item"
+                                    data-tour="{{ $page->value }}"
                                     @if (request()->routeIs($page->value)) aria-current="page" @endif
                                     x-bind:title="collapsed ? @js($page->label()) : null"
                                 >
-                                    <x-icon :name="match ($page) { Page::Customers => 'user', Page::WorkOrders => 'stack', Page::MeterReadings => 'gauge', Page::Invoices => 'receipt', Page::Payments => 'cash', default => 'home' }" />
+                                    <x-icon :name="match ($page) { Page::Customers => 'user', Page::WorkOrders => 'stack', Page::MeterReadings => 'gauge', Page::Invoices => 'receipt', Page::Payments => 'cash', Page::Disconnections => 'warning', default => 'home' }" />
                                     <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">{{ $page->label() }}</span>
                                 </a>
                             @endforeach
@@ -125,6 +127,7 @@
                                     <button
                                         type="button"
                                         class="nav-item"
+                                        data-tour="settings"
                                         data-active="{{ $settingsActive ? 'true' : 'false' }}"
                                         x-bind:aria-expanded="settingsOpen.toString()"
                                         aria-controls="sidebar-group-settings"
@@ -154,6 +157,19 @@
                         <div class="border-t border-line px-3 py-4 lg:sidebar-collapsed:px-2">
                             <p class="truncate px-2 text-xs font-medium text-label lg:sidebar-collapsed:sr-only">{{ $user->name }}</p>
 
+                            @if ($company)
+                                <button
+                                    type="button"
+                                    data-tour="tour"
+                                    x-bind:title="collapsed ? 'Take the tour' : null"
+                                    x-on:click="mobileOpen = false; $dispatch('start-tour')"
+                                    class="mt-2 flex h-9 w-full items-center gap-3 rounded-xs px-2 text-sm text-ink-soft hover:bg-hover hover:text-ink-strong lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0"
+                                >
+                                    <x-icon name="document" />
+                                    <span class="lg:sidebar-collapsed:sr-only">Take the tour</span>
+                                </button>
+                            @endif
+
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button
@@ -169,11 +185,15 @@
                     </div>
                 </aside>
 
-                <main class="min-w-0 flex-1">
+                <main class="min-w-0 flex-1 overflow-x-clip">
                     {{ $slot }}
                 </main>
             </div>
         </div>
+
+        @if ($company)
+            <livewire:onboarding.tour />
+        @endif
 
         @livewireScripts
     </body>

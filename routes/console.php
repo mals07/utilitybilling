@@ -3,6 +3,7 @@
 use App\Enums\OverdueHandling;
 use App\Models\Company;
 use App\Support\Billing\Surcharges;
+use App\Support\Disconnections;
 use App\Support\Format;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -40,3 +41,13 @@ Artisan::command('invoices:surcharge-overdue', function () {
 })->purpose('Add after-due charges to overdue invoices, for companies that surcharge the invoice itself');
 
 Schedule::command('invoices:surcharge-overdue')->dailyAt('00:30');
+
+Artisan::command('disconnections:review', function () {
+    $total = 0;
+    foreach (Company::query()->get() as $company) {
+        $total += Disconnections::reviewAll($company);
+    }
+    $this->info("Closed {$total} disconnection notice(s) that no longer apply.");
+})->purpose('Settle or cancel notices of disconnection whose customers have paid or are no longer connected');
+
+Schedule::command('disconnections:review')->dailyAt('00:45');

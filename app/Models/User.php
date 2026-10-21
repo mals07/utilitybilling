@@ -20,6 +20,7 @@ use Illuminate\Support\Str;
 #[Fillable([
     'name', 'first_name', 'last_name', 'email', 'username', 'password', 'email_verified_at', 'is_admin',
     'role_id', 'company_id', 'department_id', 'invited_at', 'last_login_at', 'deactivated_at',
+    'tour_completed_at', 'getting_started_dismissed_at',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -44,6 +45,8 @@ class User extends Authenticatable
             'invited_at' => 'datetime',
             'last_login_at' => 'datetime',
             'deactivated_at' => 'datetime',
+            'tour_completed_at' => 'datetime',
+            'getting_started_dismissed_at' => 'datetime',
             'is_admin' => 'boolean',
             'password' => 'hashed',
         ];

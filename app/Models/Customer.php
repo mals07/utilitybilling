@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'company_id', 'account_number', 'first_name', 'last_name', 'company_name', 'email', 'phone_number', 'status',
+    'disconnection_exempt_reason', 'disconnection_exempt_until', 'disconnection_exempted_by_id',
     'account_type_id', 'charge_type_id', 'meter_type_id', 'rate_type_id', 'cluster_type_id',
     'meter_number', 'meter_serial_number', 'meter_installed_on',
     'home_address', 'home_city_id', 'home_province_id', 'home_country_id', 'home_zip_code',
@@ -42,6 +43,7 @@ class Customer extends Model
             'latitude' => 'float',
             'longitude' => 'float',
             'meter_installed_on' => 'date',
+            'disconnection_exempt_until' => 'date',
         ];
     }
 
@@ -83,6 +85,33 @@ class Customer extends Model
     public function meterReadings(): HasMany
     {
         return $this->hasMany(MeterReading::class);
+    }
+
+    /**
+     * @return HasMany<DisconnectionNotice, $this>
+     */
+    public function disconnectionNotices(): HasMany
+    {
+        return $this->hasMany(DisconnectionNotice::class);
+    }
+
+    /**
+     * Who marked the customer exempt from disconnection.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function disconnectionExemptedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'disconnection_exempted_by_id');
+    }
+
+    /**
+     * Exempt from disconnection for non-payment on the given day ("YYYY-MM-DD" in the company's time zone).
+     */
+    public function isExemptFromDisconnection(string $today): bool
+    {
+        return $this->disconnection_exempt_reason !== null
+            && ($this->disconnection_exempt_until === null || $this->disconnection_exempt_until->toDateString() >= $today);
     }
 
     /**

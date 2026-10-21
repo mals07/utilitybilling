@@ -276,6 +276,9 @@ final class WorkOrderCompletion
             if ($reason = WorkOrderRules::whyNot($order->order_type, $customer, $order->id)) {
                 throw new DomainException("This order can't be completed: {$reason}.");
             }
+            if ($order->order_type === WorkOrderType::Disconnection && ($reason = Disconnections::whyNotComplete($order, $customer))) {
+                throw new DomainException("This order can't be completed: {$reason}.");
+            }
 
             $type = $order->order_type;
             $fields = $data['fields'];
@@ -362,6 +365,9 @@ final class WorkOrderCompletion
                 $description .= ' '.count($photos).' photo'.(count($photos) === 1 ? '' : 's').' added.';
             }
             $order->log($actor, 'completed', $description);
+            if ($type === WorkOrderType::Disconnection) {
+                Disconnections::workOrderCompleted($order, $actor);
+            }
 
             if ($followUp = self::followUp($type, $fields)) {
                 $notes[] = self::createFollowUp($order, $customer, $followUp[0], $followUp[1], $actor);
