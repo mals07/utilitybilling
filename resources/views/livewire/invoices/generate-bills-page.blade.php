@@ -14,13 +14,13 @@
 
         <div class="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-                <label for="bill-period" class="mb-1 block text-xs font-semibold text-ink-strong">Billing month</label>
-                <input id="bill-period" type="month" max="{{ substr($today, 0, 7) }}" wire:model.live="period" class="form-control !h-[34px] !text-[13px]" @error('period') aria-invalid="true" @enderror>
+                <label for="bill-period" class="mb-1 block text-xs font-semibold text-ink-strong">Billing month<x-required-mark /></label>
+                <input id="bill-period" aria-required="true" type="month" max="{{ substr($today, 0, 7) }}" wire:model.live="period" class="form-control !h-[34px] !text-[13px]" @error('period') aria-invalid="true" @enderror>
                 @error('period') <p class="form-error" role="alert">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="bill-invoice-date" class="mb-1 block text-xs font-semibold text-ink-strong">Invoice date</label>
-                <input id="bill-invoice-date" type="date" max="{{ $today }}" wire:model.live="invoiceDate" class="form-control !h-[34px] !text-[13px]" @error('invoiceDate') aria-invalid="true" @enderror>
+                <label for="bill-invoice-date" class="mb-1 block text-xs font-semibold text-ink-strong">Invoice date<x-required-mark /></label>
+                <input id="bill-invoice-date" aria-required="true" type="date" max="{{ $today }}" wire:model.live="invoiceDate" class="form-control !h-[34px] !text-[13px]" @error('invoiceDate') aria-invalid="true" @enderror>
                 @error('invoiceDate')
                     <p class="form-error" role="alert">{{ $message }}</p>
                 @else

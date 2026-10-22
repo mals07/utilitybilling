@@ -24,12 +24,12 @@
             </p>
             <div class="flex flex-wrap items-end gap-2">
                 <div>
-                    <label for="mr-period" class="mb-1 block text-xs font-semibold text-ink-strong">Billing month</label>
-                    <input id="mr-period" type="month" max="{{ substr($today, 0, 7) }}" wire:model.live="period" class="form-control form-control-sm w-40 !text-[13px]">
+                    <label for="mr-period" class="mb-1 block text-xs font-semibold text-ink-strong">Billing month<x-required-mark /></label>
+                    <input id="mr-period" aria-required="true" type="month" max="{{ substr($today, 0, 7) }}" wire:model.live="period" class="form-control form-control-sm w-40 !text-[13px]">
                 </div>
                 <div>
-                    <label for="mr-read-on" class="mb-1 block text-xs font-semibold text-ink-strong">Read on</label>
-                    <input id="mr-read-on" type="date" max="{{ $today }}" wire:model.blur="readOn" class="form-control form-control-sm w-40 !text-[13px]">
+                    <label for="mr-read-on" class="mb-1 block text-xs font-semibold text-ink-strong">Read on<x-required-mark /></label>
+                    <input id="mr-read-on" aria-required="true" type="date" max="{{ $today }}" wire:model.blur="readOn" class="form-control form-control-sm w-40 !text-[13px]">
                 </div>
                 <div>
                     <label for="mr-cluster" class="mb-1 block text-xs font-semibold text-ink-strong">Cluster</label>

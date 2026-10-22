@@ -154,8 +154,8 @@
             <form wire:submit="exempt" novalidate class="mt-4 grid gap-3 rounded-md border border-table-line bg-panel px-4 py-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_auto] md:items-start">
                 @include('livewire.partials.customer-search', ['fieldId' => 'exempt-customer', 'label' => 'Exempt a customer'])
                 <div>
-                    <label for="exempt-reason" class="mb-1 block text-xs font-semibold text-ink-strong">Reason</label>
-                    <input id="exempt-reason" type="text" maxlength="200" wire:model="exemptReason" placeholder="e.g. Hospital, Government" class="form-control !h-[34px] !text-[13px]" @error('exemptReason') aria-invalid="true" aria-describedby="exempt-reason-error" @enderror>
+                    <label for="exempt-reason" class="mb-1 block text-xs font-semibold text-ink-strong">Reason<x-required-mark /></label>
+                    <input id="exempt-reason" aria-required="true" type="text" maxlength="200" wire:model="exemptReason" placeholder="e.g. Hospital, Government" class="form-control !h-[34px] !text-[13px]" @error('exemptReason') aria-invalid="true" aria-describedby="exempt-reason-error" @enderror>
                     @error('exemptReason') <p id="exempt-reason-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                 </div>
                 <div>
@@ -328,8 +328,8 @@
                         Work order <span class="font-semibold">{{ $cancelling->workOrder->order_number }}</span> will be cancelled too.
                     @endif
                 </p>
-                <label for="cancel-reason" class="mt-3 block text-xs font-semibold text-ink-strong">Why?</label>
-                <textarea id="cancel-reason" wire:model="cancelReason" rows="2" maxlength="200" class="form-control mt-1 !text-[13px]" placeholder="e.g. Promised to pay on Friday" @error('cancelReason') aria-invalid="true" aria-describedby="cancel-reason-error" @enderror></textarea>
+                <label for="cancel-reason" class="mt-3 block text-xs font-semibold text-ink-strong">Why?<x-required-mark /></label>
+                <textarea id="cancel-reason" aria-required="true" wire:model="cancelReason" rows="2" maxlength="200" class="form-control mt-1 !text-[13px]" placeholder="e.g. Promised to pay on Friday" @error('cancelReason') aria-invalid="true" aria-describedby="cancel-reason-error" @enderror></textarea>
                 @error('cancelReason') <p id="cancel-reason-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                 <div class="form-actions mt-4">
                     <button type="button" class="text-button" wire:click="closeCancel">Back</button>

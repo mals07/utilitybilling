@@ -1,11 +1,12 @@
 <div class="flex w-full flex-col items-center">
     <x-auth-card active-tab="signup">
         <form wire:submit="register" method="post" novalidate class="flex flex-col gap-[18px]">
-            <x-text-field label="Full Name" id="name" wire:model="name" autocomplete="name" autofocus :error="$errors->first('name')" />
-            <x-text-field label="Email Address" id="email" type="email" wire:model="email" autocomplete="email" :error="$errors->first('email')" />
+            <x-text-field label="Full Name" id="name" required wire:model="name" autocomplete="name" autofocus :error="$errors->first('name')" />
+            <x-text-field label="Email Address" id="email" required type="email" wire:model="email" autocomplete="email" :error="$errors->first('email')" />
             <x-text-field
                 label="Password"
                 id="password"
+                required
                 type="password"
                 wire:model="password"
                 autocomplete="new-password"
@@ -17,6 +18,7 @@
             <x-text-field
                 label="Confirm Password"
                 id="confirm-password"
+                required
                 type="password"
                 wire:model="confirmPassword"
                 autocomplete="new-password"

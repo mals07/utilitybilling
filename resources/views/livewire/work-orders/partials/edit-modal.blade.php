@@ -70,10 +70,11 @@
     <x-modal :title="$reasonFor === 'hold' ? 'Put Work Order On Hold' : 'Cancel Work Order'" close="$wire.closeReason()" width="sm">
         <form wire:submit="confirmReason" class="mt-3" novalidate>
             <label for="work-order-reason" class="mb-1 block text-xs font-semibold text-ink-strong">
-                {{ $reasonFor === 'hold' ? 'Why is it on hold?' : 'Why is it being cancelled?' }}
+                {{ $reasonFor === 'hold' ? 'Why is it on hold?' : 'Why is it being cancelled?' }}<x-required-mark />
             </label>
             <textarea
                 id="work-order-reason"
+                aria-required="true"
                 wire:model="reason"
                 rows="3"
                 maxlength="255"

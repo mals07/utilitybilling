@@ -62,10 +62,11 @@
                 x-on:focusout="if (! $el.contains($event.relatedTarget)) open = false"
             >
                 <div class="flex h-11 min-w-0 flex-col justify-center border border-table-line bg-card px-2 focus-within:border-line-focus">
-                    <label for="setup-element" class="text-[10px] text-label">Charge Element</label>
+                    <label for="setup-element" class="text-[10px] text-label">Charge Element<x-required-mark /></label>
                     <div class="flex items-center">
                         <input
                             id="setup-element"
+                            aria-required="true"
                             type="text"
                             role="combobox"
                             autocomplete="off"
@@ -124,7 +125,7 @@
             </fieldset>
 
             <div class="flex h-11 w-28 min-w-0 flex-col justify-center border border-table-line bg-card px-2 focus-within:border-line-focus">
-                <label for="setup-value" class="text-[10px] text-label" wire:ignore x-data x-text="$wire.setupValueType === 'percentage' ? 'Value (%)' : 'Value'">Value</label>
+                <label for="setup-value" class="text-[10px] text-label"><span wire:ignore x-data x-text="$wire.setupValueType === 'percentage' ? 'Value (%)' : 'Value'">Value</span><x-required-mark /></label>
                 <input
                     id="setup-value"
                     type="number"
@@ -132,6 +133,7 @@
                     step="0.01"
                     inputmode="decimal"
                     wire:model="setupValue"
+                    aria-required="true"
                     placeholder="0.00"
                     @error('setupValue') aria-invalid="true" @enderror
                     class="h-5 w-full border-0 bg-transparent p-0 text-right text-sm text-ink focus:outline-none"

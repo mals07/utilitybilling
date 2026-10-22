@@ -33,17 +33,17 @@
                 '[&_input:not([aria-invalid=true]):not(:focus)]:border-transparent [&_input:not([aria-invalid=true]):not(:focus)]:bg-panel' => $updating,
             ])>
                 <div>
-                    <label for="user-first-name" class="form-label">First Name</label>
+                    <label for="user-first-name" class="form-label">First Name<x-required-mark /></label>
                     <input id="user-first-name" type="text" wire:model="firstName" autocomplete="off" aria-required="true" autofocus class="form-control" aria-invalid="{{ $invalid('firstName') }}">
                     @error('firstName') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label for="user-last-name" class="form-label">Last Name</label>
+                    <label for="user-last-name" class="form-label">Last Name<x-required-mark /></label>
                     <input id="user-last-name" type="text" wire:model="lastName" autocomplete="off" aria-required="true" class="form-control" aria-invalid="{{ $invalid('lastName') }}">
                     @error('lastName') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label for="user-email" class="form-label">Email Address</label>
+                    <label for="user-email" class="form-label">Email Address<x-required-mark /></label>
                     <input
                         id="user-email"
                         type="email"
@@ -76,7 +76,7 @@
                 <section aria-label="Access">
                     <h3 class="mb-2 text-xs font-bold text-ink italic">Role Access</h3>
                     <label class="float">
-                        <span class="float-label">Main User Role</span>
+                        <span class="float-label">Main User Role<x-required-mark /></span>
                         <select wire:model.live="roleId" aria-required="true" class="float-control chevron-select" aria-invalid="{{ $invalid('roleId') }}">
                             <option value=""></option>
                             @foreach ($this->roles as $roleOption)
@@ -93,8 +93,8 @@
                     @unless ($readOnly)
                         <div class="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]">
                             <label class="float">
-                                <span class="float-label">Pages/Forms</span>
-                                <select wire:model="accessPage" @disabled(! $chosenRole) class="float-control chevron-select" aria-invalid="{{ $invalid('accessPage') }}">
+                                <span class="float-label">Pages/Forms<x-required-mark /></span>
+                                <select wire:model="accessPage" aria-required="true" @disabled(! $chosenRole) class="float-control chevron-select" aria-invalid="{{ $invalid('accessPage') }}">
                                     <option value=""></option>
                                     @foreach ($specialPages as $page)
                                         <option value="{{ $page->value }}">{{ $page->label() }}</option>
@@ -102,12 +102,12 @@
                                 </select>
                             </label>
                             <label class="float">
-                                <span class="float-label">Start Date</span>
-                                <input type="date" wire:model="startDate" min="{{ $today }}" @disabled(! $chosenRole) class="float-control" aria-invalid="{{ $invalid('startDate') }}">
+                                <span class="float-label">Start Date<x-required-mark /></span>
+                                <input type="date" wire:model="startDate" aria-required="true" min="{{ $today }}" @disabled(! $chosenRole) class="float-control" aria-invalid="{{ $invalid('startDate') }}">
                             </label>
                             <label class="float">
-                                <span class="float-label">End Date</span>
-                                <input type="date" wire:model="endDate" min="{{ $startDate ?: $today }}" @disabled(! $chosenRole) class="float-control" aria-invalid="{{ $invalid('endDate') }}">
+                                <span class="float-label">End Date<x-required-mark /></span>
+                                <input type="date" wire:model="endDate" aria-required="true" min="{{ $startDate ?: $today }}" @disabled(! $chosenRole) class="float-control" aria-invalid="{{ $invalid('endDate') }}">
                             </label>
                         </div>
                         @unless ($chosenRole)

@@ -402,6 +402,11 @@
         font-size: 12px;
     }
 
+    .required-mark {
+        margin-left: 2px;
+        color: var(--color-danger);
+    }
+
     .form-actions {
         display: flex;
         align-items: center;

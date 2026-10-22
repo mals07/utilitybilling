@@ -16,7 +16,7 @@
             @if ($access['add'])
                 <form wire:submit="addRole" novalidate>
                     <div>
-                        <label for="role-name" class="form-label">Role Name</label>
+                        <label for="role-name" class="form-label">Role Name<x-required-mark /></label>
                         <input
                             id="role-name"
                             type="text"
@@ -121,7 +121,7 @@
                 <form wire:submit="saveFormAccess" novalidate class="mt-3">
                     <fieldset @disabled(! $selected) class="m-0 flex min-w-0 flex-wrap items-center justify-between gap-x-6 gap-y-3 border-0 p-0 disabled:opacity-60">
                         <div class="relative w-full sm:w-44">
-                            <label for="access-page" class="pointer-events-none absolute top-1 left-2 text-[10px] text-label">Pages/Forms</label>
+                            <label for="access-page" class="pointer-events-none absolute top-1 left-2 text-[10px] text-label">Pages/Forms<x-required-mark /></label>
                             <select
                                 id="access-page"
                                 wire:model="accessPage"

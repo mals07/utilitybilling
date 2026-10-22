@@ -63,7 +63,7 @@
             @php($preview = $panel['preview'])
             <form wire:submit="saveSelected(true)" class="rounded-md border border-table-line bg-panel p-3" novalidate>
                 <div class="flex items-baseline justify-between gap-2">
-                    <label for="mr-present" class="text-[11px] font-semibold text-ink-strong">{{ $reading ? 'Correct the present reading' : 'Present reading' }}</label>
+                    <label for="mr-present" class="text-[11px] font-semibold text-ink-strong">{{ $reading ? 'Correct the present reading' : 'Present reading' }}<x-required-mark /></label>
                     <span class="text-[11px] text-label">Previous {{ $panel['previous'] === null ? '—' : Format::quantity($panel['previous']) }}</span>
                 </div>
                 <input
@@ -73,6 +73,7 @@
                     maxlength="13"
                     autocomplete="off"
                     wire:model.live.debounce.400ms="presentInput"
+                    aria-required="true"
                     x-init="$nextTick(() => $el.focus())"
                     placeholder="{{ $reading?->present_reading !== null ? Format::quantity($reading->present_reading) : '0' }}"
                     class="form-control mt-1 !h-11 text-right !text-lg font-semibold tabular-nums"

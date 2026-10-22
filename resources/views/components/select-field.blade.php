@@ -5,15 +5,17 @@
     // [value => label]
     'options' => [],
     'error' => null,
+    'required' => false,
 ])
 
 @php($errorId = "{$id}-error")
 
 <div class="field">
-    <label for="{{ $id }}" class="field-label">{{ $label }}</label>
+    <label for="{{ $id }}" class="field-label">{{ $label }}@if ($required)<x-required-mark />@endif</label>
     <select
         id="{{ $id }}"
         class="field-control"
+        @if ($required) aria-required="true" @endif
         @if ($error) aria-invalid="true" aria-describedby="{{ $errorId }}" @endif
         {{ $attributes }}
     >

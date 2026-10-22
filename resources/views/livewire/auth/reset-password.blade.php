@@ -20,6 +20,7 @@
                 <x-text-field
                     label="New Password"
                     id="password"
+                    required
                     type="password"
                     wire:model="password"
                     autocomplete="new-password"
@@ -32,6 +33,7 @@
                 <x-text-field
                     label="Confirm New Password"
                     id="confirm-password"
+                    required
                     type="password"
                     wire:model="confirmPassword"
                     autocomplete="new-password"

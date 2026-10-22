@@ -1,7 +1,7 @@
 @php($id = "customer-{$key}")
 
 <div class="min-w-0">
-    <label for="{{ $id }}" class="mb-1 block text-xs font-medium text-ink">{{ $label }}</label>
+    <label for="{{ $id }}" class="mb-1 block text-xs font-medium text-ink">{{ $label }}@if ($required ?? true)<x-required-mark />@endif</label>
     <select
         id="{{ $id }}"
         wire:model{{ ($live ?? false) ? '.live' : '' }}="values.{{ $key }}"

@@ -21,7 +21,7 @@
         <div class="flex min-w-0 flex-col gap-2 md:col-span-2 lg:col-span-1">
             <div>
                 <label class="float">
-                    <span class="float-label">Default # of days for due date</span>
+                    <span class="float-label">Default # of days for due date<x-required-mark /></span>
                     <input
                         type="number"
                         min="0"
@@ -43,7 +43,7 @@
 
             <div>
                 <label class="float">
-                    <span class="float-label">Currency</span>
+                    <span class="float-label">Currency<x-required-mark /></span>
                     <select
                         wire:model="currency"
                         aria-required="true"
@@ -64,7 +64,7 @@
 
             <div>
                 <label class="float">
-                    <span class="float-label">Time Zone</span>
+                    <span class="float-label">Time Zone<x-required-mark /></span>
                     <select
                         wire:model="timezone"
                         aria-required="true"
@@ -99,15 +99,15 @@
             <div @class(['mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_140px]', 'opacity-60' => ! $taxEnabled])>
                 <div>
                     <label class="float">
-                        <span class="float-label">Tax name (shown on the bill)</span>
-                        <input type="text" wire:model="taxName" maxlength="30" placeholder=" " @disabled(! $canEdit || ! $taxEnabled) class="float-control" @error('taxName') aria-invalid="true" aria-describedby="ops-taxName-error" @enderror>
+                        <span class="float-label">Tax name (shown on the bill)<x-required-mark /></span>
+                        <input type="text" wire:model="taxName" maxlength="30" aria-required="true" placeholder=" " @disabled(! $canEdit || ! $taxEnabled) class="float-control" @error('taxName') aria-invalid="true" aria-describedby="ops-taxName-error" @enderror>
                     </label>
                     @error('taxName') <p id="ops-taxName-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="float">
-                        <span class="float-label">Rate (%)</span>
-                        <input type="text" inputmode="decimal" wire:model="taxRate" placeholder=" " @disabled(! $canEdit || ! $taxEnabled) class="float-control text-right" @error('taxRate') aria-invalid="true" aria-describedby="ops-taxRate-error" @enderror>
+                        <span class="float-label">Rate (%)<x-required-mark /></span>
+                        <input type="text" inputmode="decimal" wire:model="taxRate" aria-required="true" placeholder=" " @disabled(! $canEdit || ! $taxEnabled) class="float-control text-right" @error('taxRate') aria-invalid="true" aria-describedby="ops-taxRate-error" @enderror>
                     </label>
                     @error('taxRate') <p id="ops-taxRate-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                 </div>
@@ -115,7 +115,7 @@
 
             <div @class(['mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2', 'opacity-60' => ! $taxEnabled])>
                 <fieldset class="min-w-0">
-                    <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Your rates and charges are</legend>
+                    <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Your rates and charges are<x-required-mark /></legend>
                     <label class="check !text-[13px]">
                         <input type="radio" wire:model="taxMode" value="exclusive" @disabled(! $canEdit || ! $taxEnabled) class="check-square">
                         Before tax: add the tax on top
@@ -146,8 +146,8 @@
 
             <div class="mt-3">
                 <label class="float">
-                    <span class="float-label">Review when usage is above (× 3-month average)</span>
-                    <input type="text" inputmode="decimal" wire:model="reviewUsageMultiplier" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('reviewUsageMultiplier') aria-invalid="true" aria-describedby="ops-reviewUsageMultiplier-error" @enderror>
+                    <span class="float-label">Review when usage is above (× 3-month average)<x-required-mark /></span>
+                    <input type="text" inputmode="decimal" wire:model="reviewUsageMultiplier" aria-required="true" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('reviewUsageMultiplier') aria-invalid="true" aria-describedby="ops-reviewUsageMultiplier-error" @enderror>
                 </label>
                 @error('reviewUsageMultiplier')
                     <p id="ops-reviewUsageMultiplier-error" class="form-error" role="alert">{{ $message }}</p>
@@ -171,8 +171,8 @@
         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[200px_200px_minmax(0,1fr)]">
             <div>
                 <label class="float">
-                    <span class="float-label">Flag at # of overdue bills</span>
-                    <input type="number" min="1" max="{{ OperationSettingsForm::MAX_DISCONNECTION_OVERDUE_BILLS }}" step="1" inputmode="numeric" wire:model="disconnectionOverdueBills" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('disconnectionOverdueBills') aria-invalid="true" aria-describedby="ops-disconnectionOverdueBills-error" @enderror>
+                    <span class="float-label">Flag at # of overdue bills<x-required-mark /></span>
+                    <input type="number" min="1" max="{{ OperationSettingsForm::MAX_DISCONNECTION_OVERDUE_BILLS }}" step="1" inputmode="numeric" wire:model="disconnectionOverdueBills" aria-required="true" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('disconnectionOverdueBills') aria-invalid="true" aria-describedby="ops-disconnectionOverdueBills-error" @enderror>
                 </label>
                 @error('disconnectionOverdueBills')
                     <p id="ops-disconnectionOverdueBills-error" class="form-error" role="alert">{{ $message }}</p>
@@ -182,8 +182,8 @@
             </div>
             <div>
                 <label class="float">
-                    <span class="float-label">Notice gives # working days</span>
-                    <input type="number" min="1" max="{{ OperationSettingsForm::MAX_DISCONNECTION_NOTICE_DAYS }}" step="1" inputmode="numeric" wire:model="disconnectionNoticeDays" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('disconnectionNoticeDays') aria-invalid="true" aria-describedby="ops-disconnectionNoticeDays-error" @enderror>
+                    <span class="float-label">Notice gives # working days<x-required-mark /></span>
+                    <input type="number" min="1" max="{{ OperationSettingsForm::MAX_DISCONNECTION_NOTICE_DAYS }}" step="1" inputmode="numeric" wire:model="disconnectionNoticeDays" aria-required="true" placeholder=" " @disabled(! $canEdit) class="float-control text-right" @error('disconnectionNoticeDays') aria-invalid="true" aria-describedby="ops-disconnectionNoticeDays-error" @enderror>
                 </label>
                 @error('disconnectionNoticeDays')
                     <p id="ops-disconnectionNoticeDays-error" class="form-error" role="alert">{{ $message }}</p>

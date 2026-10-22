@@ -14,6 +14,7 @@
             <x-text-field
                 label="Email Address"
                 id="email"
+                required
                 type="email"
                 wire:model="email"
                 autocomplete="email"

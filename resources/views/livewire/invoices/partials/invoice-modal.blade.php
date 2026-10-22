@@ -133,8 +133,8 @@
                     </div>
                     @if ($voidingMemoId === (string) $memo->id)
                         <form wire:submit="voidMemo" class="mt-2 rounded-xs border border-danger bg-danger-bg p-2" novalidate>
-                            <label for="void-memo-reason" class="block text-xs font-semibold text-danger">Why is {{ $memo->label() }} being voided?</label>
-                            <input id="void-memo-reason" type="text" maxlength="255" wire:model="memoVoidReason" class="form-control mt-1 !h-[32px] !text-[13px]" @error('memoVoidReason') aria-invalid="true" @enderror>
+                            <label for="void-memo-reason" class="block text-xs font-semibold text-danger">Why is {{ $memo->label() }} being voided?<x-required-mark /></label>
+                            <input id="void-memo-reason" aria-required="true" type="text" maxlength="255" wire:model="memoVoidReason" class="form-control mt-1 !h-[32px] !text-[13px]" @error('memoVoidReason') aria-invalid="true" @enderror>
                             @error('memoVoidReason') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                             <p class="mt-1 text-xs text-ink-soft">A reversing line puts the invoice back to its amount before the memo.</p>
                             <div class="form-actions mt-2">
@@ -190,8 +190,8 @@
                         </div>
                     @endif
                     <div>
-                        <label for="adjust-category" class="mb-1 block text-xs font-semibold text-ink-strong">Reason</label>
-                        <select id="adjust-category" wire:model="adjust.category" class="form-control !h-[34px] !text-[13px]" @error('adjust.category') aria-invalid="true" @enderror>
+                        <label for="adjust-category" class="mb-1 block text-xs font-semibold text-ink-strong">Reason<x-required-mark /></label>
+                        <select id="adjust-category" aria-required="true" wire:model="adjust.category" class="form-control !h-[34px] !text-[13px]" @error('adjust.category') aria-invalid="true" @enderror>
                             <option value="">Select</option>
                             @foreach ($adjustReasons as $value => $label)
                                 <option value="{{ $value }}" wire:key="reason-{{ $value }}">{{ $label }}</option>
@@ -201,12 +201,12 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label for="adjust-amount" class="mb-1 block text-xs font-semibold text-ink-strong">Amount</label>
-                            <input id="adjust-amount" type="text" inputmode="decimal" maxlength="14" placeholder="0.00" wire:model="adjust.amount" class="form-control !h-[34px] text-right !text-[13px]" @error('adjust.amount') aria-invalid="true" @enderror>
+                            <label for="adjust-amount" class="mb-1 block text-xs font-semibold text-ink-strong">Amount<x-required-mark /></label>
+                            <input id="adjust-amount" aria-required="true" type="text" inputmode="decimal" maxlength="14" placeholder="0.00" wire:model="adjust.amount" class="form-control !h-[34px] text-right !text-[13px]" @error('adjust.amount') aria-invalid="true" @enderror>
                         </div>
                         <div>
-                            <label for="adjust-date" class="mb-1 block text-xs font-semibold text-ink-strong">Memo date</label>
-                            <input id="adjust-date" type="date" max="{{ $today }}" wire:model="adjust.issuedOn" class="form-control !h-[34px] !text-[13px]" @error('adjust.issuedOn') aria-invalid="true" @enderror>
+                            <label for="adjust-date" class="mb-1 block text-xs font-semibold text-ink-strong">Memo date<x-required-mark /></label>
+                            <input id="adjust-date" aria-required="true" type="date" max="{{ $today }}" wire:model="adjust.issuedOn" class="form-control !h-[34px] !text-[13px]" @error('adjust.issuedOn') aria-invalid="true" @enderror>
                         </div>
                         @error('adjust.amount') <p class="form-error col-span-2" role="alert">{{ $message }}</p> @enderror
                         @error('adjust.issuedOn') <p class="form-error col-span-2" role="alert">{{ $message }}</p> @enderror
@@ -215,8 +215,8 @@
                         @endif
                     </div>
                     <div class="sm:col-span-2">
-                        <label for="adjust-reason" class="mb-1 block text-xs font-semibold text-ink-strong">Explanation</label>
-                        <textarea id="adjust-reason" rows="2" maxlength="500" wire:model="adjust.reason" placeholder="Printed on the memo, e.g. Reading was entered as 150 instead of 105." class="form-control !text-[13px]" @error('adjust.reason') aria-invalid="true" @enderror></textarea>
+                        <label for="adjust-reason" class="mb-1 block text-xs font-semibold text-ink-strong">Explanation<x-required-mark /></label>
+                        <textarea id="adjust-reason" aria-required="true" rows="2" maxlength="500" wire:model="adjust.reason" placeholder="Printed on the memo, e.g. Reading was entered as 150 instead of 105." class="form-control !text-[13px]" @error('adjust.reason') aria-invalid="true" @enderror></textarea>
                         @error('adjust.reason') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -233,8 +233,8 @@
 
     @if ($voiding)
         <form wire:submit="voidInvoice" class="mt-4 rounded-xs border border-danger bg-danger-bg p-3" novalidate>
-            <label for="void-invoice-reason" class="block text-xs font-semibold text-danger">Why is this invoice being voided?</label>
-            <textarea id="void-invoice-reason" wire:model="voidReason" rows="2" maxlength="255" class="form-control mt-1 !text-[13px]" placeholder="e.g. Wrong reading entered" @error('voidReason') aria-invalid="true" @enderror></textarea>
+            <label for="void-invoice-reason" class="block text-xs font-semibold text-danger">Why is this invoice being voided?<x-required-mark /></label>
+            <textarea id="void-invoice-reason" aria-required="true" wire:model="voidReason" rows="2" maxlength="255" class="form-control mt-1 !text-[13px]" placeholder="e.g. Wrong reading entered" @error('voidReason') aria-invalid="true" @enderror></textarea>
             @error('voidReason') <p class="form-error" role="alert">{{ $message }}</p> @enderror
             <p class="mt-2 text-xs text-ink-soft">
                 Voiding can't be undone. Payments applied to it become advance credit and go to the customer's other bills.

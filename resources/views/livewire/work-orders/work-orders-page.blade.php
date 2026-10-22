@@ -27,7 +27,7 @@
                         x-on:click.outside="open = false"
                         x-on:keydown.escape="if (open) { open = false; $event.stopPropagation(); }"
                     >
-                        <label for="work-order-account" class="mb-1 block text-xs font-semibold text-ink-strong">Account No.</label>
+                        <label for="work-order-account" class="mb-1 block text-xs font-semibold text-ink-strong">Account No.<x-required-mark /></label>
                         <div class="relative">
                             <input
                                 id="work-order-account"

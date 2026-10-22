@@ -22,18 +22,18 @@
 
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                            <label for="payment-amount" class="mb-1 block text-xs font-semibold text-ink-strong">Amount received</label>
-                            <input id="payment-amount" type="text" inputmode="decimal" maxlength="14" wire:model.live.debounce.400ms="amount" placeholder="0.00" class="form-control !h-[34px] text-right !text-[13px]" @error('amount') aria-invalid="true" aria-describedby="payment-amount-error" @enderror>
+                            <label for="payment-amount" class="mb-1 block text-xs font-semibold text-ink-strong">Amount received<x-required-mark /></label>
+                            <input id="payment-amount" aria-required="true" type="text" inputmode="decimal" maxlength="14" wire:model.live.debounce.400ms="amount" placeholder="0.00" class="form-control !h-[34px] text-right !text-[13px]" @error('amount') aria-invalid="true" aria-describedby="payment-amount-error" @enderror>
                             @error('amount') <p id="payment-amount-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="payment-date" class="mb-1 block text-xs font-semibold text-ink-strong">Date received</label>
-                            <input id="payment-date" type="date" max="{{ $today }}" wire:model="paidOn" class="form-control !h-[34px] !text-[13px]" @error('paidOn') aria-invalid="true" aria-describedby="payment-date-error" @enderror>
+                            <label for="payment-date" class="mb-1 block text-xs font-semibold text-ink-strong">Date received<x-required-mark /></label>
+                            <input id="payment-date" aria-required="true" type="date" max="{{ $today }}" wire:model="paidOn" class="form-control !h-[34px] !text-[13px]" @error('paidOn') aria-invalid="true" aria-describedby="payment-date-error" @enderror>
                             @error('paidOn') <p id="payment-date-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="payment-method" class="mb-1 block text-xs font-semibold text-ink-strong">Paid by</label>
-                            <select id="payment-method" wire:model.live="method" class="form-control !h-[34px] !text-[13px]" @error('method') aria-invalid="true" @enderror>
+                            <label for="payment-method" class="mb-1 block text-xs font-semibold text-ink-strong">Paid by<x-required-mark /></label>
+                            <select id="payment-method" aria-required="true" wire:model.live="method" class="form-control !h-[34px] !text-[13px]" @error('method') aria-invalid="true" @enderror>
                                 @foreach ($methods as $value => $label)
                                     <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
@@ -42,9 +42,9 @@
                         </div>
                         <div>
                             <label for="payment-reference" class="mb-1 block text-xs font-semibold text-ink-strong">
-                                Reference no.{{ $chosenMethod?->requiresReference() ? '' : ' (optional)' }}
+                                Reference no.@if ($chosenMethod?->requiresReference())<x-required-mark />@else{{ ' (optional)' }}@endif
                             </label>
-                            <input id="payment-reference" type="text" maxlength="100" wire:model="referenceNumber" placeholder="{{ $chosenMethod?->requiresReference() ? 'Check / transaction no.' : '' }}" class="form-control !h-[34px] !text-[13px]" @error('referenceNumber') aria-invalid="true" aria-describedby="payment-reference-error" @enderror>
+                            <input id="payment-reference" type="text" @if ($chosenMethod?->requiresReference()) aria-required="true" @endif maxlength="100" wire:model="referenceNumber" placeholder="{{ $chosenMethod?->requiresReference() ? 'Check / transaction no.' : '' }}" class="form-control !h-[34px] !text-[13px]" @error('referenceNumber') aria-invalid="true" aria-describedby="payment-reference-error" @enderror>
                             @error('referenceNumber') <p id="payment-reference-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div class="sm:col-span-2">
@@ -192,8 +192,8 @@
 
             @if ($voiding)
                 <form wire:submit="voidPayment" class="mt-4 rounded-xs border border-danger bg-danger-bg p-3" novalidate>
-                    <label for="void-payment-reason" class="block text-xs font-semibold text-danger">Why is this payment being voided?</label>
-                    <textarea id="void-payment-reason" wire:model="voidReason" rows="2" maxlength="255" class="form-control mt-1 !text-[13px]" placeholder="e.g. Recorded for the wrong customer" @error('voidReason') aria-invalid="true" @enderror></textarea>
+                    <label for="void-payment-reason" class="block text-xs font-semibold text-danger">Why is this payment being voided?<x-required-mark /></label>
+                    <textarea id="void-payment-reason" aria-required="true" wire:model="voidReason" rows="2" maxlength="255" class="form-control mt-1 !text-[13px]" placeholder="e.g. Recorded for the wrong customer" @error('voidReason') aria-invalid="true" @enderror></textarea>
                     @error('voidReason') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                     <p class="mt-2 text-xs text-ink-soft">Voiding can't be undone. The bills it paid become unpaid again.</p>
                     <div class="form-actions mt-3">

@@ -10,7 +10,7 @@
         <form wire:submit="add" novalidate>
             <div class="flex h-12 items-stretch">
                 <label class="float min-w-0 flex-1 rounded-r-none border-r-0">
-                    <span class="float-label">{{ $config->heading() }}</span>
+                    <span class="float-label">{{ $config->heading() }}<x-required-mark /></span>
                     <input
                         type="text"
                         wire:model="name"

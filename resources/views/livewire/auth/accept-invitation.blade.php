@@ -25,6 +25,7 @@
                 <x-text-field
                     label="Username"
                     id="username"
+                    required
                     wire:model="username"
                     autocomplete="username"
                     autocapitalize="none"
@@ -38,6 +39,7 @@
                 <x-text-field
                     label="Password"
                     id="password"
+                    required
                     type="password"
                     wire:model="password"
                     autocomplete="new-password"
@@ -49,6 +51,7 @@
                 <x-text-field
                     label="Confirm Password"
                     id="confirm-password"
+                    required
                     type="password"
                     wire:model="confirmPassword"
                     autocomplete="new-password"

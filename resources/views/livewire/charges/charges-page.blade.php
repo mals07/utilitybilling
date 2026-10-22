@@ -11,7 +11,7 @@
         <section aria-label="Charge types" class="min-w-0 bg-panel p-5 sm:px-6">
             <form wire:submit="saveChargeType" novalidate>
                 <div>
-                    <label for="charge-type-name" class="form-label">Charge Type</label>
+                    <label for="charge-type-name" class="form-label">Charge Type<x-required-mark /></label>
                     <input
                         id="charge-type-name"
                         type="text"

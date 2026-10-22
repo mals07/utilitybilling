@@ -10,7 +10,7 @@
     x-on:click.outside="open = false"
     x-on:keydown.escape="if (open) { open = false; $event.stopPropagation(); }"
 >
-    <label for="{{ $fieldId }}" class="mb-1 block text-xs font-semibold text-ink-strong">{{ $label ?? 'Account No.' }}</label>
+    <label for="{{ $fieldId }}" class="mb-1 block text-xs font-semibold text-ink-strong">{{ $label ?? 'Account No.' }}<x-required-mark /></label>
     <div class="relative">
         <input
             id="{{ $fieldId }}"
@@ -21,6 +21,7 @@
             placeholder="Type an account no. or name"
             autocomplete="off"
             role="combobox"
+            aria-required="true"
             aria-autocomplete="list"
             aria-controls="{{ $fieldId }}-matches"
             x-bind:aria-expanded="open.toString()"

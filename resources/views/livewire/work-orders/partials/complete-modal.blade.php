@@ -78,7 +78,7 @@
 
         @if ($completionForm['checklist'] !== [])
             <fieldset class="m-0 mt-5 min-w-0 border-0 p-0" @error('completion.checked') aria-describedby="completion-checklist-error" @enderror>
-                <legend class="text-[13px] font-semibold text-ink-strong">Checklist <span class="font-normal text-label">— tick every item</span></legend>
+                <legend class="text-[13px] font-semibold text-ink-strong">Checklist<x-required-mark /> <span class="font-normal text-label">— tick every item</span></legend>
                 <div class="mt-2 grid gap-2 min-[560px]:grid-cols-2">
                     @foreach ($completionForm['checklist'] as $index => $item)
                         <label wire:key="completion-check-{{ $index }}" class="flex items-center gap-2 text-[13px] text-ink">
@@ -96,7 +96,7 @@
         @if ($type->allowsPhotos())
             <fieldset class="m-0 mt-5 min-w-0 border-0 p-0">
                 <legend class="text-[13px] font-semibold text-ink-strong">
-                    Photos
+                    Photos<x-required-mark :when="$type->requiresPhoto()" />
                     <span class="font-normal text-label">
                         — {{ $type->requiresPhoto() ? 'at least one required' : 'optional' }}, up to {{ WorkOrderCompletion::MAX_PHOTOS }} (JPG, PNG or WebP, 2MB each)
                     </span>

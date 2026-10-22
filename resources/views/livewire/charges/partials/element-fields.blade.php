@@ -3,7 +3,7 @@
 {{-- Name, "after due" and "taxable" flags and distribution type; used by the add form and the update modal. --}}
 <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
     <div class="min-w-0 flex-1 sm:max-w-80">
-        <label for="{{ $prefix }}-name" class="form-label">Charge Element</label>
+        <label for="{{ $prefix }}-name" class="form-label">Charge Element<x-required-mark /></label>
         <input
             id="{{ $prefix }}-name"
             type="text"
@@ -27,7 +27,7 @@
     </div>
 
     <fieldset class="min-w-0 border-0 p-0 text-right">
-        <legend class="form-legend ml-auto">Distribution Type</legend>
+        <legend class="form-legend ml-auto">Distribution Type<x-required-mark /></legend>
         <div class="mt-2 flex items-center justify-end gap-3">
             @foreach (DistributionType::cases() as $distribution)
                 <label class="check">

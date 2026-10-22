@@ -12,6 +12,7 @@
             <x-text-field
                 label="Email Address or Username"
                 id="login"
+                required
                 wire:model="login"
                 autocomplete="username"
                 autocapitalize="none"
@@ -22,6 +23,7 @@
             <x-text-field
                 label="Password"
                 id="password"
+                required
                 type="password"
                 wire:model="password"
                 autocomplete="current-password"

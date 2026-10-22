@@ -108,7 +108,7 @@
         <x-modal title="Billing Settings" close="$wire.closeSettings()" width="md">
             <form wire:submit="saveSettings" class="mt-3">
                 <fieldset class="m-0 min-w-0 border-0 p-0">
-                    <legend class="text-[13px] font-semibold text-ink-strong">When a bill isn't paid by its due date</legend>
+                    <legend class="text-[13px] font-semibold text-ink-strong">When a bill isn't paid by its due date<x-required-mark /></legend>
                     <p class="mt-1 text-xs text-label">After-due charges (e.g. Surcharge) from the customer's charge type are applied once per overdue bill.</p>
                     <div class="mt-3 grid gap-3">
                         @foreach (OverdueHandling::cases() as $option)

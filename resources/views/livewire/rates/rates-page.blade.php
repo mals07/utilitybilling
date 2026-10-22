@@ -19,7 +19,7 @@
         <section aria-label="Rate types" class="min-w-0 bg-panel p-5 sm:px-6">
             <form wire:submit="saveRateType" novalidate>
                 <div>
-                    <label for="rate-type-name" class="form-label">Rate Type</label>
+                    <label for="rate-type-name" class="form-label">Rate Type<x-required-mark /></label>
                     <input
                         id="rate-type-name"
                         type="text"
@@ -175,7 +175,7 @@
             <form wire:submit="addRange" novalidate class="mt-3">
                 <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
                     <div>
-                        <span id="consumption-range-label" class="form-label">Consumption Range</span>
+                        <span id="consumption-range-label" class="form-label">Consumption Range<x-required-mark /></span>
                         <div class="flex items-center gap-3" role="group" aria-labelledby="consumption-range-label">
                             <output aria-label="Range from" class="flex h-8 min-w-12 items-center justify-center bg-panel px-2 text-sm text-accent">{{ $nextRangeFrom }}</output>
                             <label for="range-to" class="text-sm font-bold text-ink-strong">To</label>
@@ -196,7 +196,7 @@
                     </div>
 
                     <div>
-                        <label for="rate-per-count" class="form-label">Rate per count</label>
+                        <label for="rate-per-count" class="form-label">Rate per count<x-required-mark /></label>
                         <input
                             id="rate-per-count"
                             type="number"
@@ -213,7 +213,7 @@
                     </div>
 
                     <div class="min-w-28 flex-1">
-                        <label for="range-description" class="form-label">Range Description</label>
+                        <label for="range-description" class="form-label">Range Description<x-required-mark /></label>
                         <input
                             id="range-description"
                             type="text"

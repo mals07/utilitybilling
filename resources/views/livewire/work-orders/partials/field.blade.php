@@ -12,7 +12,7 @@
 @endphp
 
 <div class="min-w-0">
-    <label for="{{ $id }}" class="mb-1 block text-xs font-semibold text-ink-strong">{{ $label }}</label>
+    <label for="{{ $id }}" class="mb-1 block text-xs font-semibold text-ink-strong">{{ $label }}@if ($required ?? false)<x-required-mark />@endif</label>
     @if ($choices !== null)
         <select
             id="{{ $id }}"

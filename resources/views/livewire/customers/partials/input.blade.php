@@ -1,7 +1,7 @@
 @php($id = "customer-{$key}")
 
 <div class="min-w-0">
-    <label for="{{ $id }}" class="mb-1 block text-xs font-medium text-ink">{{ $label }}</label>
+    <label for="{{ $id }}" class="mb-1 block text-xs font-medium text-ink">{{ $label }}@if ($required ?? false)<x-required-mark />@endif</label>
     <input
         id="{{ $id }}"
         type="{{ $type ?? 'text' }}"

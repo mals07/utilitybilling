@@ -17,20 +17,20 @@
 >
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,58fr)_minmax(0,42fr)]">
         <section aria-label="Company details" class="flex min-w-0 flex-col gap-[18px] lg:pr-8">
-            <x-text-field label="Company Name" id="company-name" wire:model.live.blur="values.companyName" autocomplete="organization" :error="$error('companyName')" />
-            <x-text-field label="Company Address" id="company-address" wire:model.live.blur="values.address" placeholder="Add address" autocomplete="street-address" :error="$error('address')" />
+            <x-text-field label="Company Name" id="company-name" required wire:model.live.blur="values.companyName" autocomplete="organization" :error="$error('companyName')" />
+            <x-text-field label="Company Address" id="company-address" required wire:model.live.blur="values.address" placeholder="Add address" autocomplete="street-address" :error="$error('address')" />
 
             <div class="grid grid-cols-1 items-start gap-[22px] sm:grid-cols-2">
-                <x-select-field label="City" id="company-city" placeholder="Select city" :options="$options['cities']" wire:model.live="values.cityId" :error="$error('cityId')" />
-                <x-select-field label="State/Province" id="company-province" placeholder="Select province" :options="$options['provinces']" wire:model.live="values.provinceId" :error="$error('provinceId')" />
+                <x-select-field label="City" id="company-city" required placeholder="Select city" :options="$options['cities']" wire:model.live="values.cityId" :error="$error('cityId')" />
+                <x-select-field label="State/Province" id="company-province" required placeholder="Select province" :options="$options['provinces']" wire:model.live="values.provinceId" :error="$error('provinceId')" />
             </div>
 
             <div class="grid grid-cols-1 items-start gap-[22px] sm:grid-cols-2">
-                <x-text-field label="Zip/Postal code" id="company-zip" wire:model.live.blur="values.zipCode" placeholder="Input code" autocomplete="postal-code" inputmode="numeric" :error="$error('zipCode')" />
-                <x-select-field label="Country/Region" id="company-country" placeholder="Select country/region" :options="$options['countries']" wire:model.live="values.countryId" :error="$error('countryId')" />
+                <x-text-field label="Zip/Postal code" id="company-zip" required wire:model.live.blur="values.zipCode" placeholder="Input code" autocomplete="postal-code" inputmode="numeric" :error="$error('zipCode')" />
+                <x-select-field label="Country/Region" id="company-country" required placeholder="Select country/region" :options="$options['countries']" wire:model.live="values.countryId" :error="$error('countryId')" />
             </div>
 
-            <x-text-field label="Email Address" id="company-email" type="email" wire:model.live.blur="values.email" autocomplete="email" :error="$error('email')" />
+            <x-text-field label="Email Address" id="company-email" required type="email" wire:model.live.blur="values.email" autocomplete="email" :error="$error('email')" />
 
             <div class="grid grid-cols-1 items-start gap-[22px] sm:grid-cols-2">
                 <x-text-field label="Tax Identification Number" id="company-tin" wire:model.live.blur="values.taxIdNumber" :error="$error('taxIdNumber')" />
@@ -67,15 +67,15 @@
         </section>
 
         <section aria-labelledby="point-person-heading" class="mt-8 flex min-w-0 flex-col border-t border-divider pt-8 lg:mt-0 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
-            <x-text-field label="Head of Company (Firstname,MI,Lastname)" id="company-head" wire:model.live.blur="values.headOfCompany" autocomplete="off" :error="$error('headOfCompany')" />
+            <x-text-field label="Head of Company (Firstname,MI,Lastname)" id="company-head" required wire:model.live.blur="values.headOfCompany" autocomplete="off" :error="$error('headOfCompany')" />
 
             <h2 id="point-person-heading" class="mt-[38px] mb-4 text-sm font-normal text-label italic">Point Person</h2>
 
             <div class="grid grid-cols-1 items-start gap-x-4 gap-y-3.5 sm:grid-cols-2">
-                <x-text-field variant="inset" label="Firstname" id="pp-first-name" wire:model.live.blur="values.pointPersonFirstName" autocomplete="given-name" :error="$error('pointPersonFirstName')" />
-                <x-text-field variant="inset" label="Lastname" id="pp-last-name" wire:model.live.blur="values.pointPersonLastName" autocomplete="family-name" :error="$error('pointPersonLastName')" />
-                <x-text-field variant="inset" label="Contact Number" id="pp-contact" type="tel" wire:model.live.blur="values.pointPersonContact" autocomplete="tel" :error="$error('pointPersonContact')" />
-                <x-text-field variant="inset" label="Email Address" id="pp-email" type="email" wire:model.live.blur="values.pointPersonEmail" autocomplete="email" :error="$error('pointPersonEmail')" />
+                <x-text-field variant="inset" label="Firstname" id="pp-first-name" required wire:model.live.blur="values.pointPersonFirstName" autocomplete="given-name" :error="$error('pointPersonFirstName')" />
+                <x-text-field variant="inset" label="Lastname" id="pp-last-name" required wire:model.live.blur="values.pointPersonLastName" autocomplete="family-name" :error="$error('pointPersonLastName')" />
+                <x-text-field variant="inset" label="Contact Number" id="pp-contact" required type="tel" wire:model.live.blur="values.pointPersonContact" autocomplete="tel" :error="$error('pointPersonContact')" />
+                <x-text-field variant="inset" label="Email Address" id="pp-email" required type="email" wire:model.live.blur="values.pointPersonEmail" autocomplete="email" :error="$error('pointPersonEmail')" />
                 <x-text-field variant="inset" label="Employee Number" id="pp-employee-number" wire:model.live.blur="values.employeeNumber" :error="$error('employeeNumber')" />
                 <x-text-field variant="inset" label="Employee Title/Position" id="pp-employee-title" wire:model.live.blur="values.employeeTitle" autocomplete="organization-title" :error="$error('employeeTitle')" />
             </div>
