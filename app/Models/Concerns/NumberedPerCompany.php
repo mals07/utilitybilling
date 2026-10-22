@@ -4,6 +4,7 @@ namespace App\Models\Concerns;
 
 use App\Models\Company;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Records numbered per company in the order they are created ("000001", "000002", ...), like work
@@ -22,11 +23,11 @@ trait NumberedPerCompany
         $column = static::NUMBER_COLUMN;
 
         for ($attempt = 1; ; $attempt++) {
-            $highest = static::query()
+            // "+ 0" compares the stored text as numbers, so 1000000 comes after 999999.
+            $highest = (int) static::query()
                 ->where('company_id', $company->id)
                 ->where(static::numberSequence($attributes))
-                ->pluck($column)
-                ->reduce(fn (int $max, string $number): int => max($max, (int) $number), 0);
+                ->max(DB::raw("{$column} + 0"));
 
             try {
                 return static::query()->create([
