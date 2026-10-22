@@ -14,6 +14,7 @@ use App\Models\ChargeType;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\MeterReading;
 use App\Models\RateType;
 use App\Models\User;
 use App\Models\WorkOrder;
@@ -273,6 +274,50 @@ class MeterReadingsTest extends TestCase
         $corrected = MeterReadings::save($customer, $this->period(), '12', ReadingCode::Normal, now()->toDateString(), $this->owner);
         $this->assertSame($reading->id, $corrected->id);
         $this->assertSame('12.000', $corrected->actual_consumption);
+    }
+
+    public function test_a_reading_billed_after_the_page_loaded_it_is_not_deleted(): void
+    {
+        $customer = $this->customer();
+        $loaded = MeterReadings::save($customer, $this->period(), '12', ReadingCode::Normal, now()->toDateString(), $this->owner);
+        BillingRun::generateFor($loaded, now()->toDateString(), $this->owner);
+
+        try {
+            MeterReadings::remove($loaded);
+            $this->fail('A billed reading was deleted.');
+        } catch (BillingException $exception) {
+            $this->assertStringContainsString('already billed', $exception->getMessage());
+        }
+
+        $this->assertModelExists($loaded);
+    }
+
+    public function test_a_reading_billed_after_the_page_loaded_it_stays_billed_when_confirmed(): void
+    {
+        $customer = $this->customer();
+        $loaded = MeterReadings::save($customer, $this->period(), '0', ReadingCode::Normal, now()->toDateString(), $this->owner);
+        MeterReadings::confirm($loaded->fresh(), $this->owner);
+        BillingRun::generateFor($loaded, now()->toDateString(), $this->owner);
+
+        try {
+            MeterReadings::confirm($loaded, $this->owner);
+            $this->fail('A billed reading was confirmed again.');
+        } catch (BillingException $exception) {
+            $this->assertStringContainsString('doesn\'t need review', $exception->getMessage());
+        }
+
+        $this->assertSame(MeterReadingStatus::Billed, $loaded->fresh()->status);
+    }
+
+    public function test_a_reading_deleted_by_someone_else_says_it_no_longer_exists(): void
+    {
+        $customer = $this->customer();
+        $loaded = MeterReadings::save($customer, $this->period(), '12', ReadingCode::Normal, now()->toDateString(), $this->owner);
+        MeterReading::query()->whereKey($loaded->id)->delete();
+
+        $this->expectExceptionObject(new BillingException('That reading no longer exists. The page has been refreshed.'));
+
+        MeterReadings::remove($loaded);
     }
 
     public function test_a_disconnected_meter_starts_from_its_final_reading(): void

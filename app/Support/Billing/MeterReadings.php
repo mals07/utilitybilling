@@ -206,11 +206,15 @@ final class MeterReadings
      */
     public static function confirm(MeterReading $reading, User $actor): void
     {
-        if ($reading->status !== MeterReadingStatus::Review) {
-            throw new BillingException('This reading doesn\'t need review.');
-        }
+        DB::transaction(function () use ($reading, $actor): void {
+            $reading = self::lock($reading);
 
-        $reading->update(['status' => MeterReadingStatus::Ready, 'confirmed_by_id' => $actor->id, 'confirmed_at' => now()]);
+            if ($reading->status !== MeterReadingStatus::Review) {
+                throw new BillingException('This reading doesn\'t need review.');
+            }
+
+            $reading->update(['status' => MeterReadingStatus::Ready, 'confirmed_by_id' => $actor->id, 'confirmed_at' => now()]);
+        });
     }
 
     /**
@@ -220,11 +224,27 @@ final class MeterReadings
      */
     public static function remove(MeterReading $reading): void
     {
-        if ($reading->isBilled()) {
-            throw new BillingException('This reading is already billed. Void the invoice to correct it.');
-        }
+        DB::transaction(function () use ($reading): void {
+            $reading = self::lock($reading);
 
-        $reading->delete();
+            if ($reading->isBilled()) {
+                throw new BillingException('This reading is already billed. Void the invoice to correct it.');
+            }
+
+            $reading->delete();
+        });
+    }
+
+    /**
+     * The reading as it is now, locked until the transaction ends, so a bill or another user's
+     * change made a moment ago is seen and none can start meanwhile.
+     *
+     * @throws BillingException When someone deleted the reading.
+     */
+    private static function lock(MeterReading $reading): MeterReading
+    {
+        return MeterReading::query()->lockForUpdate()->find($reading->id)
+            ?? throw new BillingException('That reading no longer exists. The page has been refreshed.');
     }
 
     /**
