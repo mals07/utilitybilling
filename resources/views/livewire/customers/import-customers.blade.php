@@ -106,7 +106,7 @@
                     <label
                         for="customer-import-file"
                         @class([
-                            'flex cursor-pointer flex-col items-center gap-1.5 rounded-xs border border-dashed bg-panel px-4 py-8 text-center hover:bg-[#ececf1]',
+                            'flex cursor-pointer flex-col items-center gap-1.5 rounded-xs border border-dashed bg-panel px-4 py-8 text-center hover:bg-[#e6f1f9]',
                             'border-danger' => $errors->has('file'),
                             'border-line' => ! $errors->has('file'),
                         ])

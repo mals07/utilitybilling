@@ -21,6 +21,9 @@
 
         <title>{{ isset($title) ? $title.' | ' : '' }}{{ config('app.name') }}</title>
 
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet">
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
@@ -55,25 +58,37 @@
             x-on:keydown.escape.window="mobileOpen = false"
             class="min-h-screen"
         >
-            <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-table-line bg-topbar px-4 lg:h-20 lg:px-6">
+            <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-table-line bg-topbar px-4 shadow-[0_1px_0_rgba(11,37,69,0.02),0_6px_20px_-12px_rgba(11,37,69,0.18)] backdrop-blur-md lg:h-20 lg:px-6">
                 <button
                     type="button"
                     x-on:click="toggleSidebar()"
-                    class="inline-flex size-9 shrink-0 items-center justify-center rounded-xs text-accent hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-line-focus"
+                    class="inline-flex size-10 shrink-0 items-center justify-center rounded-xs border border-table-line bg-card text-accent shadow-[0_1px_2px_rgba(11,37,69,0.05)] transition-colors hover:border-line hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-line-focus"
                     aria-controls="sidebar"
                     aria-label="Toggle navigation"
                 >
                     <x-icon name="menu" />
                 </button>
 
-                <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2 text-ink">
+                <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2.5 text-ink-strong">
                     @if ($logoUrl)
                         <img src="{{ $logoUrl }}" alt="{{ $company->company_name }}" class="h-9 max-w-48 object-contain lg:h-11">
                     @else
-                        <x-app-logo />
-                        <span class="truncate text-lg font-semibold">{{ $company?->company_name ?? config('app.name') }}</span>
+                        <x-app-logo :size="36" />
+                        <span class="truncate text-lg font-bold tracking-tight">{{ $company?->company_name ?? config('app.name') }}</span>
                     @endif
                 </a>
+
+                <div class="ml-auto hidden items-center gap-3 sm:flex">
+                    <div class="text-right leading-tight">
+                        <p class="max-w-48 truncate text-sm font-semibold text-ink-strong">{{ $user->name }}</p>
+                        @if ($company)
+                            <p class="max-w-48 truncate text-xs text-label">{{ $company->company_name }}</p>
+                        @endif
+                    </div>
+                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-ocean to-aqua text-sm font-bold text-white uppercase shadow-[0_4px_12px_-4px_rgba(3,105,161,0.6)] ring-2 ring-white" aria-hidden="true">
+                        {{ mb_substr($user->name, 0, 1) }}
+                    </span>
+                </div>
             </header>
 
             <div class="flex min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)]">
@@ -83,21 +98,24 @@
                     id="sidebar"
                     aria-label="Sidebar"
                     x-bind:data-open="mobileOpen"
-                    class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-sidebar transition-transform duration-200 data-[open=true]:translate-x-0 lg:static lg:z-auto lg:w-44 lg:shrink-0 lg:translate-x-0 lg:transition-[width] lg:sidebar-collapsed:w-16"
+                    class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-sidebar bg-[image:var(--gradient-navy)] text-white shadow-[4px_0_24px_-12px_rgba(11,37,69,0.6)] transition-transform duration-200 data-[open=true]:translate-x-0 lg:static lg:z-auto lg:w-52 lg:shrink-0 lg:translate-x-0 lg:transition-[width] lg:sidebar-collapsed:w-[72px]"
                 >
                     <div class="flex h-full flex-col lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)]">
-                        <div class="flex h-16 items-center justify-end px-3 lg:hidden">
+                        <div class="flex h-16 items-center justify-between px-4 lg:hidden">
+                            <span class="text-xs font-semibold tracking-[0.16em] text-cyan-200/70 uppercase">Menu</span>
                             <button
                                 type="button"
                                 x-on:click="mobileOpen = false"
-                                class="inline-flex size-9 items-center justify-center rounded-xs text-accent hover:bg-hover"
+                                class="inline-flex size-9 items-center justify-center rounded-xs text-white/80 hover:bg-white/10 hover:text-white"
                                 aria-label="Close navigation"
                             >
                                 <x-icon name="close" />
                             </button>
                         </div>
 
-                        <nav aria-label="Main" class="flex-1 overflow-y-auto py-4 lg:py-6">
+                        <p class="hidden px-6 pt-6 text-[11px] font-semibold tracking-[0.16em] text-cyan-200/60 uppercase lg:block lg:sidebar-collapsed:sr-only" aria-hidden="true">Navigation</p>
+
+                        <nav aria-label="Main" class="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 lg:py-3">
                             <a
                                 href="{{ route('dashboard') }}"
                                 class="nav-item"
@@ -123,7 +141,7 @@
                             @endforeach
 
                             @if ($settingsLinks !== [])
-                                <div class="mt-1">
+                                <div class="mt-3 border-t border-white/10 pt-3">
                                     <button
                                         type="button"
                                         class="nav-item"
@@ -139,7 +157,7 @@
                                         <x-icon name="chevron-down" :size="16" class="transition-transform duration-150 lg:sidebar-collapsed:hidden" x-bind:class="settingsOpen && 'rotate-180'" />
                                     </button>
 
-                                    <div id="sidebar-group-settings" x-show="settingsOpen" @unless ($settingsActive) x-cloak @endunless class="lg:sidebar-collapsed:hidden">
+                                    <div id="sidebar-group-settings" x-show="settingsOpen" @unless ($settingsActive) x-cloak @endunless class="mt-1 flex flex-col gap-0.5 lg:sidebar-collapsed:hidden">
                                         @foreach ($settingsLinks as $page)
                                             <a
                                                 href="{{ route($page->value) }}"
@@ -154,17 +172,20 @@
                             @endif
                         </nav>
 
-                        <div class="border-t border-line px-3 py-4 lg:sidebar-collapsed:px-2">
-                            <p class="truncate px-2 text-xs font-medium text-label lg:sidebar-collapsed:sr-only">{{ $user->name }}</p>
+                        <div class="border-t border-white/10 px-3 py-4 lg:sidebar-collapsed:px-2">
+                            <div class="flex items-center gap-3 rounded-[10px] bg-white/5 px-2.5 py-2 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:bg-transparent lg:sidebar-collapsed:px-0">
+                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-ocean-bright to-aqua text-xs font-bold text-white uppercase" aria-hidden="true">{{ mb_substr($user->name, 0, 1) }}</span>
+                                <p class="min-w-0 truncate text-xs font-medium text-white/85 lg:sidebar-collapsed:sr-only">{{ $user->name }}</p>
+                            </div>
 
-                            <x-restart-onboarding class="mt-2 h-9 w-full px-2 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0" />
+                            <x-restart-onboarding class="mt-2 h-9 w-full rounded-xs px-2.5 text-amber-300! hover:bg-white/5 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0" />
 
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button
                                     type="submit"
                                     x-bind:title="collapsed ? 'Log out' : null"
-                                    class="mt-2 flex h-9 w-full items-center gap-3 rounded-xs px-2 text-sm text-ink-soft hover:bg-hover hover:text-ink-strong lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0"
+                                    class="mt-1 flex h-9 w-full items-center gap-3 rounded-xs px-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0"
                                 >
                                     <x-icon name="logout" />
                                     <span class="lg:sidebar-collapsed:sr-only">Log out</span>

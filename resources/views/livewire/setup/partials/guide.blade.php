@@ -1,5 +1,5 @@
 {{-- The step's how-to and worked example, with the button that applies the example. --}}
-<div class="border border-table-line bg-card p-4">
+<div class="rounded-xl border border-table-line bg-card p-4 shadow-card">
     <h2 class="text-sm font-bold text-ink-strong">How to do this step</h2>
     <ol class="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-6 text-ink-soft">
         @foreach ($current['howTo'] as $line)

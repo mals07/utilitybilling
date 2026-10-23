@@ -10,7 +10,7 @@
             </div>
         </div>
 
-        <ol class="hidden border border-table-line bg-card py-2 lg:block">
+        <ol class="hidden overflow-hidden rounded-xl border border-table-line bg-card py-2 shadow-card lg:block">
             @foreach ($steps as $item)
                 <li wire:key="nav-{{ $item['key'] }}">
                     @if ($item['state'] === 'done')
@@ -30,7 +30,7 @@
     </nav>
 
     <section aria-labelledby="setup-step-title" class="min-w-0 flex-1">
-        <div class="border border-table-line bg-card px-4 py-5 sm:px-6">
+        <div class="rounded-xl border border-table-line bg-card px-4 py-5 shadow-card sm:px-6">
             <p class="text-xs font-medium tracking-wide text-label uppercase">
                 Step {{ $number }} of {{ count($steps) }} &middot; {{ $required ? 'Required' : 'Optional' }}
             </p>
@@ -68,12 +68,12 @@
 
         <div class="mt-4 xl:hidden">
             <details class="group" @if ($step === 'profile') open @endif>
-                <summary class="cursor-pointer border border-table-line bg-card px-4 py-3 text-sm font-semibold text-ink-strong">How to do this step, with an example</summary>
+                <summary class="cursor-pointer rounded-xl border border-table-line bg-card px-4 py-3 shadow-card text-sm font-semibold text-ink-strong">How to do this step, with an example</summary>
                 @include('livewire.setup.partials.guide')
             </details>
         </div>
 
-        <div class="setup-embed mt-4 border border-table-line bg-card">
+        <div class="setup-embed mt-4 overflow-hidden rounded-xl border border-table-line bg-card shadow-card">
             @switch($step)
                 @case('profile')
                     <livewire:company.profile-form :onboarding="! $company" :can-save="true" key="setup-profile" />
@@ -117,7 +117,7 @@
             @endswitch
         </div>
 
-        <div class="sticky bottom-0 z-20 mt-4 border border-table-line bg-card px-4 py-3 shadow-card sm:px-6">
+        <div class="sticky bottom-0 z-20 mt-4 rounded-xl border border-table-line bg-card/95 px-4 py-3 shadow-dialog backdrop-blur sm:px-6">
             @if ($error)
                 <p class="mb-2 text-sm text-danger" role="alert">{{ $error }}</p>
             @elseif ($stepDone && $company)

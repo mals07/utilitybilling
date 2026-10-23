@@ -61,7 +61,7 @@
                 }"
                 x-on:focusout="if (! $el.contains($event.relatedTarget)) open = false"
             >
-                <div class="flex h-11 min-w-0 flex-col justify-center border border-table-line bg-card px-2 focus-within:border-line-focus">
+                <div class="flex h-11 min-w-0 flex-col justify-center rounded-xs border border-table-line bg-card px-2 focus-within:border-line-focus">
                     <label for="setup-element" class="text-[10px] text-label">Charge Element<x-required-mark /></label>
                     <div class="flex items-center">
                         <input
@@ -112,7 +112,7 @@
                 </ul>
             </div>
 
-            <fieldset class="m-0 flex h-11 min-w-32 flex-col justify-center border border-table-line bg-card px-2">
+            <fieldset class="m-0 flex h-11 min-w-32 flex-col justify-center rounded-xs border border-table-line bg-card px-2">
                 <legend class="sr-only">Value type</legend>
                 <label class="check">
                     <input type="radio" name="setup-value-type" value="fixed" wire:model="setupValueType" class="check-square">
@@ -124,7 +124,7 @@
                 </label>
             </fieldset>
 
-            <div class="flex h-11 w-28 min-w-0 flex-col justify-center border border-table-line bg-card px-2 focus-within:border-line-focus">
+            <div class="flex h-11 w-28 min-w-0 flex-col justify-center rounded-xs border border-table-line bg-card px-2 focus-within:border-line-focus">
                 <label for="setup-value" class="text-[10px] text-label"><span wire:ignore x-data x-text="$wire.setupValueType === 'percentage' ? 'Value (%)' : 'Value'">Value</span><x-required-mark /></label>
                 <input
                     id="setup-value"
@@ -140,7 +140,7 @@
                 >
             </div>
 
-            <div class="flex h-11 w-28 min-w-0 flex-col justify-center border border-table-line bg-card px-2">
+            <div class="flex h-11 w-28 min-w-0 flex-col justify-center rounded-xs border border-table-line bg-card px-2">
                 <span id="setup-distribution-label" class="text-[10px] text-label">Distribution Type</span>
                 <output
                     aria-labelledby="setup-distribution-label"

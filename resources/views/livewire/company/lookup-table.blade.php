@@ -38,7 +38,7 @@
         <x-search-box :label="'Search '.strtolower($config->plural())" :width="112" size="sm" wire:model.live.debounce.300ms="search" />
     </div>
 
-    <div class="relative mt-2 max-h-[248px] overflow-auto border border-table-line bg-card">
+    <div class="relative mt-2 max-h-[248px] overflow-auto rounded-xl border border-table-line bg-card shadow-card">
         <table class="data-table border-0 [&_td]:border-x-0 [&_td]:border-t-0 [&_td+td]:border-l [&_th]:sticky [&_th]:top-0 [&_th]:z-[1] [&_th]:h-8 [&_th]:border-x-0 [&_th]:border-t-0 [&_th]:bg-card [&_th+th]:border-l [&_tbody_tr]:h-[26px]">
             <thead>
                 <tr>

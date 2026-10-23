@@ -37,7 +37,7 @@
                                 <span class="inline-block max-w-40 truncate rounded bg-panel px-2 py-0.5 align-middle text-xs text-ink-soft">{{ $item->accountType?->name }}</span>
                             </td>
                             <td>
-                                <span class="text-[13px] whitespace-nowrap {{ $item->status->colorClass() }}">{{ $item->status->label() }}</span>
+                                <span class="status-pill {{ $item->status->colorClass() }}">{{ $item->status->label() }}</span>
                             </td>
                             <td>
                                 @if ($item->meterType)

@@ -44,7 +44,7 @@
                     <div class="flex flex-col items-center gap-1.5" x-data="photoCropper({ model: 'photo' })">
                         <button
                             type="button"
-                            class="flex size-[140px] shrink-0 items-center justify-center overflow-hidden rounded-xs bg-[#e9e9ee] p-0 hover:enabled:bg-[#e1e1e8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus disabled:cursor-default min-[560px]:mt-[18px] min-[560px]:size-40 @error('photo') outline outline-danger @enderror"
+                            class="flex size-[140px] shrink-0 items-center justify-center overflow-hidden rounded-xs bg-[#e8f0f7] p-0 hover:enabled:bg-[#dbe8f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus disabled:cursor-default min-[560px]:mt-[18px] min-[560px]:size-40 @error('photo') outline outline-danger @enderror"
                             x-on:click="$refs.file.click()"
                             aria-label="{{ $photoUrl ? 'Change photo' : 'Upload photo' }}"
                             @error('photo') aria-describedby="customer-photo-error" @enderror
@@ -56,8 +56,8 @@
                                 @else
                                     {{-- Person silhouette with an upload arrow --}}
                                     <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true" focusable="false">
-                                        <circle cx="28" cy="18" r="10" fill="#b9b6cc" />
-                                        <path d="M8 54c0-12 9-20 20-20s20 8 20 20Z" fill="#b9b6cc" />
+                                        <circle cx="28" cy="18" r="10" fill="#a9c3d8" />
+                                        <path d="M8 54c0-12 9-20 20-20s20 8 20 20Z" fill="#a9c3d8" />
                                         <rect x="16" y="22" width="24" height="22" rx="3" fill="#ffffff" stroke="#1f2328" stroke-width="2" />
                                         <path d="M28 39V28m-5 4.5 5-5 5 5" fill="none" stroke="#1f2328" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
@@ -99,7 +99,7 @@
                                             <div class="mt-3 grid justify-items-center gap-3">
                                                 <p class="justify-self-stretch text-[13px] text-label">Drag to centre the face. Use the slider or scroll to zoom.</p>
                                                 <div
-                                                    class="relative shrink-0 cursor-grab touch-none overflow-hidden rounded-xs bg-[#e9e9ee] select-none active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+                                                    class="relative shrink-0 cursor-grab touch-none overflow-hidden rounded-xs bg-[#e8f0f7] select-none active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
                                                     x-bind:style="`width: ${frame}px; height: ${frame}px`"
                                                     tabindex="0"
                                                     role="application"

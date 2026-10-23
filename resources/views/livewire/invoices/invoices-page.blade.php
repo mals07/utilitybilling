@@ -7,18 +7,18 @@
         <x-flash class="mb-4" />
 
         <div class="grid gap-3 sm:grid-cols-3">
-            <div class="rounded-xs border border-table-line bg-card px-4 py-3">
+            <div class="rounded-xl border border-table-line bg-card px-4 py-3 shadow-card">
                 <p class="text-xs text-label">Outstanding</p>
                 <p class="mt-1 text-lg font-semibold text-ink-strong">{{ Format::amount($outstanding) }}</p>
             </div>
-            <div @class(['rounded-xs border px-4 py-3', 'border-danger bg-danger-bg' => $overdueCount > 0, 'border-table-line bg-card' => $overdueCount === 0])>
+            <div @class(['rounded-xl border px-4 py-3 shadow-card', 'border-danger bg-danger-bg' => $overdueCount > 0, 'border-table-line bg-card' => $overdueCount === 0])>
                 <p class="text-xs text-label">Overdue</p>
                 <p @class(['mt-1 text-lg font-semibold', 'text-danger' => $overdueCount > 0, 'text-ink-strong' => $overdueCount === 0])>
                     {{ Format::amount($overdueAmount) }}
                     <span class="text-xs font-normal">· {{ $overdueCount }} invoice{{ $overdueCount === 1 ? '' : 's' }}</span>
                 </p>
             </div>
-            <div class="flex flex-col items-start justify-center gap-2 rounded-xs border border-table-line bg-card px-4 py-3">
+            <div class="flex flex-col items-start justify-center gap-2 rounded-xl border border-table-line bg-card px-4 py-3 shadow-card">
                 @if ($access['add'])
                     <a href="{{ route('invoices.generate') }}" class="form-button form-button-sm inline-flex min-w-40 items-center justify-center">Generate Bills</a>
                 @endif
@@ -79,7 +79,7 @@
                             <td @class(['whitespace-nowrap', 'font-semibold text-danger' => $invoice->isOverdue($today)])>{{ $invoice->due_date->format('m/d/Y') }}</td>
                             <td class="cell-right">{{ Format::amount($invoice->total_amount) }}</td>
                             <td class="cell-right">{{ Format::amount($invoice->balance) }}</td>
-                            <td><span class="text-[13px] whitespace-nowrap {{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</span></td>
+                            <td><span class="status-pill {{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</span></td>
                             <td class="cell-actions">
                                 <button type="button" class="icon-button" wire:click="openInvoice({{ $invoice->id }})" aria-label="View invoice {{ $invoice->invoice_number }}">
                                     <x-icon name="document" :size="14" />

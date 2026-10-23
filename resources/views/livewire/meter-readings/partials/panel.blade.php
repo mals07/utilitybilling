@@ -10,7 +10,7 @@
     $canRollOver = $customer->meterType?->dial_digits !== null;
 @endphp
 
-<aside aria-label="Meter details" class="order-first self-start rounded-md border border-table-line bg-card lg:sticky lg:top-24 lg:order-none" wire:key="panel-{{ $customer->id }}">
+<aside aria-label="Meter details" class="order-first self-start rounded-xl border border-table-line bg-card shadow-card lg:sticky lg:top-24 lg:order-none" wire:key="panel-{{ $customer->id }}">
     <div class="flex items-start justify-between gap-2 border-b border-table-line px-4 py-3">
         <div class="min-w-0">
             <p class="truncate font-semibold text-ink-strong">{{ $customer->first_name }} {{ $customer->last_name }}</p>

@@ -8,15 +8,18 @@
 
         <title>{{ isset($title) ? $title.' | ' : '' }}{{ config('app.name') }}</title>
 
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet">
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
     </head>
     <body class="min-h-screen bg-panel font-sans text-ink">
-        <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-table-line bg-topbar px-4 lg:px-6">
+        <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-table-line bg-topbar px-4 backdrop-blur-md lg:px-6">
             <div class="flex min-w-0 flex-1 items-center gap-2">
-                <x-app-logo />
-                <span class="truncate text-lg font-semibold">{{ $company?->company_name ?? config('app.name') }}</span>
+                <x-app-logo :size="34" />
+                <span class="truncate text-lg font-bold tracking-tight text-ink-strong">{{ $company?->company_name ?? config('app.name') }}</span>
                 <span class="hidden text-sm text-label sm:inline">&middot; Company setup</span>
             </div>
 

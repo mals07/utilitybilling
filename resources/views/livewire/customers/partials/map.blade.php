@@ -51,7 +51,7 @@
 
         <div
             x-ref="map"
-            class="isolate h-[260px] rounded-xs border border-table-line bg-[#e9e9ee]"
+            class="isolate h-[260px] rounded-xs border border-table-line bg-[#e8f0f7]"
             role="application"
             aria-labelledby="customer-location-label"
         ></div>

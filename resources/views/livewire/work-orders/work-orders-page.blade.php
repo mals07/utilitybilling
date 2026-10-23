@@ -199,7 +199,7 @@
                             <td class="whitespace-nowrap">{{ $order->customer->account_number }}</td>
                             <td>{{ $order->customer->first_name }} {{ $order->customer->last_name }}</td>
                             <td>
-                                <span class="text-[13px] whitespace-nowrap {{ $order->status->colorClass() }}">{{ $order->status->label() }}</span>
+                                <span class="status-pill {{ $order->status->colorClass() }}">{{ $order->status->label() }}</span>
                                 @if ($order->review_flag)
                                     @if ($order->flag_resolved_at)
                                         <span class="mt-0.5 block w-max rounded bg-success-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-success" title="{{ $order->review_flag->label() }}">Resolved · {{ $order->flag_resolution }}</span>
