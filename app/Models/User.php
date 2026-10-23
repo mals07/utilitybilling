@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
 #[Fillable([
     'name', 'first_name', 'last_name', 'email', 'username', 'password', 'email_verified_at', 'is_admin',
     'role_id', 'company_id', 'department_id', 'invited_at', 'last_login_at', 'deactivated_at',
-    'tour_completed_at',
+    'tour_completed_at', 'welcomed_at',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -46,6 +46,7 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'deactivated_at' => 'datetime',
             'tour_completed_at' => 'datetime',
+            'welcomed_at' => 'datetime',
             'is_admin' => 'boolean',
             'password' => 'hashed',
         ];
@@ -119,12 +120,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Someone who just signed up sees the welcome page once, before the setup wizard.
+     */
+    public function needsWelcome(): bool
+    {
+        return $this->welcomed_at === null && ! $this->hasCompany();
+    }
+
+    /**
      * Where the user belongs given how far through onboarding they are.
      */
     public function homeRoute(): string
     {
         return match (true) {
             ! $this->hasVerifiedEmail() => 'verify-email',
+            $this->needsWelcome() => 'welcome',
             ! $this->hasCompany() || ! $this->company->isSetUp() => 'setup',
             default => 'dashboard',
         };

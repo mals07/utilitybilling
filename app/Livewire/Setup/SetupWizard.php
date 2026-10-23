@@ -50,6 +50,12 @@ class SetupWizard extends Component
             return;
         }
 
+        if ($this->user()->needsWelcome()) {
+            $this->redirectRoute('welcome');
+
+            return;
+        }
+
         $this->justVerified = request()->query('verified') === '1';
 
         // Right after the profile is first saved no step is stored yet, so carry on to the next one.

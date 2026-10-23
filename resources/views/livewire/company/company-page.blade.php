@@ -1,6 +1,6 @@
 @use('App\Enums\LookupType')
 
-<div class="mx-auto max-w-[1400px] px-4 pt-4 pb-8 sm:px-6 sm:pt-5 sm:pb-10">
+<div class="mx-auto max-w-[1600px] px-4 pt-4 pb-8 sm:px-6 sm:pt-5 sm:pb-10">
     <div class="mb-2.5 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-lg font-bold text-ink sm:text-xl">Company Setup</h1>
         <button type="button" class="link-button inline-flex items-center gap-1.5 text-sm" x-data x-on:click="$dispatch('guide-start', 'company')">
@@ -18,7 +18,7 @@
     @endif
 
     <div
-        class="bg-card pb-2 sm:px-3.5 sm:pb-3.5 sm:shadow-card"
+        class="flex flex-col gap-4"
         x-data="{
             tab: @js($initialTab),
             tabs: ['profile', 'operation-setup', 'linked-accounts'],
@@ -69,7 +69,7 @@
             aria-labelledby="company-tab-profile"
             x-show="tab === 'profile'"
             @if ($initialTab !== 'profile') x-cloak @endif
-            class="bg-panel"
+            class="rounded-2xl border border-table-line bg-card shadow-card"
         >
             <livewire:company.profile-form :onboarding="$onboarding" :can-save="$canSave" />
         </div>
@@ -80,7 +80,7 @@
             aria-labelledby="company-tab-operation-setup"
             x-show="tab === 'operation-setup'"
             @if ($initialTab !== 'operation-setup') x-cloak @endif
-            class="bg-panel px-4 py-5 sm:px-6"
+            class="pt-1"
         >
             <h2 class="sr-only">Operation Setup</h2>
             @if ($onboarding)
@@ -88,9 +88,9 @@
             @else
                 <livewire:company.operation-settings-form />
 
-                <hr class="my-5 border-0 border-t-2 border-line">
+                <hr class="my-6 border-0 border-t border-line">
 
-                <div class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
                     @foreach (LookupType::cases() as $type)
                         <livewire:company.lookup-table :type="$type->value" :key="$type->value" />
                     @endforeach
@@ -104,7 +104,7 @@
             aria-labelledby="company-tab-linked-accounts"
             x-show="tab === 'linked-accounts'"
             @if ($initialTab !== 'linked-accounts') x-cloak @endif
-            class="bg-panel"
+            class="rounded-2xl border border-table-line bg-card shadow-card"
         >
             <section class="flex min-h-60 flex-col gap-2 px-4 py-6 sm:min-h-[420px] sm:px-8 sm:py-12">
                 <h2 class="text-base font-semibold text-ink">Linked Accounts</h2>

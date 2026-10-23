@@ -12,8 +12,8 @@ use App\Models\User;
  * Onboarding for new companies: the setup wizard every new sign-up works through before the rest of
  * the app opens, and the tour of the pages a user can open, shown once the wizard is finished.
  *
- * The first steps are required; from "team" on, steps can be skipped. Tour screenshots live in
- * public/images/onboarding/{key}.png and are left out when missing.
+ * The first steps are required; from "team" on, steps can be skipped. Tour and welcome page
+ * screenshots live in public/images/onboarding/{key}.png and are left out when missing.
  */
 final class Onboarding
 {
@@ -267,6 +267,25 @@ final class Onboarding
                 ->exists(),
             'payment' => $company->payments()->exists(),
         };
+    }
+
+    /**
+     * Welcome page slides for someone who just signed up: a preview of each wizard step, with its
+     * directions and a screenshot (public/images/onboarding/setup-{step}.png, left out when missing).
+     *
+     * @return list<array{key: string, number: int, title: string, intro: string, howTo: list<string>, required: bool, image: ?string}>
+     */
+    public static function welcomeSlides(): array
+    {
+        return array_map(fn (string $key, int $index): array => [
+            'key' => $key,
+            'number' => $index + 1,
+            'title' => self::step($key)['title'],
+            'intro' => self::step($key)['intro'],
+            'howTo' => self::step($key)['howTo'],
+            'required' => self::isRequired($key),
+            'image' => self::image("setup-{$key}"),
+        ], self::STEPS, array_keys(self::STEPS));
     }
 
     /**

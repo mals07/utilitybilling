@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Enums\Access;
+use App\Enums\AuthTokenType;
 use App\Enums\CustomerStatus;
 use App\Enums\Page;
 use App\Enums\WorkOrderType;
 use App\Livewire\Company\OperationSettingsForm;
 use App\Livewire\Customers\CustomersPage;
 use App\Livewire\Onboarding\Tour;
+use App\Livewire\Onboarding\Welcome;
 use App\Livewire\Setup\SetupWizard;
 use App\Livewire\WorkOrders\WorkOrdersPage;
 use App\Models\AccountType;
@@ -18,6 +20,7 @@ use App\Models\Customer;
 use App\Models\MeterType;
 use App\Models\User;
 use App\Models\WorkOrder;
+use App\Support\AuthTokens;
 use App\Support\Billing\Ledger;
 use App\Support\Guides;
 use App\Support\Onboarding;
@@ -62,6 +65,51 @@ class OnboardingTest extends TestCase
         $this->actingAs($user)->get(route('setup'))
             ->assertSee('Your company profile')
             ->assertSee('Step 1 of 10');
+    }
+
+    public function test_new_sign_up_sees_the_welcome_page_before_the_setup_wizard(): void
+    {
+        $user = User::factory()->notWelcomed()->create();
+
+        $this->assertSame('welcome', $user->homeRoute());
+        $this->actingAs($user)->get(route('setup'))->assertRedirect(route('welcome'));
+        $this->actingAs($user)->get(route('welcome'))
+            ->assertOk()
+            ->assertSee('Welcome! Thank you for signing up to '.config('app.name'))
+            ->assertSee('Before we start, I will walk you through the steps on how to configure your system.')
+            ->assertSee('Lookup lists')
+            ->assertSee('Post the fee payment');
+    }
+
+    public function test_verifying_the_email_continues_to_the_welcome_page(): void
+    {
+        $user = User::factory()->unverified()->notWelcomed()->create();
+        $token = AuthTokens::issue($user, AuthTokenType::EmailVerification);
+
+        $this->actingAs($user)
+            ->get(route('auth.verify', ['token' => $token]))
+            ->assertRedirect(route('welcome', ['verified' => 1]));
+    }
+
+    public function test_starting_setup_from_the_welcome_page_shows_it_only_once(): void
+    {
+        $user = User::factory()->notWelcomed()->create();
+
+        Livewire::actingAs($user)->test(Welcome::class)
+            ->call('start')
+            ->assertRedirect(route('setup'));
+
+        $this->assertNotNull($user->fresh()->welcomed_at);
+        $this->actingAs($user->fresh())->get(route('welcome'))->assertRedirect(route('setup'));
+    }
+
+    public function test_invited_staff_never_see_the_welcome_page(): void
+    {
+        $company = Company::factory()->create();
+        $member = User::factory()->memberOf($company)->notWelcomed()->create();
+
+        $this->assertFalse($member->needsWelcome());
+        $this->actingAs($member)->get(route('welcome'))->assertRedirect(route('dashboard'));
     }
 
     public function test_app_pages_stay_locked_until_setup_is_finished(): void

@@ -28,3 +28,4 @@ Thumbs.db
 /database/backup.sql
 /utility-billing-deploy.zip
 error_log
+/utility_billing_test.sql

@@ -38,6 +38,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password1'),
             'is_admin' => true,
             'last_login_at' => now(),
+            'welcomed_at' => now(),
             'remember_token' => Str::random(10),
         ];
     }
@@ -48,6 +49,14 @@ class UserFactory extends Factory
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => ['email_verified_at' => null]);
+    }
+
+    /**
+     * Just signed up: the welcome page hasn't been seen yet.
+     */
+    public function notWelcomed(): static
+    {
+        return $this->state(fn (array $attributes) => ['welcomed_at' => null]);
     }
 
     /**

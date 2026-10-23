@@ -27,6 +27,7 @@ use App\Livewire\Disconnections\DisconnectionsPage;
 use App\Livewire\Invoices\GenerateBillsPage;
 use App\Livewire\Invoices\InvoicesPage;
 use App\Livewire\MeterReadings\MeterReadingsPage;
+use App\Livewire\Onboarding\Welcome;
 use App\Livewire\Payments\PaymentsPage;
 use App\Livewire\Rates\RatesPage;
 use App\Livewire\Roles\RolesPage;
@@ -65,6 +66,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified.email'])->group(function () {
+    Route::livewire('/welcome', Welcome::class)->name('welcome');
     Route::livewire('/setup', SetupWizard::class)->name('setup');
 
     Route::middleware('company')->group(function () {

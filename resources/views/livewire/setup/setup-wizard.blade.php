@@ -60,7 +60,7 @@
             @endif
             @if ($step === 'profile' && ! $company)
                 <x-alert class="mt-3">
-                    Welcome! These steps set up everything your company needs to bill customers. Steps 1–5 are required before you can use the system;
+                    These steps set up everything your company needs to bill customers. Steps 1–5 are required before you can use the system;
                     the rest walk you through your first customer and payment. Click <strong>Finish later</strong> at any time; you'll continue from here when you sign in again.
                 </x-alert>
             @endif
@@ -84,7 +84,7 @@
                     </div>
                     @break
                 @case('lists')
-                    <div class="grid grid-cols-1 gap-x-4 gap-y-8 bg-panel px-4 py-5 sm:grid-cols-2 sm:px-6 2xl:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-5 bg-panel px-4 py-5 sm:grid-cols-2 sm:px-6 2xl:grid-cols-4">
                         @foreach (LookupType::cases() as $type)
                             <livewire:company.lookup-table :type="$type->value" :key="'setup-'.$type->value.'-'.$exampleRun" />
                         @endforeach
