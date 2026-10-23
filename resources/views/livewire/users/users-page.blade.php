@@ -5,7 +5,7 @@
 @use('App\Support\SpecialAccess')
 
 <x-page title="Users" guide="users">
-    <div class="max-w-[960px]">
+    <div class="max-w-[1100px]">
         <x-flash class="mb-4" />
         @if ($devLink)
             <x-dev-email-notice :link="$devLink" label="Open the invitation link" class="mb-4" />
@@ -19,25 +19,31 @@
         </div>
 
         <div class="table-scroller mt-2">
-            <table class="data-table">
+            {{-- On narrow screens the Username (3rd) and Department (4th) columns are hidden, filler rows included. --}}
+            <table class="data-table max-md:[&_tr>*:nth-child(3)]:hidden max-md:[&_tr>*:nth-child(4)]:hidden">
                 <thead>
                     <tr>
                         <th scope="col" class="cell-number">No</th>
-                        <th scope="col">First Name</th>
-                        <th scope="col">Last Name</th>
+                        <th scope="col">Name</th>
                         <th scope="col">Username</th>
-                        <th scope="col">Email</th>
                         <th scope="col">Department</th>
-                        <th scope="col" class="cell-center">Disabled On</th>
+                        <th scope="col" class="cell-center w-px">Status</th>
                         <th scope="col" class="cell-actions"><span class="sr-only">Edit</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($users as $index => $member)
-                        <tr wire:key="user-{{ $member->id }}" @class(['row-selected' => $member->id === $selected?->id, 'row-inactive' => $member->isDeactivated()])>
+                        @php($isDisabled = $member->isDeactivated())
+                        <tr
+                            wire:key="user-{{ $member->id }}"
+                            @unless ($member->is_admin) wire:click="openUser({{ $member->id }})" @endunless
+                            @class(['row-clickable' => ! $member->is_admin, 'row-selected' => $member->id === $selected?->id, 'row-inactive' => $isDisabled])
+                        >
                             <td class="cell-number">{{ $users->firstItem() + $index }}</td>
-                            <td>{{ $member->first_name }}</td>
-                            <td>{{ $member->last_name }}</td>
+                            <td>
+                                <span @class(['block', 'font-medium text-ink-strong' => ! $isDisabled])>{{ $member->first_name }} {{ $member->last_name }}</span>
+                                <span class="mt-0.5 block text-xs text-label">{{ $member->email }}</span>
+                            </td>
                             <td>
                                 @if ($member->username)
                                     {{ $member->username }}
@@ -45,7 +51,6 @@
                                     <span class="cell-empty">Invited</span>
                                 @endif
                             </td>
-                            <td>{{ $member->email }}</td>
                             <td>
                                 @if ($member->is_admin)
                                     <span class="cell-muted">Administrator</span>
@@ -54,15 +59,13 @@
                                 @endif
                             </td>
                             <td class="cell-center">
-                                @if ($member->isDeactivated())
-                                    <span class="text-xs font-semibold text-danger">YES</span>
-                                @endif
+                                <span @class(['status-pill', 'text-danger' => $isDisabled, 'text-success' => ! $isDisabled])>{{ $isDisabled ? 'Disabled' : 'Active' }}</span>
                             </td>
                             <td class="cell-actions">
                                 <button
                                     type="button"
                                     class="icon-button"
-                                    wire:click="openUser({{ $member->id }})"
+                                    wire:click.stop="openUser({{ $member->id }})"
                                     @disabled($member->is_admin)
                                     @if ($member->is_admin) title="The company owner's account can't be changed here." @endif
                                     aria-label="Update {{ $member->first_name }} {{ $member->last_name }}"
@@ -75,7 +78,7 @@
                     <x-filler-rows
                         :count="$users->count()"
                         :minimum="UsersPage::MINIMUM_ROWS"
-                        :columns="8"
+                        :columns="6"
                         :empty-text="trim($search) === '' ? 'No users yet.' : 'No users match your search.'"
                     />
                 </tbody>

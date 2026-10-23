@@ -3,7 +3,7 @@
 @use('App\Support\Money')
 
 <x-page title="Payments" guide="payments">
-    <div class="max-w-[1100px]">
+    <div class="max-w-[1280px]">
         <x-flash class="mb-4" />
 
         @if ($access['add'])
@@ -86,8 +86,11 @@
                                 <tbody>
                                     @foreach ($openInvoices as $invoice)
                                         <tr wire:key="open-invoice-{{ $invoice->id }}">
-                                            <td>{{ $invoice->invoice_number }} <span class="text-label">· {{ $invoice->periodLabel() ?? $invoice->kind->label() }}</span></td>
-                                            <td @class(['font-semibold text-danger' => $invoice->isOverdue($today)])>{{ Format::longDate($invoice->due_date) }}</td>
+                                            <td>
+                                                <span class="block font-medium text-ink-strong tabular-nums">{{ $invoice->invoice_number }}</span>
+                                                <span class="block text-xs text-label">{{ $invoice->kind->label() }}{{ $invoice->periodLabel() ? ' · '.$invoice->periodLabel() : '' }}</span>
+                                            </td>
+                                            <td @class(['text-xs whitespace-nowrap tabular-nums', 'font-semibold text-danger' => $invoice->isOverdue($today), 'text-label' => ! $invoice->isOverdue($today)])>{{ Format::shortDate($invoice->due_date) }}</td>
                                             <td class="cell-right">{{ Format::amount($invoice->balance) }}</td>
                                             <td class="cell-right font-semibold">
                                                 @php($applied = $preview['applied'][$invoice->id] ?? 0)
@@ -115,33 +118,40 @@
         </div>
 
         <div class="table-scroller mt-3">
-            <table class="data-table [&_th]:text-ink-strong [&_tbody_tr]:h-10">
+            {{-- On narrow screens the Method (4th) and Advance (6th) columns are hidden, filler rows included. --}}
+            <table class="data-table max-md:[&_tr>*:nth-child(4)]:hidden max-md:[&_tr>*:nth-child(6)]:hidden">
                 <thead>
                     <tr>
-                        <th scope="col">OR No</th>
-                        <th scope="col">Date</th>
-                        <th scope="col">Account No</th>
+                        <th scope="col" class="w-px">OR No</th>
                         <th scope="col">Customer</th>
-                        <th scope="col">Paid By</th>
+                        <th scope="col" class="w-px">Paid On</th>
+                        <th scope="col">Method</th>
                         <th scope="col" class="cell-right">Amount</th>
                         <th scope="col" class="cell-right">Advance</th>
-                        <th scope="col">Status</th>
+                        <th scope="col" class="cell-center w-px">Status</th>
                         <th scope="col" class="cell-center"><span class="sr-only">View</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($payments as $payment)
-                        <tr wire:key="payment-{{ $payment->id }}" @class(['row-selected' => $payment->id === $selected?->id, 'row-inactive' => $payment->isVoid()])>
-                            <td class="whitespace-nowrap">{{ $payment->receipt_number }}</td>
-                            <td class="whitespace-nowrap">{{ Format::longDate($payment->paid_on) }}</td>
-                            <td class="whitespace-nowrap">{{ $payment->customer->account_number }}</td>
-                            <td>{{ $payment->customer->first_name }} {{ $payment->customer->last_name }}</td>
+                        @php($isVoid = $payment->isVoid())
+                        <tr
+                            wire:key="payment-{{ $payment->id }}"
+                            wire:click="openPayment({{ $payment->id }})"
+                            @class(['row-clickable', 'row-selected' => $payment->id === $selected?->id, 'row-inactive' => $isVoid])
+                        >
+                            <td @class(['whitespace-nowrap tabular-nums', 'font-medium text-ink-strong' => ! $isVoid])>{{ $payment->receipt_number }}</td>
+                            <td>
+                                <span @class(['block', 'font-medium text-ink-strong' => ! $isVoid])>{{ $payment->customer->first_name }} {{ $payment->customer->last_name }}</span>
+                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $payment->customer->account_number }}</span>
+                            </td>
+                            <td class="text-xs whitespace-nowrap text-label tabular-nums">{{ Format::shortDate($payment->paid_on) }}</td>
                             <td>{{ $payment->method->label() }}</td>
-                            <td class="cell-right">{{ Format::amount($payment->amount) }}</td>
+                            <td @class(['cell-right', 'font-semibold text-ink-strong' => ! $isVoid])>{{ Format::amount($payment->amount) }}</td>
                             <td class="cell-right">{{ (float) $payment->unapplied_amount > 0 ? Format::amount($payment->unapplied_amount) : '' }}</td>
-                            <td><span @class(['text-[13px]', 'text-muted' => $payment->isVoid(), 'text-success' => ! $payment->isVoid()])>{{ $payment->isVoid() ? 'Void' : 'Posted' }}</span></td>
+                            <td class="cell-center"><span @class(['status-pill', 'text-muted' => $isVoid, 'text-success' => ! $isVoid])>{{ $isVoid ? 'Void' : 'Posted' }}</span></td>
                             <td class="cell-actions">
-                                <button type="button" class="icon-button" wire:click="openPayment({{ $payment->id }})" aria-label="View receipt {{ $payment->receipt_number }}">
+                                <button type="button" class="icon-button" wire:click.stop="openPayment({{ $payment->id }})" aria-label="View receipt {{ $payment->receipt_number }}">
                                     <x-icon name="document" :size="14" />
                                 </button>
                             </td>
@@ -150,7 +160,7 @@
                     <x-filler-rows
                         :count="$payments->count()"
                         :minimum="PaymentsPage::MINIMUM_ROWS"
-                        :columns="9"
+                        :columns="8"
                         :empty-text="trim($search) === '' ? 'No payments yet.' : 'No payments match.'"
                     />
                 </tbody>

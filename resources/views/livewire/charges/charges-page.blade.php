@@ -76,8 +76,8 @@
                                 @class(['row-clickable', 'row-selected' => $chargeType->id === $selectedType?->id])
                             >
                                 <td class="cell-number">{{ $chargeTypes->firstItem() + $index }}</td>
-                                <td>{{ $chargeType->name }}</td>
-                                <td class="cell-muted text-xs whitespace-nowrap">{{ Format::date($chargeType->created_at, $timezone) }}</td>
+                                <td class="font-medium text-ink-strong">{{ $chargeType->name }}</td>
+                                <td class="cell-muted text-xs whitespace-nowrap">{{ Format::shortDateIn($chargeType->created_at, $timezone) }}</td>
                                 <td class="cell-actions">
                                     <button
                                         type="button"

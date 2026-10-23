@@ -6,10 +6,16 @@
     $noticeTab = in_array($tab, ['sent', 'due', 'field', 'history'], true);
     $selectable = in_array($tab, ['eligible', 'sent', 'due', 'field'], true);
     $columns = match ($tab) {
-        'eligible' => 6,
-        'hold' => 7,
-        'history' => 7,
-        default => 8,
+        'eligible' => 5,
+        'hold' => 6,
+        'history' => 6,
+        default => 7,
+    };
+    // The Cluster column hides on narrow screens; it follows the optional Select and Notice columns and Customer.
+    $hideClusterOnPhones = match (2 + ($selectable ? 1 : 0) + ($noticeTab ? 1 : 0)) {
+        2 => 'max-md:[&_tr>*:nth-child(2)]:hidden',
+        3 => 'max-md:[&_tr>*:nth-child(3)]:hidden',
+        default => 'max-md:[&_tr>*:nth-child(4)]:hidden',
     };
 @endphp
 
@@ -171,16 +177,15 @@
 
         {{-- List --}}
         <div class="table-scroller mt-3">
-            <table class="data-table [&_th]:text-ink-strong [&_tbody_tr]:h-10">
+            <table class="data-table {{ $hideClusterOnPhones }}">
                 <thead>
                     <tr>
                         @if ($selectable)
                             <th scope="col" class="w-8"><span class="sr-only">Select</span></th>
                         @endif
                         @if ($noticeTab)
-                            <th scope="col">Notice</th>
+                            <th scope="col" class="w-px">Notice</th>
                         @endif
-                        <th scope="col">Account No</th>
                         <th scope="col">Customer</th>
                         <th scope="col">Cluster</th>
                         @if ($tab === 'eligible' || $tab === 'hold')
@@ -211,31 +216,43 @@
                                 </td>
                             @endif
                             @if ($noticeTab)
-                                <td class="whitespace-nowrap">{{ $row->notice_number }}</td>
+                                <td class="font-medium whitespace-nowrap text-ink-strong tabular-nums">{{ $row->notice_number }}</td>
                             @endif
-                            <td class="whitespace-nowrap">{{ $customer->account_number }}</td>
-                            <td>{{ $customer->fullName() }}</td>
+                            <td>
+                                <span class="block font-medium text-ink-strong">{{ $customer->fullName() }}</span>
+                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $customer->account_number }}</span>
+                            </td>
                             <td>{{ $customer->clusterType?->name }}</td>
 
                             @if ($tab === 'eligible' || $tab === 'hold')
                                 <td class="cell-right">{{ $row->overdue_bills }}</td>
-                                <td class="cell-right">{{ Format::amount($row->overdue_amount ?? 0) }}</td>
+                                <td class="cell-right font-semibold text-ink-strong">{{ Format::amount($row->overdue_amount ?? 0) }}</td>
                                 @if ($tab === 'hold')
                                     <td class="text-warning">{{ ucfirst((string) $holdReasons[$row->id]) }}</td>
                                 @else
-                                    <td class="whitespace-nowrap">{{ Format::isoDate($row->oldest_due_date) }}</td>
+                                    <td class="text-xs whitespace-nowrap text-label tabular-nums">{{ Format::shortDate(\Illuminate\Support\Carbon::parse($row->oldest_due_date)) }}</td>
                                 @endif
                             @elseif ($tab === 'history')
-                                <td class="whitespace-nowrap">{{ Format::longDate($row->issued_on) }}</td>
-                                <td><span class="{{ $row->status->colorClass() }}">{{ $row->status->label() }}</span> <span class="text-label">· {{ $row->closed_at ? Format::date($row->closed_at, $timezone) : '' }}</span></td>
-                                <td class="text-ink-soft">{{ $row->close_reason }}{{ $row->closedBy ? ' ('.$row->closedBy->name.')' : '' }}</td>
+                                <td class="text-xs whitespace-nowrap text-label tabular-nums">{{ Format::shortDate($row->issued_on) }}</td>
+                                <td>
+                                    <span class="status-pill {{ $row->status->colorClass() }}">{{ $row->status->label() }}</span>
+                                    @if ($row->closed_at)
+                                        <span class="mt-1 block text-xs text-label tabular-nums">{{ Format::shortDateIn($row->closed_at, $timezone) }}</span>
+                                    @endif
+                                </td>
+                                <td class="text-ink-soft">
+                                    <span class="block">{{ $row->close_reason }}</span>
+                                    @if ($row->closedBy)
+                                        <span class="mt-0.5 block text-xs text-label">by {{ $row->closedBy->name }}</span>
+                                    @endif
+                                </td>
                             @else
-                                <td class="cell-right">{{ Format::amount($row->overdue_amount) }}</td>
-                                <td class="whitespace-nowrap">
-                                    {{ Format::longDate($row->deadline) }}
+                                <td class="cell-right font-semibold text-ink-strong">{{ Format::amount($row->overdue_amount) }}</td>
+                                <td class="text-xs whitespace-nowrap tabular-nums">
+                                    <span class="block text-label">{{ Format::shortDate($row->deadline) }}</span>
                                     @if ($tab === 'sent')
                                         @php($left = Disconnections::workingDaysLeft($company, $today, $row->deadline->toDateString()))
-                                        <span @class(['text-label' => $left > 0, 'font-semibold text-warning' => $left === 0])>· {{ $left > 0 ? $left.' '.Str::plural('day', $left).' left' : 'last day' }}</span>
+                                        <span @class(['mt-0.5 block', 'text-label' => $left > 0, 'font-semibold text-warning' => $left === 0])>{{ $left > 0 ? $left.' '.Str::plural('day', $left).' left' : 'Last day' }}</span>
                                     @endif
                                 </td>
                                 <td class="text-[13px]">
@@ -265,6 +282,7 @@
                         :count="$rows->count()"
                         :minimum="DisconnectionsPage::MINIMUM_ROWS"
                         :columns="$columns + ($selectable ? 1 : 0)"
+                        :text-column="($selectable ? 1 : 0) + ($noticeTab ? 1 : 0)"
                         :empty-text="match ($tab) {
                             'eligible' => 'No customers are overdue enough for a notice.',
                             'sent' => 'No notices are waiting for payment.',
@@ -288,7 +306,6 @@
                 <table class="data-table table-compact">
                     <thead>
                         <tr>
-                            <th scope="col">Account No</th>
                             <th scope="col">Customer</th>
                             <th scope="col">Reason</th>
                             <th scope="col">Until</th>
@@ -299,10 +316,12 @@
                     <tbody>
                         @forelse ($exempt as $customer)
                             <tr wire:key="exempt-{{ $customer->id }}">
-                                <td>{{ $customer->account_number }}</td>
-                                <td>{{ $customer->fullName() }}</td>
+                                <td>
+                                    <span class="block font-medium text-ink-strong">{{ $customer->fullName() }}</span>
+                                    <span class="block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $customer->account_number }}</span>
+                                </td>
                                 <td>{{ $customer->disconnection_exempt_reason }}</td>
-                                <td>{{ $customer->disconnection_exempt_until ? Format::longDate($customer->disconnection_exempt_until) : 'No end date' }}</td>
+                                <td class="text-xs whitespace-nowrap text-label tabular-nums">{{ $customer->disconnection_exempt_until ? Format::shortDate($customer->disconnection_exempt_until) : 'No end date' }}</td>
                                 <td>{{ $customer->disconnectionExemptedBy?->name }}</td>
                                 <td class="cell-actions">
                                     @if ($access['edit'])
@@ -311,7 +330,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-label">No exempt customers.</td></tr>
+                            <tr><td colspan="5" class="text-label">No exempt customers.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

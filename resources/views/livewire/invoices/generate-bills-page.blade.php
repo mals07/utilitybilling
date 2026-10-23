@@ -1,7 +1,7 @@
 @use('App\Support\Format')
 
 <x-page title="Generate Bills" guide="generate-bills">
-    <div class="max-w-[1100px]">
+    <div class="max-w-[1280px]">
         <x-flash class="mb-4" />
 
         <a href="{{ route('invoices') }}" class="link-button">← Back to Invoices</a>
@@ -53,10 +53,10 @@
         @endif
 
         <div class="table-scroller mt-4">
-            <table class="data-table [&_th]:text-ink-strong [&_tbody_tr]:h-11">
+            {{-- On narrow screens the Rate (2nd) and Previous (3rd) columns are hidden. --}}
+            <table class="data-table max-md:[&_tr>*:nth-child(2)]:hidden max-md:[&_tr>*:nth-child(3)]:hidden">
                 <thead>
                     <tr>
-                        <th scope="col">Account No</th>
                         <th scope="col">Customer</th>
                         <th scope="col">Rate</th>
                         <th scope="col" class="cell-right">Previous</th>
@@ -73,10 +73,9 @@
                             $failure = $failures[$reading->id] ?? null;
                         @endphp
                         <tr wire:key="bill-row-{{ $reading->id }}">
-                            <td class="whitespace-nowrap">{{ $customer->account_number }}</td>
                             <td>
-                                {{ $customer->first_name }} {{ $customer->last_name }}
-                                <span class="block text-[11px] text-label">{{ $reading->meter_number }}</span>
+                                <span class="block font-medium text-ink-strong">{{ $customer->first_name }} {{ $customer->last_name }}</span>
+                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $customer->account_number }} · Meter {{ $reading->meter_number }}</span>
                             </td>
                             <td>{{ $customer->rateType?->name ?? '—' }}</td>
                             <td class="cell-right">{{ Format::quantity($reading->previous_reading) }}</td>
@@ -103,7 +102,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="cell-empty py-6 text-center">
+                            <td colspan="6" class="cell-empty py-6 text-center">
                                 No readings ready to bill for this month.
                                 @if ($canRead)
                                     Enter them on the <a href="{{ route('meter-readings', ['period' => $period]) }}" class="font-semibold underline">Meter Readings</a> page.

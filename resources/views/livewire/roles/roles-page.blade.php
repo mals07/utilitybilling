@@ -73,7 +73,7 @@
                                 @class(['row-clickable', 'row-selected' => $item->id === $selected?->id])
                             >
                                 <td class="cell-number">{{ $roles->firstItem() + $index }}</td>
-                                <td @if ($item->description) title="{{ $item->description }}" @endif>{{ $item->name }}</td>
+                                <td class="font-medium text-ink-strong" @if ($item->description) title="{{ $item->description }}" @endif>{{ $item->name }}</td>
                                 <td class="cell-actions">
                                     @if ($access['delete'])
                                         <button

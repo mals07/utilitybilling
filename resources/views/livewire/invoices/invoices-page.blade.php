@@ -3,7 +3,7 @@
 @use('App\Support\Format')
 
 <x-page title="Invoices" guide="invoices">
-    <div class="max-w-[1100px]">
+    <div class="max-w-[1280px]">
         <x-flash class="mb-4" />
 
         <div class="grid gap-3 sm:grid-cols-3">
@@ -53,42 +53,51 @@
         </div>
 
         <div class="table-scroller mt-3">
-            <table class="data-table [&_th]:text-ink-strong [&_tbody_tr]:h-10">
+            {{-- On narrow screens the For (3rd) and Balance (6th) columns are hidden, filler rows included. --}}
+            <table class="data-table max-md:[&_tr>*:nth-child(3)]:hidden max-md:[&_tr>*:nth-child(6)]:hidden">
                 <thead>
                     <tr>
-                        <th scope="col">Invoice No</th>
+                        <th scope="col" class="w-px">Invoice No</th>
                         <th scope="col">Customer</th>
                         <th scope="col">For</th>
-                        <th scope="col">Dates</th>
+                        <th scope="col" class="w-px">Dates</th>
                         <th scope="col" class="cell-right">Amount</th>
                         <th scope="col" class="cell-right">Balance</th>
-                        <th scope="col" class="cell-center">Status</th>
+                        <th scope="col" class="cell-center w-px">Status</th>
                         <th scope="col" class="cell-center"><span class="sr-only">View</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($invoices as $invoice)
-                        <tr wire:key="invoice-{{ $invoice->id }}" @class(['row-selected' => $invoice->id === $selected?->id, 'row-inactive' => $invoice->status->value === 'void'])>
-                            <td class="whitespace-nowrap">{{ $invoice->invoice_number }}</td>
+                        @php
+                            $isVoid = $invoice->status->value === 'void';
+                            $isOverdue = $invoice->isOverdue($today);
+                        @endphp
+                        <tr
+                            wire:key="invoice-{{ $invoice->id }}"
+                            wire:click="openInvoice({{ $invoice->id }})"
+                            @class(['row-clickable', 'row-selected' => $invoice->id === $selected?->id, 'row-inactive' => $isVoid])
+                        >
+                            <td @class(['whitespace-nowrap tabular-nums', 'font-medium text-ink-strong' => ! $isVoid])>{{ $invoice->invoice_number }}</td>
                             <td>
-                                {{ $invoice->customer->first_name }} {{ $invoice->customer->last_name }}
-                                <span class="block text-xs text-label whitespace-nowrap">Acct No: {{ $invoice->customer->account_number }}</span>
+                                <span @class(['block', 'font-medium text-ink-strong' => ! $isVoid])>{{ $invoice->customer->first_name }} {{ $invoice->customer->last_name }}</span>
+                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label">Acct No: {{ $invoice->customer->account_number }}</span>
                             </td>
                             <td class="whitespace-nowrap">
-                                {{ $invoice->kind->label() }}
+                                <span @class(['block', 'font-medium text-ink-strong' => ! $isVoid])>{{ $invoice->kind->label() }}</span>
                                 @if ($invoice->periodLabel())
-                                    <span class="block text-xs text-label">{{ $invoice->periodLabel() }}</span>
+                                    <span class="mt-0.5 block text-xs text-label">{{ $invoice->periodLabel() }}</span>
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap text-xs">
+                            <td class="text-xs whitespace-nowrap tabular-nums">
                                 <span class="block text-label">Billed: {{ Format::shortDate($invoice->invoice_date) }}</span>
-                                <span @class(['block', 'font-semibold text-danger' => $invoice->isOverdue($today), 'text-label' => ! $invoice->isOverdue($today)])>Due: {{ Format::shortDate($invoice->due_date) }}</span>
+                                <span @class(['mt-0.5 block', 'font-semibold text-danger' => $isOverdue, 'text-label' => ! $isOverdue])>Due: {{ Format::shortDate($invoice->due_date) }}</span>
                             </td>
                             <td class="cell-right">{{ Format::amount($invoice->total_amount) }}</td>
-                            <td class="cell-right">{{ Format::amount($invoice->balance) }}</td>
+                            <td @class(['cell-right', 'font-semibold text-ink-strong' => ! $isVoid && (float) $invoice->balance > 0])>{{ Format::amount($invoice->balance) }}</td>
                             <td class="cell-center"><span class="status-pill {{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</span></td>
                             <td class="cell-actions">
-                                <button type="button" class="icon-button" wire:click="openInvoice({{ $invoice->id }})" aria-label="View invoice {{ $invoice->invoice_number }}">
+                                <button type="button" class="icon-button" wire:click.stop="openInvoice({{ $invoice->id }})" aria-label="View invoice {{ $invoice->invoice_number }}">
                                     <x-icon name="document" :size="14" />
                                 </button>
                             </td>

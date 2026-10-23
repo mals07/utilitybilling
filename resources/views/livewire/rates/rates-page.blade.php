@@ -84,7 +84,7 @@
                                 @class(['row-clickable', 'row-selected' => $isSelected])
                             >
                                 <td class="cell-number">{{ $rateTypes->firstItem() + $index }}</td>
-                                <td>{{ $type->name }}</td>
+                                <td class="font-medium text-ink-strong">{{ $type->name }}</td>
                                 <td class="cell-actions">
                                     <button
                                         type="button"

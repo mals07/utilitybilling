@@ -6,7 +6,7 @@
 @php($meterTypeHint = 'Add meter types in Company Setup → Operation Setup.')
 
 <x-page title="Work Orders" guide="work-orders">
-    <div class="max-w-[1100px]">
+    <div class="max-w-[1280px]">
         <x-flash class="mb-4" />
 
         {{-- Submit Work Order --}}
@@ -170,17 +170,15 @@
         </div>
 
         <div class="table-scroller mt-3">
-            <table class="data-table [&_th]:text-ink-strong [&_tbody_tr]:h-10">
+            {{-- On narrow screens the Order Type (2nd) and Dates (4th) columns are hidden, filler rows included. --}}
+            <table class="data-table max-md:[&_tr>*:nth-child(2)]:hidden max-md:[&_tr>*:nth-child(4)]:hidden">
                 <thead>
                     <tr>
-                        <th scope="col">No.</th>
+                        <th scope="col" class="w-px">No.</th>
                         <th scope="col">Order Type</th>
-                        <th scope="col">Account No</th>
-                        <th scope="col">Customer Name</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Requested On</th>
-                        <th scope="col">Completed On</th>
-                        <th scope="col">Completed By</th>
+                        <th scope="col">Customer</th>
+                        <th scope="col" class="w-px">Dates</th>
+                        <th scope="col" class="cell-center w-px">Status</th>
                         <th scope="col" class="cell-center"><span class="sr-only">Update</span></th>
                         <th scope="col" class="cell-center"><span class="sr-only">View</span></th>
                     </tr>
@@ -188,48 +186,55 @@
                 <tbody>
                     @foreach ($orders as $order)
                         @php($overdue = $order->isOverdue($timezone))
-                        <tr wire:key="order-{{ $order->id }}" @class(['row-selected' => $order->id === ($editing?->id ?? $viewing?->id ?? $completing?->id)])>
-                            <td class="whitespace-nowrap">
-                                {{ $order->order_number }}
+                        <tr
+                            wire:key="order-{{ $order->id }}"
+                            wire:click="openView({{ $order->id }})"
+                            @class(['row-clickable', 'row-selected' => $order->id === ($editing?->id ?? $viewing?->id ?? $completing?->id)])
+                        >
+                            <td class="whitespace-nowrap tabular-nums">
+                                <span class="block font-medium text-ink-strong">{{ $order->order_number }}</span>
                                 @if ($order->parent)
-                                    <span class="block text-[11px] text-label">from {{ $order->parent->order_number }}</span>
+                                    <span class="mt-0.5 block text-xs text-label">from {{ $order->parent->order_number }}</span>
                                 @endif
                             </td>
-                            <td>{{ $order->order_type->label() }}</td>
-                            <td class="whitespace-nowrap">{{ $order->customer->account_number }}</td>
-                            <td>{{ $order->customer->first_name }} {{ $order->customer->last_name }}</td>
+                            <td><span class="font-medium text-ink-strong">{{ $order->order_type->label() }}</span></td>
                             <td>
+                                <span class="block">{{ $order->customer->first_name }} {{ $order->customer->last_name }}</span>
+                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $order->customer->account_number }}</span>
+                            </td>
+                            <td class="text-xs whitespace-nowrap tabular-nums">
+                                <span @class(['block', 'font-semibold text-danger' => $overdue, 'text-label' => ! $overdue]) @if ($overdue) title="Open for more than {{ WorkOrder::OVERDUE_AFTER_DAYS }} days" @endif>
+                                    @if ($overdue)
+                                        <x-icon name="warning" :size="12" class="inline align-[-2px]" />
+                                    @endif
+                                    Requested: {{ Format::shortDateIn($order->requested_at, $timezone) }}
+                                    @if ($overdue)
+                                        <span class="sr-only">(overdue)</span>
+                                    @endif
+                                </span>
+                                @if ($order->completed_at)
+                                    <span class="mt-0.5 block text-label">Done: {{ Format::shortDateIn($order->completed_at, $timezone) }}{{ $order->completedBy ? ' · '.$order->completedBy->name : '' }}</span>
+                                @endif
+                            </td>
+                            <td class="cell-center">
                                 <span class="status-pill {{ $order->status->colorClass() }}">{{ $order->status->label() }}</span>
                                 @if ($order->review_flag)
                                     @if ($order->flag_resolved_at)
-                                        <span class="mt-0.5 block w-max rounded bg-success-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-success" title="{{ $order->review_flag->label() }}">Resolved · {{ $order->flag_resolution }}</span>
+                                        <span class="mx-auto mt-1 block w-max rounded bg-success-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-success" title="{{ $order->review_flag->label() }}">Resolved · {{ $order->flag_resolution }}</span>
                                     @else
-                                        <span class="mt-0.5 block w-max rounded bg-danger-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-danger">{{ $order->review_flag->label() }}</span>
+                                        <span class="mx-auto mt-1 block w-max rounded bg-danger-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-danger">{{ $order->review_flag->label() }}</span>
                                     @endif
                                 @endif
                             </td>
-                            <td @class(['whitespace-nowrap', 'bg-danger-bg font-semibold text-danger' => $overdue])>
-                                @if ($overdue)
-                                    <span class="inline-flex items-center gap-1" title="Open for more than {{ WorkOrder::OVERDUE_AFTER_DAYS }} days">
-                                        <x-icon name="warning" :size="14" />
-                                        {{ Format::date($order->requested_at, $timezone) }}
-                                        <span class="sr-only">(overdue)</span>
-                                    </span>
-                                @else
-                                    {{ Format::date($order->requested_at, $timezone) }}
-                                @endif
-                            </td>
-                            <td class="whitespace-nowrap">{{ $order->completed_at ? Format::date($order->completed_at, $timezone) : '' }}</td>
-                            <td>{{ $order->completedBy?->name }}</td>
                             <td class="cell-actions">
                                 @if ($order->status->isOpen())
-                                    <button type="button" class="icon-button" wire:click="openEdit({{ $order->id }})" aria-label="Update work order {{ $order->order_number }}">
+                                    <button type="button" class="icon-button" wire:click.stop="openEdit({{ $order->id }})" aria-label="Update work order {{ $order->order_number }}">
                                         <x-icon name="pencil" :size="14" />
                                     </button>
                                 @endif
                             </td>
                             <td class="cell-actions">
-                                <button type="button" class="icon-button" wire:click="openView({{ $order->id }})" aria-label="View work order {{ $order->order_number }}">
+                                <button type="button" class="icon-button" wire:click.stop="openView({{ $order->id }})" aria-label="View work order {{ $order->order_number }}">
                                     <x-icon name="document" :size="14" />
                                 </button>
                             </td>
@@ -238,7 +243,8 @@
                     <x-filler-rows
                         :count="$orders->count()"
                         :minimum="WorkOrdersPage::MINIMUM_ROWS"
-                        :columns="10"
+                        :columns="7"
+                        :text-column="2"
                         :empty-text="trim($search) === '' && ! $pendingOnly ? 'No work orders yet.' : 'No work orders match.'"
                     />
                 </tbody>

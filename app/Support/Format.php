@@ -50,6 +50,14 @@ final class Format
     }
 
     /**
+     * "Oct. 5 2026" for a moment in time, in the company's time zone.
+     */
+    public static function shortDateIn(CarbonInterface $date, ?string $timezone): string
+    {
+        return self::shortDate($date->copy()->setTimezone($timezone ?? self::DEFAULT_TIMEZONE));
+    }
+
+    /**
      * Today's date as "2026-10-08" in the company's time zone.
      */
     public static function todayIn(?string $timezone): string

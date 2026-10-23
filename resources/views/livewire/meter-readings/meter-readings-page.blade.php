@@ -100,11 +100,11 @@
                     <table class="w-full text-[13px]">
                         <thead>
                             <tr class="border-b border-table-line text-left text-[11px] text-label">
-                                <th scope="col" class="px-3 py-2 font-medium">Customer</th>
-                                <th scope="col" class="px-3 py-2 text-right font-medium">Previous</th>
-                                <th scope="col" class="w-36 px-3 py-2 text-right font-medium">Present</th>
-                                <th scope="col" class="px-3 py-2 text-right font-medium">Cu.m.</th>
-                                <th scope="col" class="w-10 px-3 py-2"><span class="sr-only">Status</span></th>
+                                <th scope="col" class="px-4 py-3 font-medium">Customer</th>
+                                <th scope="col" class="px-4 py-3 text-right font-medium">Previous</th>
+                                <th scope="col" class="w-36 px-4 py-3 text-right font-medium">Present</th>
+                                <th scope="col" class="px-4 py-3 text-right font-medium">Cu.m.</th>
+                                <th scope="col" class="w-10 px-4 py-3"><span class="sr-only">Status</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -120,19 +120,19 @@
                                     wire:key="reading-{{ $customer->id }}-{{ $period }}-{{ $reading?->id }}-{{ $reading?->updated_at?->getTimestamp() }}"
                                     @class(['border-b border-table-line last:border-b-0', 'bg-row-selected' => $isSelected, 'hover:bg-row-hover' => ! $isSelected])
                                 >
-                                    <td class="px-3 py-2">
+                                    <td class="px-4 py-3">
                                         <button type="button" wire:click="select({{ $customer->id }})" class="text-left">
                                             <span class="block font-medium text-ink-strong hover:underline">{{ $customer->first_name }} {{ $customer->last_name }}</span>
                                             <span class="block text-[11px] text-label">
-                                                {{ $customer->account_number }} · {{ $customer->meter_number }}
+                                                Acct No: {{ $customer->account_number }} · Meter {{ $customer->meter_number }}
                                                 @if ($customer->status === CustomerStatus::Disconnected)
                                                     · <span class="text-danger">Disconnected</span>
                                                 @endif
                                             </span>
                                         </button>
                                     </td>
-                                    <td class="px-3 py-2 text-right text-ink-soft tabular-nums">{{ $row['previous'] === null ? '—' : Format::quantity($row['previous']) }}</td>
-                                    <td class="px-3 py-2 text-right">
+                                    <td class="px-4 py-3 text-right text-ink-soft tabular-nums">{{ $row['previous'] === null ? '—' : Format::quantity($row['previous']) }}</td>
+                                    <td class="px-4 py-3 text-right">
                                         @if ($reading?->present_reading !== null)
                                             <span class="tabular-nums {{ $billed ? 'text-ink-soft' : 'font-medium text-ink-strong' }}">{{ Format::quantity($reading->present_reading) }}</span>
                                         @elseif ($reading)
@@ -154,7 +154,7 @@
                                             <span class="mt-0.5 block text-[11px] text-label">Final reading {{ Format::quantity($row['finalReading']) }}</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-2 text-right tabular-nums">
+                                    <td class="px-4 py-3 text-right tabular-nums">
                                         @if ($reading)
                                             <span class="font-semibold text-ink-strong">{{ Format::quantity($reading->usage()) }}</span>
                                             @if ($reading->reading_code->isEstimated())
@@ -164,7 +164,7 @@
                                             <span class="text-placeholder">—</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-2 text-center">
+                                    <td class="px-4 py-3 text-center">
                                         <button type="button" wire:click="select({{ $customer->id }})" class="inline-flex size-6 items-center justify-center rounded-full" title="{{ $reading?->status->label() ?? 'Not read yet' }}">
                                             <span class="sr-only">{{ $reading?->status->label() ?? 'Not read yet' }} — open details</span>
                                             @if ($reading?->status === MeterReadingStatus::Review)
