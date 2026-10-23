@@ -11,6 +11,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
 use App\Models\Payment;
 use App\Support\Billing\Ledger;
+use App\Support\Format;
 use App\Support\Money;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -39,7 +40,7 @@ class StatementController extends Controller
             'charge' => Money::toCents($invoice->total_amount)
                 - Money::toCents($invoice->lines->where('kind', InvoiceLineKind::Adjustment)->sum('amount')),
             'payment' => 0,
-            'due' => $invoice->due_date->format('m/d/Y'),
+            'due' => Format::longDate($invoice->due_date),
         ]);
 
         $memos = $invoices->flatMap(fn (Invoice $invoice) => $invoice->adjustments->reject(fn (InvoiceAdjustment $memo): bool => $memo->isVoid())

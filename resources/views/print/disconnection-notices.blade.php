@@ -31,7 +31,7 @@
             <main class="print-sheet mx-auto mb-8 max-w-[800px] border border-table-line bg-card px-8 py-8 text-[13px]">
                 <x-print-letterhead :company="$company" title="Notice of Disconnection">
                     <p>No. <span class="font-semibold">{{ $notice->notice_number }}</span></p>
-                    <p>Date {{ $notice->issued_on->format('m/d/Y') }}</p>
+                    <p>Date {{ Format::longDate($notice->issued_on) }}</p>
                 </x-print-letterhead>
 
                 <section class="mt-5 grid grid-cols-[9rem_1fr] gap-x-4 gap-y-1">
@@ -55,7 +55,7 @@
                 <p class="mt-2">
                     Our records show the following bills on your account remain unpaid past their due date.
                     Please settle the overdue amount on or before
-                    <span class="font-bold text-ink-strong">{{ $notice->deadline->format('F j, Y') }}</span>
+                    <span class="font-bold text-ink-strong">{{ Format::longDate($notice->deadline) }}</span>
                     to avoid disconnection of your water service.
                 </p>
 
@@ -73,7 +73,7 @@
                             <tr>
                                 <td>{{ $bill->invoice_number }}</td>
                                 <td>{{ $bill->periodLabel() ?? $bill->kind->label() }}</td>
-                                <td>{{ $bill->due_date->format('m/d/Y') }}</td>
+                                <td>{{ Format::longDate($bill->due_date) }}</td>
                                 <td class="cell-right">{{ Format::amount($bill->balance) }}</td>
                             </tr>
                         @empty

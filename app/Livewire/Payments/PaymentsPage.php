@@ -323,6 +323,7 @@ class PaymentsPage extends Component
             'chosenMethod' => PaymentMethod::tryFrom($this->method),
             'selected' => $this->selected,
             'today' => BillingRun::today($company),
+            'timezone' => $company->timezone,
             'access' => $this->access,
         ]);
     }

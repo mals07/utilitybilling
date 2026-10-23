@@ -1,5 +1,6 @@
 @use('App\Support\CustomerImport\CustomerImporter')
 @use('App\Support\CustomerImport\CustomerSpreadsheet')
+@use('App\Support\Format')
 
 <div class="contents">
     <button type="button" class="link-button text-[11px]" wire:click="openImport">Import Customers</button>
@@ -150,7 +151,7 @@
                                 <tbody>
                                     @foreach ($this->history as $item)
                                         <tr wire:key="import-{{ $item->id }}">
-                                            <td class="whitespace-nowrap">{{ $item->created_at->copy()->setTimezone($timezone)->format('m/d/Y g:i A') }}</td>
+                                            <td class="whitespace-nowrap">{{ Format::dateTime($item->created_at, $timezone) }}</td>
                                             <td>{{ $item->user?->name ?? '—' }}</td>
                                             <td class="max-w-44 truncate" title="{{ $item->file_name }}">{{ $item->file_name }}</td>
                                             <td class="cell-center">{{ number_format($item->imported_count) }}</td>

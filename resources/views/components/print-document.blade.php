@@ -1,3 +1,5 @@
+@use('App\Support\Format')
+
 @props(['company', 'title'])
 
 {{-- A printable document (bill, receipt, statement): the company letterhead, the document, and a Print button. --}}
@@ -35,7 +37,7 @@
                         <p>{{ $line }}</p>
                     @endif
                 @endforeach
-                <p class="mt-1">Printed {{ now()->setTimezone($company->timezone ?? 'Asia/Manila')->format('m/d/Y g:i A') }}</p>
+                <p class="mt-1">Printed {{ Format::dateTime(now(), $company->timezone) }}</p>
             </footer>
         </main>
     </body>

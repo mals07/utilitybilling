@@ -87,7 +87,7 @@
                                     @foreach ($openInvoices as $invoice)
                                         <tr wire:key="open-invoice-{{ $invoice->id }}">
                                             <td>{{ $invoice->invoice_number }} <span class="text-label">· {{ $invoice->periodLabel() ?? $invoice->kind->label() }}</span></td>
-                                            <td @class(['font-semibold text-danger' => $invoice->isOverdue($today)])>{{ $invoice->due_date->format('m/d/Y') }}</td>
+                                            <td @class(['font-semibold text-danger' => $invoice->isOverdue($today)])>{{ Format::longDate($invoice->due_date) }}</td>
                                             <td class="cell-right">{{ Format::amount($invoice->balance) }}</td>
                                             <td class="cell-right font-semibold">
                                                 @php($applied = $preview['applied'][$invoice->id] ?? 0)
@@ -133,7 +133,7 @@
                     @foreach ($payments as $payment)
                         <tr wire:key="payment-{{ $payment->id }}" @class(['row-selected' => $payment->id === $selected?->id, 'row-inactive' => $payment->isVoid()])>
                             <td class="whitespace-nowrap">{{ $payment->receipt_number }}</td>
-                            <td class="whitespace-nowrap">{{ $payment->paid_on->format('m/d/Y') }}</td>
+                            <td class="whitespace-nowrap">{{ Format::longDate($payment->paid_on) }}</td>
                             <td class="whitespace-nowrap">{{ $payment->customer->account_number }}</td>
                             <td>{{ $payment->customer->first_name }} {{ $payment->customer->last_name }}</td>
                             <td>{{ $payment->method->label() }}</td>
@@ -163,12 +163,12 @@
     @if ($selected)
         <x-modal :title="'Official Receipt '.$selected->receipt_number" close="$wire.closeModal()" width="md">
             @if ($selected->isVoid())
-                <x-alert tone="error" class="mt-3">Void: {{ $selected->void_reason }} ({{ $selected->voidedBy?->name }}, {{ $selected->voided_at?->format('m/d/Y') }})</x-alert>
+                <x-alert tone="error" class="mt-3">Void: {{ $selected->void_reason }} ({{ $selected->voidedBy?->name }}, {{ $selected->voided_at ? Format::date($selected->voided_at, $timezone) : '' }})</x-alert>
             @endif
 
             <dl class="mt-3 grid grid-cols-2 gap-3 text-[13px]">
                 <div><dt class="text-xs text-label">Customer</dt><dd>{{ $selected->customer->first_name }} {{ $selected->customer->last_name }} ({{ $selected->customer->account_number }})</dd></div>
-                <div><dt class="text-xs text-label">Date received</dt><dd>{{ $selected->paid_on->format('m/d/Y') }}</dd></div>
+                <div><dt class="text-xs text-label">Date received</dt><dd>{{ Format::longDate($selected->paid_on) }}</dd></div>
                 <div><dt class="text-xs text-label">Amount</dt><dd class="font-semibold">{{ Format::amount($selected->amount) }}</dd></div>
                 <div><dt class="text-xs text-label">Paid by</dt><dd>{{ $selected->method->label() }}{{ $selected->reference_number ? ' · '.$selected->reference_number : '' }}</dd></div>
                 <div><dt class="text-xs text-label">Received by</dt><dd>{{ $selected->receivedBy?->name ?? '—' }}</dd></div>

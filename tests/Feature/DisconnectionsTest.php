@@ -312,7 +312,7 @@ class DisconnectionsTest extends TestCase
             ->assertSee('Notice of Disconnection')
             ->assertSee($first->account_number)
             ->assertSee($second->account_number)
-            ->assertSee('October 26, 2026');
+            ->assertSee('October 26 2026');
         $this->assertNotNull($issued[0]->fresh()->printed_at);
 
         [$otherOwner] = $this->ownerWithCompany();

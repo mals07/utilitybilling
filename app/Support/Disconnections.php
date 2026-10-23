@@ -219,7 +219,7 @@ final class Disconnections
                 "Our records show {$notice->overdue_bills} unpaid bill(s) past their due date on account {$customer->account_number}, "
                     ."totaling {$currency}".Format::amount($notice->overdue_amount).'.',
                 '',
-                'Please pay on or before '.$notice->deadline->format('F j, Y').' to avoid disconnection of your water service. '
+                'Please pay on or before '.Format::longDate($notice->deadline).' to avoid disconnection of your water service. '
                     .'Once disconnected, the overdue bills and a reconnection fee must be paid before service is restored.',
                 '',
                 'If you have already paid, please disregard this notice. For questions, contact us'
@@ -359,7 +359,7 @@ final class Disconnections
                     'meter_number' => $customer->meter_number,
                     'serial_number' => $customer->meter_serial_number,
                     'description' => "Disconnection for non-payment. Notice {$notice->notice_number}: {$notice->overdue_bills} overdue bill(s), "
-                        .Format::amount($notice->overdue_amount).', deadline '.$notice->deadline->format('m/d/Y').'. Check the balance before disconnecting.',
+                        .Format::amount($notice->overdue_amount).', deadline '.Format::longDate($notice->deadline).'. Check the balance before disconnecting.',
                     'assigned_to_id' => $assigneeId,
                     'status' => WorkOrderStatus::InProgress,
                     'requested_by_id' => $actor->id,

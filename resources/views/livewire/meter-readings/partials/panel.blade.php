@@ -126,7 +126,7 @@
                     <dd class="text-right tabular-nums">{{ Format::quantity($reading->consumption) }} cu.m.</dd>
                 @endif
                 <dt class="text-label">Read on</dt>
-                <dd class="text-right">{{ $reading->read_on->format('M j, Y') }}</dd>
+                <dd class="text-right">{{ Format::longDate($reading->read_on) }}</dd>
                 <dt class="text-label">Entered by</dt>
                 <dd class="truncate text-right">{{ $reading->createdBy?->name ?? '—' }}</dd>
             @endif

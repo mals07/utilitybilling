@@ -440,6 +440,7 @@ class InvoicesPage extends Component
             'adjustType' => $adjustType,
             'adjustReasons' => $adjustType ? AdjustmentReason::options($adjustType) : [],
             'today' => $today,
+            'timezone' => $company->timezone,
             'outstanding' => Money::fromCents(Money::toCents((clone $open)->sum('balance'))),
             'overdueAmount' => Money::fromCents(Money::toCents((clone $overdue)->sum('balance'))),
             'overdueCount' => (clone $overdue)->count(),

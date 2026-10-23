@@ -12,7 +12,7 @@ enum InvoiceKind: string
     public function label(): string
     {
         return match ($this) {
-            self::Monthly => 'Monthly Bill',
+            self::Monthly => 'Water Bill',
             self::WorkOrder => 'Work Order Fee',
         };
     }

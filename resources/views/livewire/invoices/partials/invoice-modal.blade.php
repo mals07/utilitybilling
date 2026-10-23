@@ -13,9 +13,9 @@
 <x-modal :title="'Invoice '.$invoice->invoice_number" close="$wire.closeModal()" width="lg">
     <div class="mt-3 grid gap-2">
         @if ($isVoid)
-            <x-alert tone="error">Void: {{ $invoice->void_reason }} ({{ $invoice->voidedBy?->name }}, {{ $invoice->voided_at?->format('m/d/Y') }})</x-alert>
+            <x-alert tone="error">Void: {{ $invoice->void_reason }} ({{ $invoice->voidedBy?->name }}, {{ $invoice->voided_at ? Format::date($invoice->voided_at, $timezone) : '' }})</x-alert>
         @elseif ($invoice->isOverdue($today))
-            <x-alert tone="error">Overdue since {{ $invoice->due_date->format('m/d/Y') }}.</x-alert>
+            <x-alert tone="error">Overdue since {{ Format::longDate($invoice->due_date) }}.</x-alert>
         @endif
     </div>
 
@@ -27,14 +27,17 @@
         </div>
         <div>
             <p class="text-xs font-medium text-label">For</p>
-            <p class="mt-0.5">{{ $invoice->periodLabel() ?? $invoice->kind->label() }}</p>
+            <p class="mt-0.5">{{ $invoice->kind->label() }}</p>
+            @if ($invoice->periodLabel())
+                <p class="text-label">{{ $invoice->periodLabel() }}</p>
+            @endif
             @if ($invoice->workOrder)
                 <p class="text-label">Work order {{ $invoice->workOrder->order_number }}</p>
             @endif
         </div>
         <div>
             <p class="text-xs font-medium text-label">Dates</p>
-            <p class="mt-0.5">Issued {{ $invoice->invoice_date->format('m/d/Y') }} · Due <span @class(['font-semibold text-danger' => $invoice->isOverdue($today)])>{{ $invoice->due_date->format('m/d/Y') }}</span></p>
+            <p class="mt-0.5">Issued {{ Format::longDate($invoice->invoice_date) }} · Due <span @class(['font-semibold text-danger' => $invoice->isOverdue($today)])>{{ Format::longDate($invoice->due_date) }}</span></p>
             <p class="{{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</p>
         </div>
     </div>
@@ -44,7 +47,7 @@
             <p><span class="block text-xs text-label">Previous reading</span>{{ Format::quantity($reading->previous_reading) }}</p>
             <p><span class="block text-xs text-label">Present reading</span>{{ $reading->present_reading === null ? 'Defective meter' : Format::quantity($reading->present_reading) }}</p>
             <p><span class="block text-xs text-label">Billed consumption</span>{{ Format::quantity($reading->consumption) }} cu.m.</p>
-            <p><span class="block text-xs text-label">Read on</span>{{ $reading->read_on->format('m/d/Y') }}</p>
+            <p><span class="block text-xs text-label">Read on</span>{{ Format::longDate($reading->read_on) }}</p>
         </div>
     @endif
 
@@ -96,7 +99,7 @@
         <ul class="mt-1 grid gap-1 text-[13px]">
             @foreach ($payments as $allocation)
                 <li wire:key="allocation-{{ $allocation->id }}">
-                    OR {{ $allocation->payment->receipt_number }} · {{ $allocation->payment->paid_on->format('m/d/Y') }}
+                    OR {{ $allocation->payment->receipt_number }} · {{ Format::longDate($allocation->payment->paid_on) }}
                     · {{ $allocation->payment->method->label() }} · <span class="font-semibold">{{ Format::amount($allocation->amount) }}</span>
                 </li>
             @endforeach
@@ -111,7 +114,7 @@
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <p>
                             <span class="font-semibold text-ink-strong">{{ $memo->type->label() }} {{ $memo->label() }}</span>
-                            · {{ $memo->reason_category->label() }} · {{ $memo->issued_on->format('m/d/Y') }}
+                            · {{ $memo->reason_category->label() }} · {{ Format::longDate($memo->issued_on) }}
                             @if ($memo->workOrder) · work order {{ $memo->workOrder->order_number }} @endif
                         </p>
                         <p @class(['font-semibold', 'text-success' => $memo->type === AdjustmentType::Credit, 'line-through' => $memo->isVoid()])>

@@ -74,9 +74,14 @@
                             <td class="whitespace-nowrap">{{ $invoice->invoice_number }}</td>
                             <td class="whitespace-nowrap">{{ $invoice->customer->account_number }}</td>
                             <td>{{ $invoice->customer->first_name }} {{ $invoice->customer->last_name }}</td>
-                            <td class="whitespace-nowrap">{{ $invoice->periodLabel() ?? $invoice->kind->label() }}</td>
-                            <td class="whitespace-nowrap">{{ $invoice->invoice_date->format('m/d/Y') }}</td>
-                            <td @class(['whitespace-nowrap', 'font-semibold text-danger' => $invoice->isOverdue($today)])>{{ $invoice->due_date->format('m/d/Y') }}</td>
+                            <td class="whitespace-nowrap">
+                                {{ $invoice->kind->label() }}
+                                @if ($invoice->periodLabel())
+                                    <span class="block text-xs text-label">{{ $invoice->periodLabel() }}</span>
+                                @endif
+                            </td>
+                            <td class="whitespace-nowrap">{{ Format::longDate($invoice->invoice_date) }}</td>
+                            <td @class(['whitespace-nowrap', 'font-semibold text-danger' => $invoice->isOverdue($today)])>{{ Format::longDate($invoice->due_date) }}</td>
                             <td class="cell-right">{{ Format::amount($invoice->total_amount) }}</td>
                             <td class="cell-right">{{ Format::amount($invoice->balance) }}</td>
                             <td><span class="status-pill {{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</span></td>

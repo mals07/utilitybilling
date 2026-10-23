@@ -13,11 +13,32 @@ final class Format
     public const DEFAULT_TIMEZONE = 'Asia/Manila';
 
     /**
-     * "10/08/2026" in the company's time zone.
+     * How every date reads on the pages and printouts: "October 5 2026".
+     */
+    public const DATE_FORMAT = 'F j Y';
+
+    /**
+     * "October 8 2026" for a moment in time, in the company's time zone.
      */
     public static function date(CarbonInterface $date, ?string $timezone): string
     {
-        return $date->copy()->setTimezone($timezone ?? self::DEFAULT_TIMEZONE)->format('m/d/Y');
+        return $date->copy()->setTimezone($timezone ?? self::DEFAULT_TIMEZONE)->format(self::DATE_FORMAT);
+    }
+
+    /**
+     * "October 8 2026 3:45 PM" for a moment in time, in the company's time zone.
+     */
+    public static function dateTime(CarbonInterface $date, ?string $timezone): string
+    {
+        return $date->copy()->setTimezone($timezone ?? self::DEFAULT_TIMEZONE)->format(self::DATE_FORMAT.' g:i A');
+    }
+
+    /**
+     * "October 5 2026" for a calendar date (a date column, so no time zone shift).
+     */
+    public static function longDate(CarbonInterface $date): string
+    {
+        return $date->format(self::DATE_FORMAT);
     }
 
     /**
@@ -29,13 +50,11 @@ final class Format
     }
 
     /**
-     * "2026-10-08" as "10/08/2026".
+     * "2026-10-08" as "October 8 2026".
      */
     public static function isoDate(string $value): string
     {
-        [$year, $month, $day] = explode('-', $value);
-
-        return "{$month}/{$day}/{$year}";
+        return self::longDate(Carbon::parse($value));
     }
 
     /**

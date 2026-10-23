@@ -1,5 +1,6 @@
 @use('App\Enums\CustomerStatus')
 @use('App\Enums\Page')
+@use('App\Support\Format')
 
 @php
     $updating = ! $adding;
@@ -26,7 +27,7 @@
                 @if ($selected->hasMeter())
                     Meter No: {{ $selected->meter_number }} · Serial No: {{ $selected->meter_serial_number ?? '—' }}
                     @if ($selected->meter_installed_on)
-                        · Installed {{ $selected->meter_installed_on->format('m/d/Y') }}
+                        · Installed {{ Format::longDate($selected->meter_installed_on) }}
                     @endif
                 @else
                     No meter installed yet

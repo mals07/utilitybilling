@@ -5,7 +5,7 @@
 
 <x-print-document :company="$company" title="Statement of Account">
     <x-slot:heading>
-        <p>As of {{ now()->setTimezone($company->timezone ?? 'Asia/Manila')->format('m/d/Y') }}</p>
+        <p>As of {{ Format::date(now(), $company->timezone) }}</p>
     </x-slot:heading>
 
     <section class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -37,7 +37,7 @@
         <tbody>
             @forelse ($entries as $entry)
                 <tr>
-                    <td class="whitespace-nowrap">{{ date('m/d/Y', strtotime($entry['date'])) }}</td>
+                    <td class="whitespace-nowrap">{{ Format::isoDate($entry['date']) }}</td>
                     <td class="whitespace-nowrap">{{ $entry['reference'] }}</td>
                     <td>{{ $entry['description'] }}{{ $entry['due'] ? ' (due '.$entry['due'].')' : '' }}</td>
                     <td class="cell-right">{{ $entry['charge'] ? Format::amount(Money::fromCents($entry['charge'])) : '' }}</td>

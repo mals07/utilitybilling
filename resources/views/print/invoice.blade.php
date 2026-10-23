@@ -10,8 +10,8 @@
 <x-print-document :company="$company" :title="$isVoid ? 'Void Bill' : 'Statement of Bill'">
     <x-slot:heading>
         <p>Invoice No. <span class="font-semibold">{{ $invoice->invoice_number }}</span></p>
-        <p>Invoice date {{ $invoice->invoice_date->format('m/d/Y') }}</p>
-        <p class="font-semibold">Due date {{ $invoice->due_date->format('m/d/Y') }}</p>
+        <p>Invoice date {{ Format::longDate($invoice->invoice_date) }}</p>
+        <p class="font-semibold">Due date {{ Format::longDate($invoice->due_date) }}</p>
     </x-slot:heading>
 
     @if ($isVoid)
@@ -56,7 +56,7 @@
                             <span class="text-xs text-label">(meter rolled over)</span>
                         @endif
                     </td>
-                    <td>{{ $reading->read_on->format('m/d/Y') }}</td>
+                    <td>{{ Format::longDate($reading->read_on) }}</td>
                     <td class="cell-right font-semibold">{{ Format::quantity($reading->consumption) }}</td>
                 </tr>
             </tbody>
@@ -111,7 +111,7 @@
     </section>
 
     <p class="mt-6 text-xs text-label">
-        Please pay on or before {{ $invoice->due_date->format('F j, Y') }}. Bills not paid by the due date are subject to the surcharge in your charge type.
+        Please pay on or before {{ Format::longDate($invoice->due_date) }}. Bills not paid by the due date are subject to the surcharge in your charge type.
         Present this bill when paying.
     </p>
 </x-print-document>

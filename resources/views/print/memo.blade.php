@@ -6,7 +6,7 @@
 <x-print-document :company="$company" :title="($memo->isVoid() ? 'Void ' : '').$memo->type->label()">
     <x-slot:heading>
         <p>No. <span class="font-semibold">{{ $memo->label() }}</span></p>
-        <p>Date {{ $memo->issued_on->format('m/d/Y') }}</p>
+        <p>Date {{ Format::longDate($memo->issued_on) }}</p>
     </x-slot:heading>
 
     @if ($memo->isVoid())
@@ -19,7 +19,7 @@
         <p class="text-label">Account No.</p>
         <p>{{ $memo->customer->account_number }}</p>
         <p class="text-label">Applies to</p>
-        <p>Invoice {{ $invoice->invoice_number }} ({{ $invoice->periodLabel() ?? $invoice->kind->label() }}, due {{ $invoice->due_date->format('m/d/Y') }})</p>
+        <p>Invoice {{ $invoice->invoice_number }} ({{ $invoice->periodLabel() ?? $invoice->kind->label() }}, due {{ Format::longDate($invoice->due_date) }})</p>
         <p class="text-label">Reason</p>
         <p>{{ $memo->reason_category->label() }}</p>
         <p class="text-label">Explanation</p>

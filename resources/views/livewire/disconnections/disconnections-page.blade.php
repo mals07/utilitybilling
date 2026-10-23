@@ -223,16 +223,16 @@
                                 @if ($tab === 'hold')
                                     <td class="text-warning">{{ ucfirst((string) $holdReasons[$row->id]) }}</td>
                                 @else
-                                    <td class="whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($row->oldest_due_date)->format('m/d/Y') }}</td>
+                                    <td class="whitespace-nowrap">{{ Format::isoDate($row->oldest_due_date) }}</td>
                                 @endif
                             @elseif ($tab === 'history')
-                                <td class="whitespace-nowrap">{{ $row->issued_on->format('m/d/Y') }}</td>
-                                <td><span class="{{ $row->status->colorClass() }}">{{ $row->status->label() }}</span> <span class="text-label">· {{ $row->closed_at?->format('m/d/Y') }}</span></td>
+                                <td class="whitespace-nowrap">{{ Format::longDate($row->issued_on) }}</td>
+                                <td><span class="{{ $row->status->colorClass() }}">{{ $row->status->label() }}</span> <span class="text-label">· {{ $row->closed_at ? Format::date($row->closed_at, $timezone) : '' }}</span></td>
                                 <td class="text-ink-soft">{{ $row->close_reason }}{{ $row->closedBy ? ' ('.$row->closedBy->name.')' : '' }}</td>
                             @else
                                 <td class="cell-right">{{ Format::amount($row->overdue_amount) }}</td>
                                 <td class="whitespace-nowrap">
-                                    {{ $row->deadline->format('m/d/Y') }}
+                                    {{ Format::longDate($row->deadline) }}
                                     @if ($tab === 'sent')
                                         @php($left = Disconnections::workingDaysLeft($company, $today, $row->deadline->toDateString()))
                                         <span @class(['text-label' => $left > 0, 'font-semibold text-warning' => $left === 0])>· {{ $left > 0 ? $left.' '.Str::plural('day', $left).' left' : 'last day' }}</span>
@@ -302,7 +302,7 @@
                                 <td>{{ $customer->account_number }}</td>
                                 <td>{{ $customer->fullName() }}</td>
                                 <td>{{ $customer->disconnection_exempt_reason }}</td>
-                                <td>{{ $customer->disconnection_exempt_until?->format('m/d/Y') ?? 'No end date' }}</td>
+                                <td>{{ $customer->disconnection_exempt_until ? Format::longDate($customer->disconnection_exempt_until) : 'No end date' }}</td>
                                 <td>{{ $customer->disconnectionExemptedBy?->name }}</td>
                                 <td class="cell-actions">
                                     @if ($access['edit'])

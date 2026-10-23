@@ -12,6 +12,7 @@ use App\Models\Customer;
 use App\Models\DisconnectionNotice;
 use App\Models\User;
 use App\Support\Disconnections;
+use App\Support\Format;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -455,7 +456,7 @@ class DisconnectionsPage extends Component
         $this->clearCustomer();
         $this->reset('exemptReason', 'exemptUntil');
         unset($this->counts);
-        $this->flash("{$customer->fullName()} is exempt from disconnection".($until === '' ? '.' : ' until '.date('m/d/Y', strtotime($until)).'.'));
+        $this->flash("{$customer->fullName()} is exempt from disconnection".($until === '' ? '.' : ' until '.Format::isoDate($until).'.'));
     }
 
     public function removeExemption(int $id): void
@@ -502,6 +503,7 @@ class DisconnectionsPage extends Component
         return view('livewire.disconnections.disconnections-page', [
             'company' => $company,
             'today' => $today,
+            'timezone' => $company->timezone,
             'rows' => $rows,
             'counts' => $this->counts,
             'clusters' => $company->clusterTypes()->orderBy('name')->pluck('name', 'id')->all(),

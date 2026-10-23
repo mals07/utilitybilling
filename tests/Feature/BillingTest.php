@@ -238,6 +238,23 @@ class BillingTest extends TestCase
         $this->assertSame('1500.00', $bill->previous_balance);
     }
 
+    public function test_the_invoice_list_names_what_each_invoice_is_for_with_long_dates(): void
+    {
+        $customer = $this->customer();
+        $bill = $this->bill($customer, '2026-10', '15', invoiceDate: '2026-10-05');
+        $installation = WorkOrder::factory()->forCustomer($customer, WorkOrderType::NewInstallation)->completed()->create(['fee_amount' => '1500.00']);
+        WorkOrderBilling::onCompleted($installation, $this->owner, '2026-10-05');
+
+        Livewire::actingAs($this->owner)
+            ->test(InvoicesPage::class)
+            ->assertSeeInOrder(['Water Bill', 'October 2026'])
+            ->assertSee('Work Order Fee')
+            ->assertSee('October 5 2026')
+            ->assertDontSee('10/05/2026')
+            ->call('openInvoice', $bill->id)
+            ->assertSee('Issued October 5 2026');
+    }
+
     public function test_payments_go_to_the_oldest_bill_and_the_excess_becomes_advance_credit(): void
     {
         $customer = $this->customer();

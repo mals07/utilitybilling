@@ -3,7 +3,7 @@
 <x-print-document :company="$company" :title="$payment->isVoid() ? 'Void Receipt' : 'Official Receipt'">
     <x-slot:heading>
         <p>OR No. <span class="font-semibold">{{ $payment->receipt_number }}</span></p>
-        <p>Date {{ $payment->paid_on->format('m/d/Y') }}</p>
+        <p>Date {{ Format::longDate($payment->paid_on) }}</p>
     </x-slot:heading>
 
     @if ($payment->isVoid())

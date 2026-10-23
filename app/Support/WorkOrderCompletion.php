@@ -358,7 +358,7 @@ final class WorkOrderCompletion
                     ? " (billed on invoice {$feeInvoice->invoice_number})."
                     : ' (goes on the next monthly bill).');
                 $notes[] = $feeInvoice
-                    ? 'Fee billed on invoice '.$feeInvoice->invoice_number.', due '.$feeInvoice->due_date->format('m/d/Y').'.'
+                    ? 'Fee billed on invoice '.$feeInvoice->invoice_number.', due '.Format::longDate($feeInvoice->due_date).'.'
                     : 'The fee will be added to the next monthly bill.';
             }
             if ($photos !== []) {
