@@ -57,14 +57,12 @@
                 <thead>
                     <tr>
                         <th scope="col">Invoice No</th>
-                        <th scope="col">Account No</th>
                         <th scope="col">Customer</th>
                         <th scope="col">For</th>
-                        <th scope="col">Invoice Date</th>
-                        <th scope="col">Due Date</th>
+                        <th scope="col">Dates</th>
                         <th scope="col" class="cell-right">Amount</th>
                         <th scope="col" class="cell-right">Balance</th>
-                        <th scope="col">Status</th>
+                        <th scope="col" class="cell-center">Status</th>
                         <th scope="col" class="cell-center"><span class="sr-only">View</span></th>
                     </tr>
                 </thead>
@@ -72,19 +70,23 @@
                     @foreach ($invoices as $invoice)
                         <tr wire:key="invoice-{{ $invoice->id }}" @class(['row-selected' => $invoice->id === $selected?->id, 'row-inactive' => $invoice->status->value === 'void'])>
                             <td class="whitespace-nowrap">{{ $invoice->invoice_number }}</td>
-                            <td class="whitespace-nowrap">{{ $invoice->customer->account_number }}</td>
-                            <td>{{ $invoice->customer->first_name }} {{ $invoice->customer->last_name }}</td>
+                            <td>
+                                {{ $invoice->customer->first_name }} {{ $invoice->customer->last_name }}
+                                <span class="block text-xs text-label whitespace-nowrap">Acct No: {{ $invoice->customer->account_number }}</span>
+                            </td>
                             <td class="whitespace-nowrap">
                                 {{ $invoice->kind->label() }}
                                 @if ($invoice->periodLabel())
                                     <span class="block text-xs text-label">{{ $invoice->periodLabel() }}</span>
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap">{{ Format::longDate($invoice->invoice_date) }}</td>
-                            <td @class(['whitespace-nowrap', 'font-semibold text-danger' => $invoice->isOverdue($today)])>{{ Format::longDate($invoice->due_date) }}</td>
+                            <td class="whitespace-nowrap text-xs">
+                                <span class="block text-label">Billed: {{ Format::shortDate($invoice->invoice_date) }}</span>
+                                <span @class(['block', 'font-semibold text-danger' => $invoice->isOverdue($today), 'text-label' => ! $invoice->isOverdue($today)])>Due: {{ Format::shortDate($invoice->due_date) }}</span>
+                            </td>
                             <td class="cell-right">{{ Format::amount($invoice->total_amount) }}</td>
                             <td class="cell-right">{{ Format::amount($invoice->balance) }}</td>
-                            <td><span class="status-pill {{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</span></td>
+                            <td class="cell-center"><span class="status-pill {{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</span></td>
                             <td class="cell-actions">
                                 <button type="button" class="icon-button" wire:click="openInvoice({{ $invoice->id }})" aria-label="View invoice {{ $invoice->invoice_number }}">
                                     <x-icon name="document" :size="14" />
@@ -95,7 +97,7 @@
                     <x-filler-rows
                         :count="$invoices->count()"
                         :minimum="InvoicesPage::MINIMUM_ROWS"
-                        :columns="10"
+                        :columns="8"
                         :empty-text="trim($search) === '' && $statusFilter === '' && $periodFilter === '' ? 'No invoices yet. Use Generate Bills to bill your customers.' : 'No invoices match.'"
                     />
                 </tbody>

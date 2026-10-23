@@ -249,7 +249,7 @@ class BillingTest extends TestCase
             ->test(InvoicesPage::class)
             ->assertSeeInOrder(['Water Bill', 'October 2026'])
             ->assertSee('Work Order Fee')
-            ->assertSee('October 5 2026')
+            ->assertSeeInOrder(["Acct No: {$customer->account_number}", 'Billed: Oct. 5 2026', 'Due: Oct. 20 2026'])
             ->assertDontSee('10/05/2026')
             ->call('openInvoice', $bill->id)
             ->assertSee('Issued October 5 2026');

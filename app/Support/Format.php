@@ -42,6 +42,14 @@ final class Format
     }
 
     /**
+     * "Oct. 5 2026" for a calendar date where space is tight; May has no period since it isn't shortened.
+     */
+    public static function shortDate(CarbonInterface $date): string
+    {
+        return $date->format($date->month === 5 ? 'M j Y' : 'M. j Y');
+    }
+
+    /**
      * Today's date as "2026-10-08" in the company's time zone.
      */
     public static function todayIn(?string $timezone): string
