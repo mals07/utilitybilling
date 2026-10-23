@@ -43,6 +43,15 @@ class NumberedPerCompanyTest extends TestCase
         $this->assertSame('1000001', $this->nextOrder()->order_number);
     }
 
+    public function test_numbering_skips_a_number_already_taken_by_a_record_numbered_another_way(): void
+    {
+        $this->assertSame('000001', $this->nextOrder()->order_number);
+        $this->existingOrder($this->company, '000002');
+
+        $this->assertSame('000003', $this->nextOrder()->order_number);
+        $this->assertSame('000004', $this->nextOrder()->order_number);
+    }
+
     public function test_numbers_of_another_company_do_not_affect_the_sequence(): void
     {
         $this->existingOrder($this->company, '000004');

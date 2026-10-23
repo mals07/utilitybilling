@@ -351,10 +351,7 @@ class PaymentsPage extends Component
             ->when($search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query
                 ->where('receipt_number', 'like', "%{$search}%")
                 ->orWhere('reference_number', 'like', "%{$search}%")
-                ->orWhereHas('customer', fn (Builder $query) => $query
-                    ->where('account_number', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%"))))
+                ->orWhereIn('customer_id', Customer::idsMatching($company->id, $search))))
             ->orderByDesc('paid_on')
             ->orderByDesc('id');
 

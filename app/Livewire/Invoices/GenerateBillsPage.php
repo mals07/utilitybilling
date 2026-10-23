@@ -16,6 +16,7 @@ use App\Support\Money;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -32,6 +33,11 @@ class GenerateBillsPage extends Component
     use GuardsPageAccess, ParsesIds, WithPagination;
 
     public const PER_PAGE = 25;
+
+    /**
+     * Readings billed per request during a billing run.
+     */
+    public const BATCH_SIZE = 25;
 
     #[Url(as: 'period', except: '')]
     public string $period = '';
@@ -50,6 +56,14 @@ class GenerateBillsPage extends Component
      * @var array<int|string, string>
      */
     public array $failures = [];
+
+    /**
+     * The billing run in progress: what it bills, the last reading id done, and bills issued so far.
+     *
+     * @var array{period: string, invoiceDate: string, clusterId: string, afterId: int, issued: int, total: int}|null
+     */
+    #[Locked]
+    public ?array $run = null;
 
     protected function page(): Page
     {
@@ -92,13 +106,13 @@ class GenerateBillsPage extends Component
      *
      * @return Builder<MeterReading>
      */
-    private function readings(): Builder
+    private function readings(?string $period = null, ?string $cluster = null): Builder
     {
-        $clusterId = self::idFrom($this->clusterId);
+        $clusterId = self::idFrom($cluster ?? $this->clusterId);
 
         return MeterReading::query()
             ->where('company_id', $this->company()->id)
-            ->where('billing_period', $this->period)
+            ->where('billing_period', $period ?? $this->period)
             ->when($clusterId !== null, fn (Builder $query) => $query->whereHas('customer', fn (Builder $customer) => $customer->where('cluster_type_id', $clusterId)));
     }
 
@@ -123,12 +137,12 @@ class GenerateBillsPage extends Component
     }
 
     /**
-     * Issues a bill for every reading of the month (and cluster) that is Ready to bill. Readings that
-     * can't be billed stay Ready and show why.
+     * Starts a billing run: a bill for every reading of the month (and cluster) that is Ready to bill.
+     * Readings that can't be billed stay Ready and show why.
      */
     public function generate(): void
     {
-        if (! $this->allowed(Access::Add)) {
+        if (! $this->allowed(Access::Add) || $this->run !== null) {
             return;
         }
 
@@ -142,18 +156,59 @@ class GenerateBillsPage extends Component
         }
 
         $this->failures = [];
-        $issued = 0;
-        $readings = $this->readings()->where('status', MeterReadingStatus::Ready)->whereNull('invoice_id')->orderBy('id')->get();
+        $this->run = [
+            'period' => $this->period,
+            'invoiceDate' => $this->invoiceDate,
+            'clusterId' => $this->clusterId,
+            'afterId' => 0,
+            'issued' => 0,
+            'total' => $this->readyToBill($this->period, $this->clusterId)->count(),
+        ];
+
+        $this->generateBatch();
+    }
+
+    /**
+     * Bills the run's next BATCH_SIZE readings, then asks the browser for the next batch, so a month of
+     * thousands of customers isn't billed in one request that could time out. The run keeps the month,
+     * invoice date and cluster it started with.
+     */
+    public function generateBatch(): void
+    {
+        if ($this->run === null || ! $this->allowed(Access::Add)) {
+            return;
+        }
+
+        $run = $this->run;
+        $readings = $this->readyToBill($run['period'], $run['clusterId'])
+            ->where('id', '>', $run['afterId'])
+            ->orderBy('id')
+            ->limit(self::BATCH_SIZE)
+            ->get();
 
         foreach ($readings as $reading) {
             try {
-                BillingRun::generateFor($reading, $this->invoiceDate, $this->user());
-                $issued++;
+                BillingRun::generateFor($reading, $run['invoiceDate'], $this->user());
+                $run['issued']++;
             } catch (BillingException $exception) {
                 $this->failures[$reading->id] = $exception->getMessage();
             }
+            $run['afterId'] = $reading->id;
         }
 
+        if ($readings->count() === self::BATCH_SIZE) {
+            $this->run = $run;
+            $this->js('$wire.generateBatch()');
+
+            return;
+        }
+
+        $this->run = null;
+        $this->finishRun($run['period'], $run['issued']);
+    }
+
+    private function finishRun(string $period, int $issued): void
+    {
         $failed = count($this->failures);
         if ($issued === 0 && $failed === 0) {
             $this->flash('No readings are ready to bill. Enter and check them on the Meter Readings page first.', 'error');
@@ -162,9 +217,17 @@ class GenerateBillsPage extends Component
         }
 
         $this->flash(trim(
-            ($issued > 0 ? "{$issued} bill".($issued === 1 ? '' : 's').' generated for '.BillingRun::periodLabel($this->period).'. ' : '')
+            ($issued > 0 ? "{$issued} bill".($issued === 1 ? '' : 's').' generated for '.BillingRun::periodLabel($period).'. ' : '')
             .($failed > 0 ? "{$failed} could not be billed; see the messages in the table." : ''),
         ), $failed > 0 && $issued === 0 ? 'error' : 'success');
+    }
+
+    /**
+     * @return Builder<MeterReading>
+     */
+    private function readyToBill(string $period, string $clusterId): Builder
+    {
+        return $this->readings($period, $clusterId)->where('status', MeterReadingStatus::Ready)->whereNull('invoice_id');
     }
 
     public function render(): View
@@ -182,11 +245,9 @@ class GenerateBillsPage extends Component
 
         $readings = $this->readings()
             ->whereIn('status', [MeterReadingStatus::Ready, MeterReadingStatus::Billed])
-            ->when($search !== '', fn (Builder $query) => $query->whereHas('customer', fn (Builder $customer) => $customer->where(fn (Builder $customer) => $customer
-                ->where('account_number', 'like', "%{$search}%")
-                ->orWhere('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%")
-                ->orWhere('meter_number', 'like', "%{$search}%"))))
+            ->when($search !== '', fn (Builder $query) => $query->whereIn('customer_id', Customer::idsMatching(
+                $company->id, $search, ['account_number', 'first_name', 'last_name', 'meter_number'],
+            )))
             ->with(['customer.rateType:id,name', 'invoice:id,invoice_number,total_amount'])
             ->orderBy(Customer::query()->select('account_number')->whereColumn('customers.id', 'meter_readings.customer_id'))
             ->paginate(self::PER_PAGE);

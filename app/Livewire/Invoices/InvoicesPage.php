@@ -11,6 +11,7 @@ use App\Enums\OverdueHandling;
 use App\Enums\Page;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Livewire\Concerns\ParsesIds;
+use App\Models\Customer;
 use App\Models\Invoice;
 use App\Support\Billing\Adjustments;
 use App\Support\Billing\BillingException;
@@ -414,10 +415,7 @@ class InvoicesPage extends Component
             ->with(['customer:id,account_number,first_name,last_name'])
             ->when($search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query
                 ->where('invoice_number', 'like', "%{$search}%")
-                ->orWhereHas('customer', fn (Builder $query) => $query
-                    ->where('account_number', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%"))))
+                ->orWhereIn('customer_id', Customer::idsMatching($company->id, $search))))
             ->when(preg_match('/^\d{4}-\d{2}$/', $this->periodFilter), fn (Builder $query) => $query->where('billing_period', $this->periodFilter))
             ->when($this->statusFilter !== '', fn (Builder $query) => match ($this->statusFilter) {
                 'open' => $query->whereIn('status', InvoiceStatus::openValues()),

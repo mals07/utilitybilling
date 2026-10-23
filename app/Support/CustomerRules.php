@@ -10,6 +10,7 @@ use App\Models\ClusterType;
 use App\Models\Company;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -144,10 +145,10 @@ final class CustomerRules
      */
     public static function nextAccountNumber(Company $company, int $after = 0): string
     {
-        $highest = $company->customers()->pluck('account_number')
-            ->reduce(fn (int $max, string $number): int => max($max, (int) $number), $after);
+        // "+ 0" compares the stored text as numbers, so 1000000 comes after 999999.
+        $highest = (int) $company->customers()->max(DB::raw('account_number + 0'));
 
-        return self::accountNumber($highest + 1);
+        return self::accountNumber(max($highest, $after) + 1);
     }
 
     public static function accountNumber(int $number): string

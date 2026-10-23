@@ -6,6 +6,7 @@ use App\Enums\CustomerStatus;
 use App\Models\Concerns\DefersBinaryColumns;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,6 +46,26 @@ class Customer extends Model
             'meter_installed_on' => 'date',
             'disconnection_exempt_until' => 'date',
         ];
+    }
+
+    /**
+     * Ids of the company's customers with the text in any of the columns, for whereIn() on a list of
+     * their invoices, payments or readings. The customers are searched once, instead of once per row
+     * of the list as whereHas() does.
+     *
+     * @param  list<string>  $columns
+     * @return Builder<Customer>
+     */
+    public static function idsMatching(int $companyId, string $search, array $columns = ['account_number', 'first_name', 'last_name']): Builder
+    {
+        return self::query()
+            ->select('customers.id')
+            ->where('company_id', $companyId)
+            ->where(function (Builder $query) use ($columns, $search): void {
+                foreach ($columns as $column) {
+                    $query->orWhere($column, 'like', "%{$search}%");
+                }
+            });
     }
 
     /**

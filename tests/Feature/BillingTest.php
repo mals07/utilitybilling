@@ -169,6 +169,67 @@ class BillingTest extends TestCase
         $this->bill($customer, $period, '20');
     }
 
+    public function test_the_billing_run_bills_a_large_month_in_batches_with_the_settings_it_started_with(): void
+    {
+        $period = now()->format('Y-m');
+        $today = now()->toDateString();
+        $customers = collect(range(1, GenerateBillsPage::BATCH_SIZE + 1))->map(function () use ($period, $today): Customer {
+            $customer = $this->customer();
+            MeterReadings::save($customer, $period, '15', ReadingCode::Normal, $today, $this->owner);
+
+            return $customer;
+        });
+
+        $page = Livewire::actingAs($this->owner)
+            ->test(GenerateBillsPage::class)
+            ->call('generate')
+            ->assertSet('run.issued', GenerateBillsPage::BATCH_SIZE)
+            ->assertNotDispatched('flash');
+        $this->assertSame(GenerateBillsPage::BATCH_SIZE, Invoice::query()->count());
+
+        // Changing the month mid-run doesn't change what the run bills.
+        $page->set('period', now()->subMonth()->format('Y-m'))
+            ->call('generateBatch')
+            ->assertSet('run', null)
+            ->assertDispatched('flash', fn (string $name, array $params): bool => str_contains($params['message'], $customers->count().' bills generated'));
+
+        foreach ($customers as $customer) {
+            $this->assertSame($period, $customer->invoices()->sole()->billing_period);
+            $this->assertSame($today, $customer->invoices()->sole()->invoice_date->toDateString());
+        }
+    }
+
+    public function test_the_invoice_and_payment_lists_find_records_by_customer_name(): void
+    {
+        $found = $this->customer(['first_name' => 'Rosalinda']);
+        $other = $this->customer(['first_name' => 'Teodoro']);
+        $foundBill = $this->bill($found, now()->format('Y-m'), '15');
+        $this->bill($other, now()->format('Y-m'), '15');
+        $payment = ['paid_on' => now()->toDateString(), 'amount' => '10.00', 'method' => 'cash', 'reference_number' => null, 'notes' => null];
+        $foundReceipt = Ledger::recordPayment($found, $payment, $this->owner);
+        Ledger::recordPayment($other, $payment, $this->owner);
+
+        Livewire::actingAs($this->owner)
+            ->test(InvoicesPage::class)
+            ->set('search', 'rosalin')
+            ->assertViewHas('invoices', fn ($invoices): bool => $invoices->pluck('id')->all() === [$foundBill->id]);
+
+        Livewire::actingAs($this->owner)
+            ->test(PaymentsPage::class)
+            ->set('search', 'rosalin')
+            ->assertViewHas('payments', fn ($payments): bool => $payments->pluck('id')->all() === [$foundReceipt->id]);
+    }
+
+    public function test_credit_and_debit_memos_are_numbered_separately(): void
+    {
+        $invoice = $this->bill($this->customer(), now()->format('Y-m'), '15');
+        $memo = fn (AdjustmentType $type) => Adjustments::issue($invoice, $type, $type === AdjustmentType::Credit ? AdjustmentReason::MeterReadingError : AdjustmentReason::Undercharge, 'Correction', 10_00, now()->toDateString(), null, $this->owner);
+
+        $this->assertSame('CM-000001', $memo(AdjustmentType::Credit)->label());
+        $this->assertSame('DM-000001', $memo(AdjustmentType::Debit)->label());
+        $this->assertSame('CM-000002', $memo(AdjustmentType::Credit)->label());
+    }
+
     public function test_the_next_bill_starts_from_the_last_reading_and_rejects_a_lower_one(): void
     {
         $customer = $this->customer();

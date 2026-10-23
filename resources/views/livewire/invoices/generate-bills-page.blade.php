@@ -15,12 +15,12 @@
         <div class="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
                 <label for="bill-period" class="mb-1 block text-xs font-semibold text-ink-strong">Billing month<x-required-mark /></label>
-                <input id="bill-period" aria-required="true" type="month" max="{{ substr($today, 0, 7) }}" wire:model.live="period" class="form-control !h-[34px] !text-[13px]" @error('period') aria-invalid="true" @enderror>
+                <input id="bill-period" aria-required="true" type="month" max="{{ substr($today, 0, 7) }}" wire:model.live="period" class="form-control !h-[34px] !text-[13px]" @disabled($run) @error('period') aria-invalid="true" @enderror>
                 @error('period') <p class="form-error" role="alert">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="bill-invoice-date" class="mb-1 block text-xs font-semibold text-ink-strong">Invoice date<x-required-mark /></label>
-                <input id="bill-invoice-date" aria-required="true" type="date" max="{{ $today }}" wire:model.live="invoiceDate" class="form-control !h-[34px] !text-[13px]" @error('invoiceDate') aria-invalid="true" @enderror>
+                <input id="bill-invoice-date" aria-required="true" type="date" max="{{ $today }}" wire:model.live="invoiceDate" class="form-control !h-[34px] !text-[13px]" @disabled($run) @error('invoiceDate') aria-invalid="true" @enderror>
                 @error('invoiceDate')
                     <p class="form-error" role="alert">{{ $message }}</p>
                 @else
@@ -29,7 +29,7 @@
             </div>
             <div>
                 <label for="bill-cluster" class="mb-1 block text-xs font-semibold text-ink-strong">Cluster</label>
-                <select id="bill-cluster" wire:model.live="clusterId" class="form-control !h-[34px] !text-[13px]">
+                <select id="bill-cluster" wire:model.live="clusterId" class="form-control !h-[34px] !text-[13px]" @disabled($run)>
                     <option value="">All clusters</option>
                     @foreach ($clusters as $id => $name)
                         <option value="{{ $id }}" wire:key="cluster-{{ $id }}">{{ $name }}</option>
@@ -123,10 +123,16 @@
                     @if ($periodLabel) for {{ $periodLabel }} @endif
                     · {{ Format::integer($counts['billed']) }} billed
                 </p>
-                <button type="button" class="form-button min-w-[160px]" wire:click="generate" wire:loading.attr="disabled" wire:target="generate" @disabled($counts['ready'] === 0)>
-                    <span wire:loading.remove wire:target="generate">Generate {{ $counts['ready'] > 0 ? Format::integer($counts['ready']).' ' : '' }}Bill{{ $counts['ready'] === 1 ? '' : 's' }}</span>
-                    <span wire:loading wire:target="generate">Generating…</span>
-                </button>
+                @if ($run)
+                    <p class="text-[13px] font-semibold text-ink-strong" role="status">
+                        Generating… {{ Format::integer($run['issued'] + count($failures)) }} of {{ Format::integer($run['total']) }} done. Keep this page open.
+                    </p>
+                @else
+                    <button type="button" class="form-button min-w-[160px]" wire:click="generate" wire:loading.attr="disabled" wire:target="generate" @disabled($counts['ready'] === 0)>
+                        <span wire:loading.remove wire:target="generate">Generate {{ $counts['ready'] > 0 ? Format::integer($counts['ready']).' ' : '' }}Bill{{ $counts['ready'] === 1 ? '' : 's' }}</span>
+                        <span wire:loading wire:target="generate">Generating…</span>
+                    </button>
+                @endif
             </div>
         @endif
     </div>
