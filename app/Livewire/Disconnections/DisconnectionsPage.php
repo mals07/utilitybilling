@@ -161,11 +161,16 @@ class DisconnectionsPage extends Component
     private function noticesFor(string $tab): Builder
     {
         $today = $this->today();
+        $company = $this->company();
+        $filtered = trim($this->search) !== '' || self::idFrom($this->clusterId) !== null;
 
-        return $this->company()->disconnectionNotices()->getQuery()
-            ->whereHas('customer', fn (Builder $query) => $this->filterCustomers($query))
-            ->when($tab === 'sent', fn (Builder $query) => $query->where('status', DisconnectionNoticeStatus::Pending)->whereDate('deadline', '>=', $today))
-            ->when($tab === 'due', fn (Builder $query) => $query->where('status', DisconnectionNoticeStatus::Pending)->whereDate('deadline', '<', $today))
+        return $company->disconnectionNotices()->getQuery()
+            // The matching customers are found once, and only when there is something to match.
+            ->when($filtered, fn (Builder $query) => $query->whereIn('customer_id', $this->filterCustomers(
+                Customer::query()->select('customers.id')->where('company_id', $company->id),
+            )))
+            ->when($tab === 'sent', fn (Builder $query) => $query->where('status', DisconnectionNoticeStatus::Pending)->where('deadline', '>=', $today))
+            ->when($tab === 'due', fn (Builder $query) => $query->where('status', DisconnectionNoticeStatus::Pending)->where('deadline', '<', $today))
             ->when($tab === 'field', fn (Builder $query) => $query->where('status', DisconnectionNoticeStatus::Scheduled))
             ->when($tab === 'history', fn (Builder $query) => $query->whereNotIn('status', DisconnectionNoticeStatus::openValues()));
     }
@@ -206,8 +211,8 @@ class DisconnectionsPage extends Component
 
         return [
             'eligible' => Disconnections::eligible($company, $today)->count(),
-            'sent' => $pending()->whereDate('deadline', '>=', $today)->count(),
-            'due' => $pending()->whereDate('deadline', '<', $today)->count(),
+            'sent' => $pending()->where('deadline', '>=', $today)->count(),
+            'due' => $pending()->where('deadline', '<', $today)->count(),
             'field' => $company->disconnectionNotices()->where('status', DisconnectionNoticeStatus::Scheduled)->count(),
             'hold' => Disconnections::onHold($company, $today)->count(),
         ];

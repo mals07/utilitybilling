@@ -191,6 +191,22 @@ class WorkOrdersPageTest extends TestCase
             ->assertSee('(overdue)');
     }
 
+    public function test_the_list_finds_orders_by_customer_name_newest_first(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $found = Customer::factory()->for($company)->create(['first_name' => 'Rosalinda']);
+        $other = Customer::factory()->for($company)->create(['first_name' => 'Teodoro']);
+        WorkOrder::factory()->for($company)->create(['order_number' => '000101', 'customer_id' => $found->id]);
+        WorkOrder::factory()->for($company)->create(['order_number' => '000102', 'customer_id' => $other->id]);
+        WorkOrder::factory()->for($company)->create(['order_number' => '000103', 'customer_id' => $found->id]);
+
+        Livewire::actingAs($owner)
+            ->test(WorkOrdersPage::class)
+            ->set('search', 'rosalin')
+            ->assertSeeInOrder(['000103', '000101'])
+            ->assertDontSee('000102');
+    }
+
     public function test_the_pending_filter_lists_only_orders_in_progress(): void
     {
         [$owner, $company] = $this->ownerWithCompany();

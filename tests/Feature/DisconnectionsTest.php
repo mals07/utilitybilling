@@ -13,6 +13,7 @@ use App\Enums\WorkOrderType;
 use App\Livewire\Company\OperationSettingsForm;
 use App\Livewire\Disconnections\DisconnectionsPage;
 use App\Livewire\WorkOrders\WorkOrdersPage;
+use App\Models\ClusterType;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\DisconnectionNotice;
@@ -258,6 +259,40 @@ class DisconnectionsTest extends TestCase
         $this->assertSame(DisconnectionNoticeStatus::Cancelled, $notice->fresh()->status);
         $this->assertSame('Promised to pay Friday', $notice->fresh()->close_reason);
         $this->assertSame(WorkOrderStatus::Cancelled, $notice->workOrder->fresh()->status);
+    }
+
+    public function test_a_bill_due_today_is_not_overdue_until_tomorrow(): void
+    {
+        $customer = $this->overdueCustomer(1);
+        $this->bill($customer, '2026-10-19');
+
+        $this->assertSame([], Disconnections::eligible($this->company, '2026-10-19')->pluck('customers.id')->all());
+        $this->assertSame([$customer->id], Disconnections::eligible($this->company, '2026-10-20')->pluck('customers.id')->all());
+    }
+
+    public function test_the_tabs_are_counted_and_the_notice_tabs_are_searched_by_customer_and_cluster(): void
+    {
+        $cluster = ClusterType::factory()->for($this->company)->create();
+        $this->overdueCustomer(2);
+        $this->overdueCustomer(2, ['disconnection_exempt_reason' => 'Hospital']);
+        $found = $this->overdueCustomer(2, ['first_name' => 'Rosalinda', 'cluster_type_id' => $cluster->id]);
+        $other = $this->overdueCustomer(2, ['first_name' => 'Teodoro']);
+        [$foundNotice, $otherNotice] = Disconnections::issue($this->company, [$found->id, $other->id], $this->owner, false)['issued'];
+
+        $page = Livewire::actingAs($this->owner)->test(DisconnectionsPage::class)
+            ->assertViewHas('counts', ['eligible' => 1, 'sent' => 2, 'due' => 0, 'field' => 0, 'hold' => 1])
+            ->set('tab', 'sent')
+            ->assertSee($foundNotice->notice_number)
+            ->assertSee($otherNotice->notice_number);
+
+        $page->set('search', 'rosalin')
+            ->assertSee($foundNotice->notice_number)
+            ->assertDontSee($otherNotice->notice_number);
+
+        $page->set('search', '')
+            ->set('clusterId', (string) $cluster->id)
+            ->assertSee($foundNotice->notice_number)
+            ->assertDontSee($otherNotice->notice_number);
     }
 
     public function test_each_tab_lists_its_customers_or_notices(): void

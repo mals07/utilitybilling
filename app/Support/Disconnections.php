@@ -10,6 +10,7 @@ use App\Enums\WorkOrderType;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\DisconnectionNotice;
+use App\Models\Invoice;
 use App\Models\User;
 use App\Models\WorkOrder;
 use Closure;
@@ -34,7 +35,8 @@ final class Disconnections
      */
     public static function overdue(string $today): Closure
     {
-        return fn (Builder $query) => $query->whereIn('status', InvoiceStatus::openValues())->whereDate('due_date', '<', $today);
+        // A plain comparison, not whereDate(), so the status and due date index can be used.
+        return fn (Builder $query) => $query->whereIn('status', InvoiceStatus::openValues())->where('due_date', '<', $today);
     }
 
     public static function overdueCount(Customer $customer, ?string $today = null): int
@@ -54,10 +56,18 @@ final class Disconnections
     {
         $overdue = self::overdue($today);
 
+        // The company's overdue bills are grouped by customer once, instead of counted for every customer.
+        $overdueEnough = Invoice::query()
+            ->select('customer_id')
+            ->where('company_id', $company->id)
+            ->where($overdue)
+            ->groupBy('customer_id')
+            ->havingRaw('count(*) >= ?', [max($company->disconnection_overdue_bills, 1)]);
+
         return Customer::query()
             ->where('company_id', $company->id)
             ->where('status', CustomerStatus::Connected)
-            ->whereHas('invoices', $overdue, '>=', max($company->disconnection_overdue_bills, 1))
+            ->whereIn('customers.id', $overdueEnough)
             ->whereDoesntHave('disconnectionNotices', fn (Builder $query) => $query->whereIn('status', DisconnectionNoticeStatus::openValues()))
             ->withCount(['invoices as overdue_bills' => $overdue])
             ->withSum(['invoices as overdue_amount' => $overdue], 'balance')

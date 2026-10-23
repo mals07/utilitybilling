@@ -1099,10 +1099,7 @@ class WorkOrdersPage extends Component
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('order_number', 'like', "%{$search}%")
                 ->orWhereIn('order_type', $matchingTypes)
-                ->orWhereHas('customer', fn ($query) => $query
-                    ->where('account_number', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%"))))
+                ->orWhereIn('customer_id', Customer::idsMatching($company->id, $search))))
             ->orderByDesc('id');
 
         $overdueCount = $company->workOrders()
