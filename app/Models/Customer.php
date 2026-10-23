@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'company_id', 'account_number', 'first_name', 'last_name', 'company_name', 'email', 'phone_number', 'status',
+    'company_id', 'customer_import_id', 'account_number', 'first_name', 'last_name', 'company_name', 'email', 'phone_number', 'status',
     'disconnection_exempt_reason', 'disconnection_exempt_until', 'disconnection_exempted_by_id',
     'account_type_id', 'charge_type_id', 'meter_type_id', 'rate_type_id', 'cluster_type_id',
     'meter_number', 'meter_serial_number', 'meter_installed_on',
@@ -140,6 +140,16 @@ class Customer extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * The import that added the customer, if they came from a file.
+     *
+     * @return BelongsTo<CustomerImport, $this>
+     */
+    public function customerImport(): BelongsTo
+    {
+        return $this->belongsTo(CustomerImport::class);
     }
 
     /**

@@ -7,7 +7,10 @@
         <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
             <x-search-box label="Search customers" :width="200" wire:model.live.debounce.300ms="search" />
             @if ($access['add'])
-                <button type="button" class="form-button form-button-sm min-w-40" wire:click="openAdd">Add Customer</button>
+                <div class="flex items-center gap-5">
+                    <livewire:customers.import-customers />
+                    <button type="button" class="form-button form-button-sm min-w-40" wire:click="openAdd">Add Customer</button>
+                </div>
             @endif
         </div>
 

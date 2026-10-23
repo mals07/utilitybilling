@@ -183,6 +183,14 @@ class Company extends Model
     }
 
     /**
+     * @return HasMany<CustomerImport, $this>
+     */
+    public function customerImports(): HasMany
+    {
+        return $this->hasMany(CustomerImport::class);
+    }
+
+    /**
      * @return HasMany<WorkOrder, $this>
      */
     public function workOrders(): HasMany

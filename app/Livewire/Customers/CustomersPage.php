@@ -5,20 +5,16 @@ namespace App\Livewire\Customers;
 use App\Enums\Access;
 use App\Enums\CustomerStatus;
 use App\Enums\Page;
-use App\Livewire\Auth\AuthRules;
-use App\Livewire\Company\ProfileForm;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Livewire\Concerns\ParsesIds;
-use App\Models\AccountType;
-use App\Models\ClusterType;
 use App\Models\Customer;
+use App\Support\CustomerRules;
 use App\Support\ImageType;
 use App\Support\Locations;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -48,41 +44,9 @@ class CustomersPage extends Component
      */
     public const MINIMUM_ROWS = 10;
 
-    public const ACCOUNT_NUMBER_DIGITS = 6;
-
     public const PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 
     public const PHOTO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-    /**
-     * Modal field => customers column.
-     */
-    public const FIELDS = [
-        'firstName' => 'first_name',
-        'lastName' => 'last_name',
-        'companyName' => 'company_name',
-        'email' => 'email',
-        'phoneNumber' => 'phone_number',
-        'accountTypeId' => 'account_type_id',
-        'status' => 'status',
-        'chargeTypeId' => 'charge_type_id',
-        'rateTypeId' => 'rate_type_id',
-        'clusterTypeId' => 'cluster_type_id',
-        'homeAddress' => 'home_address',
-        'homeCityId' => 'home_city_id',
-        'homeProvinceId' => 'home_province_id',
-        'homeCountryId' => 'home_country_id',
-        'homeZipCode' => 'home_zip_code',
-        'billingAddress' => 'billing_address',
-        'billingCityId' => 'billing_city_id',
-        'billingProvinceId' => 'billing_province_id',
-        'billingCountryId' => 'billing_country_id',
-        'billingZipCode' => 'billing_zip_code',
-        'latitude' => 'latitude',
-        'longitude' => 'longitude',
-    ];
-
-    public const ADDRESS_PARTS = ['Address', 'CityId', 'ProvinceId', 'CountryId', 'ZipCode'];
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -116,7 +80,7 @@ class CustomersPage extends Component
 
     public function mount(): void
     {
-        $this->values = self::emptyValues();
+        $this->values = CustomerRules::emptyValues();
 
         if ($this->customer !== '') {
             $this->fillFromCustomer();
@@ -129,11 +93,12 @@ class CustomersPage extends Component
     }
 
     /**
-     * @return array<string, string>
+     * Redraws the table with the customers just imported.
      */
-    private static function emptyValues(): array
+    #[On('customers-imported')]
+    public function refreshAfterImport(): void
     {
-        return array_fill_keys(array_keys(self::FIELDS), '');
+        unset($this->selected);
     }
 
     #[Computed]
@@ -170,7 +135,7 @@ class CustomersPage extends Component
     private function resetForm(): void
     {
         unset($this->selected);
-        $this->values = self::emptyValues();
+        $this->values = CustomerRules::emptyValues();
         $this->reset('photo', 'photoRemoved', 'notice');
         $this->resetValidation();
     }
@@ -186,7 +151,7 @@ class CustomersPage extends Component
             return;
         }
 
-        foreach (self::FIELDS as $field => $column) {
+        foreach (CustomerRules::FIELDS as $field => $column) {
             $value = $customer->{$column};
             $this->values[$field] = match (true) {
                 $value instanceof CustomerStatus => $value->value,
@@ -281,7 +246,7 @@ class CustomersPage extends Component
 
     public function copyHomeAddress(): void
     {
-        foreach (self::ADDRESS_PARTS as $part) {
+        foreach (CustomerRules::ADDRESS_PARTS as $part) {
             $this->values["billing{$part}"] = $this->values["home{$part}"];
             $this->resetValidation("values.billing{$part}");
         }
@@ -366,160 +331,26 @@ class CustomersPage extends Component
     /* --------------------------------- Saving -------------------------------- */
 
     /**
-     * @return array{rules: array<string, list<mixed>>, messages: array<string, string>}
-     */
-    private static function validation(bool $withBilling): array
-    {
-        $rules = [];
-        $messages = [];
-
-        $text = function (string $field, string $label, int $max, bool $required) use (&$rules, &$messages): void {
-            $rules["values.{$field}"] = ['bail', $required ? 'required' : 'nullable', "max:{$max}"];
-            $messages["values.{$field}.required"] = "The {$label} field is required.";
-            $messages["values.{$field}.max"] = "The {$label} must not be greater than {$max} characters.";
-        };
-        $selection = function (string $field, string $message) use (&$rules, &$messages): void {
-            $rules["values.{$field}"] = ['bail', 'required', 'regex:/^[1-9]\d{0,9}$/'];
-            $messages["values.{$field}.required"] = $message;
-            $messages["values.{$field}.regex"] = $message;
-        };
-        $address = function (string $prefix) use ($text, $selection, &$rules, &$messages): void {
-            $text("{$prefix}Address", 'address', 255, true);
-            $selection("{$prefix}CityId", 'Select a city.');
-            $selection("{$prefix}ProvinceId", 'Select a state/province.');
-            $selection("{$prefix}CountryId", 'Select a country/region.');
-            $rules["values.{$prefix}ZipCode"] = ['bail', 'required', 'regex:'.ProfileForm::POSTAL_CODE_PATTERN];
-            $messages["values.{$prefix}ZipCode.required"] = 'The zip/postal code field is required.';
-            $messages["values.{$prefix}ZipCode.regex"] = 'Enter a valid zip/postal code.';
-        };
-
-        $text('firstName', 'first name', 75, true);
-        $text('lastName', 'last name', 75, true);
-        $text('companyName', 'company', 150, false);
-        $text('email', 'email', 150, false);
-        $rules['values.email'][] = 'regex:'.AuthRules::EMAIL_PATTERN;
-        $messages['values.email.regex'] = 'Enter a valid email address.';
-        $text('phoneNumber', 'phone number', 30, false);
-        $rules['values.phoneNumber'][] = 'regex:'.ProfileForm::PHONE_PATTERN;
-        $messages['values.phoneNumber.regex'] = 'Enter a valid phone number.';
-        $selection('accountTypeId', 'Select an account type.');
-        $rules['values.status'] = ['bail', 'required', Rule::enum(CustomerStatus::class)];
-        $messages['values.status.required'] = 'Select a status.';
-        $messages['values.status.enum'] = 'Select a status.';
-        $selection('chargeTypeId', 'Select a charge type.');
-        $selection('rateTypeId', 'Select a rate.');
-        $selection('clusterTypeId', 'Select a cluster type.');
-        $address('home');
-        if ($withBilling) {
-            $address('billing');
-        }
-
-        return ['rules' => $rules, 'messages' => $messages];
-    }
-
-    /**
-     * Both coordinates in range, or neither when no pin is placed.
-     */
-    private function locationIsValid(): bool
-    {
-        $latitude = $this->values['latitude'];
-        $longitude = $this->values['longitude'];
-
-        if ($latitude === '' && $longitude === '') {
-            return true;
-        }
-
-        return is_numeric($latitude) && is_numeric($longitude)
-            && abs((float) $latitude) <= 90 && abs((float) $longitude) <= 180;
-    }
-
-    /**
-     * Checks the chosen lookups belong to the company. Account and cluster types must be active,
-     * except the one the customer already has, which stays valid if deactivated since.
-     *
-     * @return array<string, string>
-     */
-    private function checkSelections(?Customer $existing): array
-    {
-        $company = $this->company();
-        $lookup = fn (string $class, string $field, ?int $current): bool => $class::withTrashed()
-            ->where('company_id', $company->id)
-            ->whereKey((int) $this->values[$field])
-            ->when((int) $this->values[$field] !== $current, fn (Builder $query) => $query->where('is_active', true)->whereNull('deleted_at'))
-            ->exists();
-
-        $errors = [];
-        if (! $lookup(AccountType::class, 'accountTypeId', $existing?->account_type_id)) {
-            $errors['values.accountTypeId'] = 'Select an account type from the list.';
-        }
-        if (! $lookup(ClusterType::class, 'clusterTypeId', $existing?->cluster_type_id)) {
-            $errors['values.clusterTypeId'] = 'Select a cluster type from the list.';
-        }
-        if (! $company->chargeTypes()->whereKey((int) $this->values['chargeTypeId'])->exists()) {
-            $errors['values.chargeTypeId'] = 'Select a charge type from the list.';
-        }
-        if (! $company->rateTypes()->whereKey((int) $this->values['rateTypeId'])->exists()) {
-            $errors['values.rateTypeId'] = 'Select a rate from the list.';
-        }
-
-        return $errors;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function checkAddress(string $prefix): array
-    {
-        $errors = [];
-        $found = Locations::check(
-            (int) $this->values["{$prefix}CityId"],
-            (int) $this->values["{$prefix}ProvinceId"],
-            (int) $this->values["{$prefix}CountryId"],
-            'Select a city from the list.',
-        );
-        foreach ($found as $suffix => $message) {
-            $errors["values.{$prefix}{$suffix}"] = $message;
-        }
-
-        return $errors;
-    }
-
-    /**
      * @return array<string, mixed>|null The customer's attributes, or null after showing the errors.
      */
     private function validateCustomer(?Customer $existing): ?array
     {
         $this->resetValidation();
-        $this->values = array_map(fn ($value): string => trim((string) $value), $this->values);
+        $this->values = CustomerRules::trimmed($this->values);
 
-        // The billing address is optional, but once any part of it is given it must be complete.
-        $withBilling = collect(self::ADDRESS_PARTS)->contains(fn (string $part): bool => $this->values["billing{$part}"] !== '');
-
-        $validation = self::validation($withBilling);
-        $errors = array_map(
-            fn (array $messages): string => $messages[0],
-            validator(['values' => $this->values], $validation['rules'], $validation['messages'])->errors()->messages(),
-        );
-
-        // Only the map sets these, so a bad value means a tampered or broken request.
-        if (! $this->locationIsValid()) {
-            $errors['location'] = 'The map location is invalid. Place the pin again.';
-        }
+        // A bad location means a tampered or broken request, since only the map sets it.
+        $errors = CustomerRules::fieldErrors($this->values);
         if ($photoError = $this->photoError()) {
             $errors['photo'] = $photoError;
         }
 
         if ($errors === []) {
-            $errors = [
-                ...$this->checkSelections($existing),
-                ...$this->checkAddress('home'),
-                ...($withBilling ? $this->checkAddress('billing') : []),
-            ];
+            $errors = CustomerRules::recordErrors($this->values, $this->company(), $existing);
         }
 
         if ($errors !== []) {
             foreach ($errors as $key => $message) {
-                $this->addError($key, $message);
+                $this->addError(in_array($key, ['location', 'photo'], true) ? $key : "values.{$key}", $message);
             }
             $this->notice = 'Please correct the highlighted fields.';
             $this->dispatch('focus-first-error');
@@ -527,16 +358,7 @@ class CustomersPage extends Component
             return null;
         }
 
-        $attributes = [];
-        foreach (self::FIELDS as $field => $column) {
-            $value = $this->values[$field];
-            $attributes[$column] = match (true) {
-                $value === '' => null,
-                str_ends_with($field, 'Id') => (int) $value,
-                in_array($field, ['latitude', 'longitude'], true) => round((float) $value, 6),
-                default => $value,
-            };
-        }
+        $attributes = CustomerRules::attributes($this->values);
 
         if ($this->photo !== null) {
             $data = (string) file_get_contents($this->photo->getRealPath());
@@ -550,17 +372,6 @@ class CustomersPage extends Component
         }
 
         return $attributes;
-    }
-
-    /**
-     * The next account number in the company's sequence: one more than the highest so far.
-     */
-    private function nextAccountNumber(): string
-    {
-        $highest = $this->company()->customers()->pluck('account_number')
-            ->reduce(fn (int $max, string $number): int => max($max, (int) $number), 0);
-
-        return str_pad((string) ($highest + 1), self::ACCOUNT_NUMBER_DIGITS, '0', STR_PAD_LEFT);
     }
 
     public function save(): void
@@ -588,7 +399,7 @@ class CustomersPage extends Component
         // Two customers added at the same moment may pick the same number; the unique index
         // rejects the second, which then takes the next one.
         for ($attempt = 0; $attempt < 3; $attempt++) {
-            $accountNumber = $this->nextAccountNumber();
+            $accountNumber = CustomerRules::nextAccountNumber($this->company());
 
             try {
                 $this->company()->customers()->create([...$attributes, 'account_number' => $accountNumber]);
