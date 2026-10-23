@@ -11,6 +11,7 @@ use App\Models\Customer;
 use App\Support\CustomerRules;
 use App\Support\ImageType;
 use App\Support\Locations;
+use App\Support\PhotoResizer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -362,8 +363,9 @@ class CustomersPage extends Component
 
         if ($this->photo !== null) {
             $data = (string) file_get_contents($this->photo->getRealPath());
-            $attributes['photo_data'] = $data;
-            $attributes['photo_mime_type'] = ImageType::detect($data);
+            $photo = PhotoResizer::shrink($data, PhotoResizer::CUSTOMER_MAX_SIDE) ?? ['data' => $data, 'mime' => ImageType::detect($data)];
+            $attributes['photo_data'] = $photo['data'];
+            $attributes['photo_mime_type'] = $photo['mime'];
             $attributes['photo_file_name'] = mb_substr($this->photo->getClientOriginalName(), 0, 255);
         } elseif ($this->photoRemoved) {
             $attributes['photo_data'] = null;

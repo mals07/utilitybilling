@@ -81,6 +81,24 @@ class CustomersPageTest extends TestCase
         $this->actingAs($owner)->get(route('customers.photo', $customer))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
     }
 
+    public function test_a_large_customer_photo_is_stored_shrunk_as_a_jpeg(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+
+        Livewire::actingAs($owner)
+            ->test(CustomersPage::class)
+            ->call('openAdd')
+            ->set('values', $this->customerValues($company))
+            ->set('photo', UploadedFile::fake()->image('house.png', 1000, 500))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $customer = $company->customers()->sole();
+        $stored = $this->actingAs($owner)->get(route('customers.photo', $customer))->assertHeader('Content-Type', 'image/jpeg')->getContent();
+        $this->assertSame([800, 400], array_slice(getimagesizefromstring($stored), 0, 2));
+        $this->assertSame('image/jpeg', $customer->photo_mime_type);
+    }
+
     public function test_a_partly_filled_billing_address_must_be_completed(): void
     {
         [$owner, $company] = $this->ownerWithCompany();

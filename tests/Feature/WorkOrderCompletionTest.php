@@ -108,6 +108,28 @@ class WorkOrderCompletionTest extends TestCase
         $this->actingAs($this->owner)->get($photo->url())->assertOk()->assertHeader('Content-Type', 'image/jpeg');
     }
 
+    public function test_a_large_completion_photo_is_stored_shrunk_as_a_jpeg(): void
+    {
+        $customer = Customer::factory()->for($this->company)->create();
+        $meterType = MeterType::factory()->for($this->company)->create();
+        $order = $this->order($customer, WorkOrderType::NewInstallation);
+
+        $this->complete($order, [
+            'meter_number' => 'MTR-100',
+            'serial_number' => 'SN-100',
+            'meter_type_id' => (string) $meterType->id,
+            'initial_reading' => '0',
+        ], withPhoto: false, submit: false)
+            ->set('newPhotos', [UploadedFile::fake()->image('meter.png', 1800, 900)])
+            ->call('complete')
+            ->assertHasNoErrors();
+
+        $photo = $order->photos()->sole();
+        $stored = $this->actingAs($this->owner)->get($photo->url())->assertHeader('Content-Type', 'image/jpeg')->getContent();
+        $this->assertSame([1600, 800], array_slice(getimagesizefromstring($stored), 0, 2));
+        $this->assertSame('meter.png', $photo->file_name);
+    }
+
     public function test_a_photo_and_every_checklist_item_are_required_where_the_type_asks(): void
     {
         $customer = Customer::factory()->for($this->company)->create();

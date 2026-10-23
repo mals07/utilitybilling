@@ -18,6 +18,7 @@ use App\Models\WorkOrder;
 use App\Models\WorkOrderFee;
 use App\Support\Disconnections;
 use App\Support\ImageType;
+use App\Support\PhotoResizer;
 use App\Support\WorkOrderCompletion;
 use App\Support\WorkOrderRules;
 use DomainException;
@@ -910,8 +911,9 @@ class WorkOrdersPage extends Component
 
         $files = $order->order_type->allowsPhotos() ? array_map(function (TemporaryUploadedFile $file): array {
             $data = (string) file_get_contents($file->getRealPath());
+            $photo = PhotoResizer::shrink($data, PhotoResizer::WORK_ORDER_MAX_SIDE) ?? ['data' => $data, 'mime' => (string) ImageType::detect($data)];
 
-            return ['data' => $data, 'mime' => (string) ImageType::detect($data), 'name' => $file->getClientOriginalName()];
+            return [...$photo, 'name' => $file->getClientOriginalName()];
         }, $photos) : [];
 
         try {

@@ -5,8 +5,10 @@ use App\Models\Company;
 use App\Support\Billing\Surcharges;
 use App\Support\Disconnections;
 use App\Support\Format;
+use App\Support\PhotoResizer;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -51,3 +53,34 @@ Artisan::command('disconnections:review', function () {
 })->purpose('Settle or cancel notices of disconnection whose customers have paid or are no longer connected');
 
 Schedule::command('disconnections:review')->dailyAt('00:45');
+
+Artisan::command('photos:shrink', function () {
+    // Photos are read ten at a time, since each may be a few megabytes. A photo is saved again only when
+    // it comes out at least 10% smaller, so running the command twice doesn't wear down photos already shrunk.
+    $shrink = function (string $table, string $mimeColumn, int $maxSide): array {
+        $shrunk = 0;
+        $savedBytes = 0;
+
+        DB::table($table)->whereNotNull('photo_data')->select(['id', 'photo_data', $mimeColumn])
+            ->chunkById(10, function ($rows) use ($table, $mimeColumn, $maxSide, &$shrunk, &$savedBytes): void {
+                foreach ($rows as $row) {
+                    $photo = PhotoResizer::shrink($row->photo_data, $maxSide);
+                    if ($photo === null || strlen($photo['data']) > strlen($row->photo_data) * 0.9) {
+                        continue;
+                    }
+
+                    DB::table($table)->where('id', $row->id)->update(['photo_data' => $photo['data'], $mimeColumn => $photo['mime']]);
+                    $shrunk++;
+                    $savedBytes += strlen($row->photo_data) - strlen($photo['data']);
+                }
+            });
+
+        return [$shrunk, $savedBytes];
+    };
+
+    [$orderPhotos, $orderBytes] = $shrink('work_order_photos', 'mime_type', PhotoResizer::WORK_ORDER_MAX_SIDE);
+    [$customerPhotos, $customerBytes] = $shrink('customers', 'photo_mime_type', PhotoResizer::CUSTOMER_MAX_SIDE);
+
+    $this->info("Shrank {$orderPhotos} work order photo(s) and {$customerPhotos} customer photo(s), saving "
+        .number_format(($orderBytes + $customerBytes) / (1024 * 1024), 1).'MB.');
+})->purpose('Shrink stored work order and customer photos, like new uploads are');
