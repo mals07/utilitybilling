@@ -2,7 +2,7 @@
 @use('App\Support\CustomerImport\CustomerSpreadsheet')
 
 <div class="contents">
-    <button type="button" class="link-button text-[13px]" wire:click="openImport">Import Customers</button>
+    <button type="button" class="link-button text-[11px]" wire:click="openImport">Import Customers</button>
 
     @if ($open)
         <x-modal title="Import Customers" close="$wire.closeImport()" width="lg">
