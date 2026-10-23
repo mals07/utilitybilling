@@ -57,7 +57,7 @@
                     <div class="flex justify-end">
                         <button type="submit" class="form-button min-w-[160px]" wire:loading.attr="disabled" wire:target="record">
                             <span wire:loading.remove wire:target="record">Record Payment</span>
-                            <span wire:loading wire:target="record">Saving…</span>
+                            <span wire:loading wire:target="record">Checking…</span>
                         </button>
                     </div>
                 </fieldset>
@@ -169,6 +169,59 @@
 
         <x-pagination :paginator="$payments" />
     </div>
+
+    @if ($confirming)
+        @php($amountCents = Money::toCents(trim($amount)))
+        @php($overpaid = $summary['owed'] > 0 ? $amountCents - $summary['owed'] : 0)
+        <x-modal title="Confirm Payment" close="$wire.cancelConfirmation()" width="md">
+            <p class="mt-1 text-[13px] text-ink-soft">Check the details below. The payment is saved only when you click Confirm &amp; Save.</p>
+
+            @if ($overpaid > 0)
+                <x-alert tone="error" class="mt-3">
+                    This is {{ Format::amount(Money::fromCents($overpaid)) }} more than the {{ Format::amount(Money::fromCents($summary['owed'])) }} owed. The extra will be kept as advance credit.
+                </x-alert>
+            @endif
+
+            <dl class="mt-3 grid grid-cols-2 gap-3 text-[13px]">
+                <div class="col-span-2"><dt class="text-xs text-label">Customer</dt><dd>{{ $chosenCustomer->first_name }} {{ $chosenCustomer->last_name }} ({{ $chosenCustomer->account_number }})</dd></div>
+                <div><dt class="text-xs text-label">Amount received</dt><dd class="text-lg font-semibold text-ink-strong">{{ Format::amount(Money::fromCents($amountCents)) }}</dd></div>
+                <div><dt class="text-xs text-label">Date received</dt><dd>{{ Format::longDate(\Illuminate\Support\Carbon::parse($paidOn)) }}</dd></div>
+                <div><dt class="text-xs text-label">Paid by</dt><dd>{{ $chosenMethod?->label() }}</dd></div>
+                <div><dt class="text-xs text-label">Reference no.</dt><dd>{{ trim($referenceNumber) !== '' ? trim($referenceNumber) : '—' }}</dd></div>
+                @if (trim($notes) !== '')
+                    <div class="col-span-2"><dt class="text-xs text-label">Notes</dt><dd>{{ trim($notes) }}</dd></div>
+                @endif
+            </dl>
+
+            <h3 class="mt-4 text-[13px] font-semibold text-ink-strong">Will be applied to</h3>
+            @if ($preview['applied'] === [])
+                <p class="mt-1 text-[13px] text-label">No unpaid bills.</p>
+            @else
+                <ul class="mt-1 grid gap-1 text-[13px]">
+                    @foreach ($openInvoices->filter(fn ($invoice) => isset($preview['applied'][$invoice->id])) as $invoice)
+                        <li wire:key="confirm-invoice-{{ $invoice->id }}">
+                            Invoice {{ $invoice->invoice_number }} · {{ $invoice->periodLabel() ?? $invoice->kind->label() }}
+                            · <span class="font-semibold">{{ Format::amount(Money::fromCents($preview['applied'][$invoice->id])) }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+                @if ($summary['credit'] > 0)
+                    <p class="mt-1 text-xs text-label">Includes {{ Format::amount(Money::fromCents($summary['credit'])) }} of existing advance credit.</p>
+                @endif
+            @endif
+            @if ($preview['advance'] > 0)
+                <p class="mt-2 text-[13px] font-semibold text-success">{{ Format::amount(Money::fromCents($preview['advance'])) }} will be kept as advance credit.</p>
+            @endif
+
+            <div class="form-actions mt-5">
+                <button type="button" class="text-button" wire:click="cancelConfirmation" wire:loading.attr="disabled" wire:target="confirmRecord">Back</button>
+                <button type="button" class="form-button min-w-[160px]" wire:click="confirmRecord" wire:loading.attr="disabled" wire:target="confirmRecord">
+                    <span wire:loading.remove wire:target="confirmRecord">Confirm &amp; Save</span>
+                    <span wire:loading wire:target="confirmRecord">Saving…</span>
+                </button>
+            </div>
+        </x-modal>
+    @endif
 
     @if ($selected)
         <x-modal :title="'Official Receipt '.$selected->receipt_number" close="$wire.closeModal()" width="md">

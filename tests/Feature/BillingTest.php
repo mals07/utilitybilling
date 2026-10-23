@@ -269,9 +269,15 @@ class BillingTest extends TestCase
             ->set('method', 'e_wallet')
             ->call('record')
             ->assertHasErrors(['referenceNumber'])
+            ->assertSet('confirming', false)
             ->set('referenceNumber', 'GC-123')
             ->call('record')
             ->assertHasNoErrors()
+            ->assertSet('confirming', true)
+            ->assertSee(['Confirm Payment', 'GC-123', '300.00'])
+            ->assertNotDispatched('flash')
+            ->call('confirmRecord')
+            ->assertSet('confirming', false)
             ->assertDispatched('flash', fn (string $name, array $params): bool => str_contains($params['message'], 'Official receipt 000001'));
 
         $this->assertSame(InvoiceStatus::Paid, $first->fresh()->status);
@@ -287,6 +293,28 @@ class BillingTest extends TestCase
         $this->assertSame('100.00', $third->total_amount);
         $this->assertSame('25.00', $third->balance);
         $this->assertSame(InvoiceStatus::PartiallyPaid, $third->status);
+    }
+
+    public function test_a_payment_is_not_saved_until_it_is_confirmed_and_an_overpayment_is_flagged(): void
+    {
+        $customer = $this->customer();
+        $this->bill($customer, now()->format('Y-m'), '15');     // 225.00
+
+        $page = Livewire::actingAs($this->owner)
+            ->test(PaymentsPage::class, ['preselect' => (string) $customer->id])
+            ->set('amount', '2250')
+            ->call('record')
+            ->assertSet('confirming', true)
+            ->assertSee('This is 2,025.00 more than the 225.00 owed.');
+
+        $page->call('cancelConfirmation')->assertSet('confirming', false)->assertSet('amount', '2250');
+        $this->assertSame(0, $customer->payments()->count());
+
+        $page->call('record')->set('amount', '225')->assertSet('confirming', false);
+        $this->assertSame(0, $customer->payments()->count());
+
+        $page->call('record')->assertDontSee('more than the')->call('confirmRecord');
+        $this->assertSame('225.00', $customer->payments()->sole()->amount);
     }
 
     public function test_voiding_a_payment_reopens_its_bills_and_voiding_a_bill_frees_the_month(): void

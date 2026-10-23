@@ -388,7 +388,7 @@ final class Guides
                     [
                         'target' => '[wire\:submit="record"] [type="submit"]',
                         'title' => 'Record the payment',
-                        'body' => 'Click Record Payment, then click its receipt in the table below to print the official receipt.',
+                        'body' => 'Click Record Payment, check the details shown, then click Confirm & Save. Click its receipt in the table below to print the official receipt.',
                         'grows' => '[aria-label^="View receipt"]',
                     ],
                 ],

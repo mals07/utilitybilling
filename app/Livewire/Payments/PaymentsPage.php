@@ -63,6 +63,11 @@ class PaymentsPage extends Component
     public string $notes = '';
 
     /**
+     * Whether the confirmation modal is open, showing the payment for a last check before it is saved.
+     */
+    public bool $confirming = false;
+
+    /**
      * The payment open in the details modal.
      */
     #[Url(as: 'payment', except: '')]
@@ -95,6 +100,9 @@ class PaymentsPage extends Component
         if (in_array($property, ['amount', 'paidOn', 'method', 'referenceNumber', 'notes', 'voidReason'], true)) {
             $this->resetValidation($property);
         }
+        if (in_array($property, ['amount', 'paidOn', 'method', 'referenceNumber', 'notes'], true)) {
+            $this->confirming = false;
+        }
     }
 
     protected function customerChosen(Customer $customer): void
@@ -107,6 +115,7 @@ class PaymentsPage extends Component
     protected function customerCleared(): void
     {
         $this->amount = '';
+        $this->confirming = false;
     }
 
     /**
@@ -166,12 +175,61 @@ class PaymentsPage extends Component
         $this->method = 'cash';
     }
 
+    /**
+     * Checks the form, then opens the confirmation modal; nothing is saved until the payment is confirmed.
+     */
     public function record(): void
     {
         if (! $this->allowed(Access::Add)) {
             return;
         }
 
+        $this->confirming = $this->validatedPayment() !== null;
+    }
+
+    public function cancelConfirmation(): void
+    {
+        $this->confirming = false;
+    }
+
+    /**
+     * Saves the payment shown in the confirmation modal, checking the form again first.
+     */
+    public function confirmRecord(): void
+    {
+        $this->confirming = false;
+
+        if (! $this->allowed(Access::Add)) {
+            return;
+        }
+
+        $attributes = $this->validatedPayment();
+        if ($attributes === null) {
+            return;
+        }
+
+        $payment = Ledger::recordPayment($this->chosenCustomer, $attributes, $this->user());
+
+        $advance = Money::toCents($payment->unapplied_amount);
+        $this->clearCustomer();
+        $this->reset('referenceNumber', 'notes');
+        $this->method = PaymentMethod::Cash->value;
+        $this->paidOn = BillingRun::today($this->company());
+        unset($this->openInvoices);
+        $this->resetPage();
+        $this->paymentId = (string) $payment->id;
+
+        $this->flash("Payment recorded. Official receipt {$payment->receipt_number}."
+            .($advance > 0 ? ' '.Money::fromCents($advance).' is kept as advance credit for the next bill.' : ''));
+    }
+
+    /**
+     * The payment as typed, ready for the ledger, or null (with the form's errors shown) when something is wrong.
+     *
+     * @return array{paid_on: string, amount: string, method: string, reference_number: ?string, notes: ?string}|null
+     */
+    private function validatedPayment(): ?array
+    {
         $this->resetValidation();
         unset($this->chosenCustomer);
         $customer = $this->chosenCustomer;
@@ -210,28 +268,16 @@ class PaymentsPage extends Component
                 $this->addError($key, $message);
             }
 
-            return;
+            return null;
         }
 
-        $payment = Ledger::recordPayment($customer, [
+        return [
             'paid_on' => $this->paidOn,
             'amount' => Money::fromCents(Money::toCents($amount)),
             'method' => $method->value,
             'reference_number' => $reference === '' ? null : $reference,
             'notes' => $notes === '' ? null : $notes,
-        ], $this->user());
-
-        $advance = Money::toCents($payment->unapplied_amount);
-        $this->clearCustomer();
-        $this->reset('referenceNumber', 'notes');
-        $this->method = PaymentMethod::Cash->value;
-        $this->paidOn = $today;
-        unset($this->openInvoices);
-        $this->resetPage();
-        $this->paymentId = (string) $payment->id;
-
-        $this->flash("Payment recorded. Official receipt {$payment->receipt_number}."
-            .($advance > 0 ? ' '.Money::fromCents($advance).' is kept as advance credit for the next bill.' : ''));
+        ];
     }
 
     /* ------------------------------ Details / void ----------------------------- */
@@ -322,6 +368,7 @@ class PaymentsPage extends Component
             'methods' => PaymentMethod::options(),
             'chosenMethod' => PaymentMethod::tryFrom($this->method),
             'selected' => $this->selected,
+            'confirming' => $this->confirming && $customer !== null,
             'today' => BillingRun::today($company),
             'timezone' => $company->timezone,
             'access' => $this->access,
