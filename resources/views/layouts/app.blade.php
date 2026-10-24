@@ -69,7 +69,8 @@
                     <x-icon name="menu" />
                 </button>
 
-                <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2.5 text-ink-strong">
+                {{-- On desktop the sidebar shows the company brand instead. --}}
+                <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2.5 text-ink-strong lg:hidden">
                     @if ($logoUrl)
                         <img src="{{ $logoUrl }}" alt="{{ $company->company_name }}" class="h-9 max-w-48 object-contain lg:h-11">
                     @else
@@ -101,19 +102,34 @@
                     class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-sidebar bg-[image:var(--gradient-navy)] text-white shadow-[4px_0_24px_-12px_rgba(11,37,69,0.6)] transition-transform duration-200 data-[open=true]:translate-x-0 lg:static lg:z-auto lg:w-52 lg:shrink-0 lg:translate-x-0 lg:transition-[width] lg:sidebar-collapsed:w-[72px]"
                 >
                     <div class="flex h-full flex-col lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)]">
-                        <div class="flex h-16 items-center justify-between px-4 lg:hidden">
-                            <span class="text-xs font-semibold tracking-[0.16em] text-cyan-200/70 uppercase">Menu</span>
+                        {{-- Company brand; only the logo shows while collapsed. --}}
+                        <div class="flex items-center gap-2 border-b border-white/10 px-4 py-4 lg:px-4 lg:py-5 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0">
+                            <a
+                                href="{{ route('dashboard') }}"
+                                class="flex min-w-0 flex-1 items-center gap-3 rounded-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqua lg:sidebar-collapsed:flex-none"
+                                x-bind:title="collapsed ? @js($company?->company_name ?? config('app.name')) : null"
+                            >
+                                @if ($logoUrl)
+                                    <span class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] ring-1 ring-white/20">
+                                        <img src="{{ $logoUrl }}" alt="" class="size-full object-contain">
+                                    </span>
+                                @else
+                                    <x-app-logo :size="44" class="drop-shadow-[0_6px_12px_rgba(6,182,212,0.35)]" />
+                                @endif
+                                <span class="min-w-0 lg:sidebar-collapsed:sr-only">
+                                    <span class="line-clamp-2 text-sm leading-tight font-bold text-white">{{ $company?->company_name ?? config('app.name') }}</span>
+                                    <span class="mt-0.5 block text-[11px] text-cyan-200/70">Water Billing</span>
+                                </span>
+                            </a>
                             <button
                                 type="button"
                                 x-on:click="mobileOpen = false"
-                                class="inline-flex size-9 items-center justify-center rounded-xs text-white/80 hover:bg-white/10 hover:text-white"
+                                class="inline-flex size-9 shrink-0 items-center justify-center rounded-xs text-white/80 hover:bg-white/10 hover:text-white lg:hidden"
                                 aria-label="Close navigation"
                             >
                                 <x-icon name="close" />
                             </button>
                         </div>
-
-                        <p class="hidden px-6 pt-6 text-[11px] font-semibold tracking-[0.16em] text-cyan-200/60 uppercase lg:block lg:sidebar-collapsed:sr-only" aria-hidden="true">Navigation</p>
 
                         <nav aria-label="Main" class="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 lg:py-3">
                             <a
