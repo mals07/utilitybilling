@@ -1,5 +1,8 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { CategoryScale, Chart, Filler, LinearScale, LineController, LineElement, PointElement, Tooltip } from 'chart.js';
+
+Chart.register(CategoryScale, Filler, LinearScale, LineController, LineElement, PointElement, Tooltip);
 
 /* ------------------------------ Map Location ------------------------------ */
 
@@ -543,7 +546,169 @@ function pageGuide(urlTemplate) {
     };
 }
 
+/* ---------------------------- Dashboard trend ----------------------------- */
+
+const CHART_INK = '#475569';
+const CHART_MUTED = '#7a8a9c';
+const CHART_GRID = '#e5edf4';
+const CHART_SURFACE = '#ffffff';
+
+/** "PHP 1,234.50", "87.5%", "1,234.5 cu.m." or "12" for a measure's format. */
+function formatValue(value, format, currency, compact = false) {
+    if (value === null || value === undefined) return '—';
+    const options = compact ? { notation: 'compact', maximumFractionDigits: 1 } : {};
+    switch (format) {
+        case 'money':
+            return `${currency}${new Intl.NumberFormat('en-US', compact ? options : { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}`;
+        case 'percent':
+            return `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(value)}%`;
+        case 'quantity':
+            return `${new Intl.NumberFormat('en-US', compact ? options : { maximumFractionDigits: 1 }).format(value)} cu.m.`;
+        default:
+            return new Intl.NumberFormat('en-US', options).format(value);
+    }
+}
+
+/** Indexes of the highest and lowest months of a series, skipping months with no value. */
+function extremes(values) {
+    let high = null;
+    let low = null;
+    values.forEach((value, index) => {
+        if (value === null) return;
+        if (high === null || value > values[high]) high = index;
+        if (low === null || value < values[low]) low = index;
+    });
+    return high === low ? { high, low: null } : { high, low };
+}
+
+/** Writes "High" above the best month and "Low" below the worst month of the highlighted series. */
+const highLowLabels = {
+    id: 'highLowLabels',
+    afterDatasetsDraw(chart, _args, options) {
+        const { datasetIndex, high, low } = options;
+        if (datasetIndex === undefined) return;
+        const points = chart.getDatasetMeta(datasetIndex).data;
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = '600 12px Inter, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = CHART_INK;
+        if (high !== null && points[high]) {
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('High', points[high].x, points[high].y - 10);
+        }
+        if (low !== null && points[low]) {
+            ctx.textBaseline = 'top';
+            ctx.fillText('Low', points[low].x, points[low].y + 10);
+        }
+        ctx.restore();
+    },
+};
+
+/**
+ * The dashboard's six-month performance line chart. `measures` are the views the user can switch
+ * between; each has one or more series, and the one at `highlight` gets its best and worst months marked.
+ */
+function trendChart({ months, measures, currency }) {
+    let chart = null;
+
+    return {
+        measures,
+        selected: measures[0]?.key ?? null,
+
+        init() {
+            this.draw();
+        },
+
+        destroy() {
+            chart?.destroy();
+            chart = null;
+        },
+
+        get measure() {
+            return this.measures.find((measure) => measure.key === this.selected) ?? null;
+        },
+
+        get summary() {
+            const measure = this.measure;
+            if (!measure) return null;
+            const values = measure.series[measure.highlight].values;
+            const { high, low } = extremes(values);
+            const known = values.filter((value) => value !== null);
+            const average = known.length ? known.reduce((sum, value) => sum + value, 0) / known.length : null;
+            return {
+                high: high === null ? '—' : `${months[high]} · ${formatValue(values[high], measure.format, currency)}`,
+                low: low === null ? '—' : `${months[low]} · ${formatValue(values[low], measure.format, currency)}`,
+                average: formatValue(average, measure.format, currency),
+            };
+        },
+
+        choose(key) {
+            this.selected = key;
+            this.draw();
+        },
+
+        draw() {
+            const measure = this.measure;
+            chart?.destroy();
+            chart = null;
+            if (!measure) return;
+
+            const highlighted = measure.series[measure.highlight];
+            const { high, low } = extremes(highlighted.values);
+            const isMarked = (datasetIndex, index) => datasetIndex === measure.highlight && (index === high || index === low);
+
+            chart = new Chart(this.$refs.canvas, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: measure.series.map((series, datasetIndex) => ({
+                        label: series.label,
+                        data: series.values,
+                        borderColor: series.color,
+                        backgroundColor: series.color,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        spanGaps: true,
+                        pointRadius: (context) => (isMarked(datasetIndex, context.dataIndex) ? 6 : 3),
+                        pointHoverRadius: 7,
+                        pointBorderColor: CHART_SURFACE,
+                        pointBorderWidth: 2,
+                    })),
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    layout: { padding: { top: 24, bottom: 4, left: 4, right: 12 } },
+                    scales: {
+                        x: { grid: { display: false }, border: { color: CHART_GRID }, ticks: { color: CHART_MUTED, font: { size: 12 } } },
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: measure.format === 'percent' ? 100 : undefined,
+                            grid: { color: CHART_GRID },
+                            border: { display: false },
+                            ticks: { color: CHART_MUTED, font: { size: 12 }, maxTicksLimit: 5, callback: (value) => formatValue(value, measure.format, currency, true) },
+                        },
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0b2545',
+                            padding: 10,
+                            boxPadding: 4,
+                            callbacks: { label: (context) => ` ${context.dataset.label}: ${formatValue(context.parsed.y, measure.format, currency)}` },
+                        },
+                        highLowLabels: { datasetIndex: measure.highlight, high, low },
+                    },
+                },
+                plugins: [highLowLabels],
+            });
+        },
+    };
+}
+
 document.addEventListener('alpine:init', () => {
+    window.Alpine.data('trendChart', trendChart);
     window.Alpine.data('mapLocation', mapLocation);
     window.Alpine.data('photoCropper', photoCropper);
     window.Alpine.data('pageGuide', pageGuide);
