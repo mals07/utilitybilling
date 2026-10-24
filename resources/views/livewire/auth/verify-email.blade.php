@@ -23,7 +23,7 @@
             </button>
         </form>
 
-        <form method="POST" action="{{ route('logout') }}" class="text-center text-[13px] text-label">
+        <form method="POST" action="{{ route('logout') }}" class="text-center text-body text-label">
             @csrf
             Wrong account?
             <button type="submit" class="btn btn-link">Log out</button>

@@ -1,6 +1,6 @@
 {{-- "Map Location": the map is drawn by Leaflet, so Livewire leaves it alone (wire:ignore). --}}
 <div class="mt-3 min-w-0">
-    <span id="customer-location-label" class="mb-1 block text-xs font-medium text-ink">Map Location (Optional)</span>
+    <span id="customer-location-label" class="mb-1 block text-caption font-medium text-ink">Map Location (Optional)</span>
 
     <div
         wire:ignore
@@ -34,7 +34,7 @@
                     aria-label="Search the map"
                     autocomplete="off"
                     x-on:keydown.enter.prevent="search(query)"
-                    class="form-control !h-[34px] min-w-0 flex-[1_1_200px] !text-[13px]"
+                    class="form-control !h-[34px] min-w-0 flex-[1_1_200px] !text-body"
                 >
                 <button type="button" class="form-button form-button-sm" x-on:click="search(query)" x-bind:disabled="searching || query.trim() === ''">Search</button>
                 <button
@@ -57,10 +57,10 @@
         ></div>
 
         <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <span class="mt-1 text-xs text-placeholder" x-text="pinText"></span>
+            <span class="mt-1 text-caption text-placeholder" x-text="pinText"></span>
             <button type="button" class="link-button" x-show="pin && ! readOnly" x-on:click="place(null)">Remove pin</button>
         </div>
-        <p class="mt-1 text-xs text-placeholder" role="status" x-show="message && ! readOnly" x-text="message"></p>
+        <p class="mt-1 text-caption text-placeholder" role="status" x-show="message && ! readOnly" x-text="message"></p>
     </div>
 
     @error('location')

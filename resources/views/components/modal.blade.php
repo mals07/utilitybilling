@@ -33,7 +33,7 @@
     >
         <div class="modal-content">
             <div class="flex items-start justify-between gap-3">
-                <h2 id="{{ $titleId }}" class="text-base font-bold text-ink-strong">{{ $title }}</h2>
+                <h2 id="{{ $titleId }}" class="text-heading font-bold text-ink-strong">{{ $title }}</h2>
                 <button type="button" class="modal-close" x-on:click="{{ $close }}" aria-label="Close">
                     <x-icon name="close" />
                 </button>

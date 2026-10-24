@@ -4,7 +4,7 @@
             <x-alert tone="error">
                 This password reset link is invalid or has expired. Reset links can only be used once and expire after 1 hour.
             </x-alert>
-            <p class="text-center text-[13px] text-label">
+            <p class="text-center text-body text-label">
                 <a href="{{ route('password.request') }}" class="auth-link">Request a new reset link</a>
             </p>
         </x-auth-card>

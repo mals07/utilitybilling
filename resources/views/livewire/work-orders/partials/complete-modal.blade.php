@@ -17,7 +17,7 @@
         x-data
         x-on:focus-first-error.window="$nextTick(() => $el.querySelector('[aria-invalid=true]')?.focus())"
     >
-        <div class="grid gap-1 rounded-xs bg-panel px-3 py-2 text-[13px]">
+        <div class="grid gap-1 rounded-xs bg-panel px-3 py-2 text-body">
             <p class="font-semibold text-ink-strong">{{ $type->label() }}</p>
             <p class="text-label">
                 {{ $customer->account_number }} · {{ $customer->first_name }} {{ $customer->last_name }}
@@ -34,7 +34,7 @@
         @enderror
 
         <fieldset class="m-0 mt-4 min-w-0 border-0 p-0" wire:loading.attr="disabled" wire:target="complete">
-            <legend class="text-[13px] font-semibold text-ink-strong">What was done</legend>
+            <legend class="text-body font-semibold text-ink-strong">What was done</legend>
             <div class="mt-2 grid grid-cols-1 gap-x-5 gap-y-3 min-[560px]:grid-cols-2">
                 @foreach ($completionForm['fields'] as $key => $spec)
                     @php
@@ -78,10 +78,10 @@
 
         @if ($completionForm['checklist'] !== [])
             <fieldset class="m-0 mt-5 min-w-0 border-0 p-0" @error('completion.checked') aria-describedby="completion-checklist-error" @enderror>
-                <legend class="text-[13px] font-semibold text-ink-strong">Checklist<x-required-mark /> <span class="font-normal text-label">— tick every item</span></legend>
+                <legend class="text-body font-semibold text-ink-strong">Checklist<x-required-mark /> <span class="font-normal text-label">— tick every item</span></legend>
                 <div class="mt-2 grid gap-2 min-[560px]:grid-cols-2">
                     @foreach ($completionForm['checklist'] as $index => $item)
-                        <label wire:key="completion-check-{{ $index }}" class="flex items-center gap-2 text-[13px] text-ink">
+                        <label wire:key="completion-check-{{ $index }}" class="flex items-center gap-2 text-body text-ink">
                             <input type="checkbox" wire:model="completion.checked.{{ $index }}" class="size-4 accent-accent" @error('completion.checked') aria-invalid="true" @enderror>
                             {{ $item }}
                         </label>
@@ -95,7 +95,7 @@
 
         @if ($type->allowsPhotos())
             <fieldset class="m-0 mt-5 min-w-0 border-0 p-0">
-                <legend class="text-[13px] font-semibold text-ink-strong">
+                <legend class="text-body font-semibold text-ink-strong">
                     Photos<x-required-mark :when="$type->requiresPhoto()" />
                     <span class="font-normal text-label">
                         — {{ $type->requiresPhoto() ? 'at least one required' : 'optional' }}, up to {{ WorkOrderCompletion::MAX_PHOTOS }} (JPG, PNG or WebP, 2MB each)
@@ -111,7 +111,7 @@
                         </div>
                     @endforeach
                     @if (count($photos) < WorkOrderCompletion::MAX_PHOTOS)
-                        <label class="flex size-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xs border border-dashed border-upload-line text-xs text-label hover:bg-hover">
+                        <label class="flex size-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xs border border-dashed border-upload-line text-caption text-label hover:bg-hover">
                             <x-icon name="upload" :size="20" />
                             <span wire:loading.remove wire:target="newPhotos">Add photo</span>
                             <span wire:loading wire:target="newPhotos">Uploading…</span>
@@ -126,7 +126,7 @@
         @endif
 
         <fieldset class="m-0 mt-5 min-w-0 border-0 p-0" wire:loading.attr="disabled" wire:target="complete">
-            <legend class="text-[13px] font-semibold text-ink-strong">Completion</legend>
+            <legend class="text-body font-semibold text-ink-strong">Completion</legend>
             <div class="mt-2 grid grid-cols-1 gap-x-5 gap-y-3 min-[560px]:grid-cols-2">
                 @include($field, ['model' => 'completion', 'key' => 'completedOn', 'label' => 'Date completed', 'type' => 'date', 'max' => $today, 'required' => true])
                 @include($field, ['model' => 'completion', 'key' => 'completedById', 'label' => 'Completed by', 'placeholder' => 'Select User', 'choices' => $completionForm['completedBy'], 'required' => true])

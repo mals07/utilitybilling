@@ -10,7 +10,7 @@
         "
     >
         @csrf
-        <button type="submit" {{ $attributes->class('flex items-center gap-2 text-sm text-warning hover:underline') }} title="Restart onboarding (test)">
+        <button type="submit" {{ $attributes->class('flex items-center gap-2 text-body text-warning hover:underline') }} title="Restart onboarding (test)">
             <x-icon name="restore" :size="18" />
             <span class="lg:sidebar-collapsed:sr-only">Restart onboarding (test)</span>
         </button>

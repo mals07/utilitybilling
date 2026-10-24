@@ -14,11 +14,11 @@
     <div class="flex items-start justify-between gap-2 border-b border-table-line px-4 py-3">
         <div class="min-w-0">
             <p class="truncate font-semibold text-ink-strong">{{ $customer->first_name }} {{ $customer->last_name }}</p>
-            <p class="text-[11px] text-label">
+            <p class="text-caption text-label">
                 {{ $customer->account_number }} · {{ $customer->meter_number }}
                 @if ($customer->clusterType) · {{ $customer->clusterType->name }} @endif
             </p>
-            <p class="text-[11px] text-label">
+            <p class="text-caption text-label">
                 {{ $customer->rateType?->name ?? 'No rate' }}
                 @if ($customer->meterType) · {{ $customer->meterType->name }}{{ $customer->meterType->dial_digits ? " ({$customer->meterType->dial_digits} dials)" : '' }} @endif
                 @if ($customer->accountType?->is_tax_exempt) · <span class="font-semibold">Tax exempt</span> @endif
@@ -29,31 +29,31 @@
         </button>
     </div>
 
-    <div class="space-y-4 px-4 py-3 text-[13px]">
+    <div class="space-y-4 px-4 py-3 text-body">
         {{-- Status and what to do about it --}}
         @if ($reading)
             <div class="flex items-center gap-2">
-                <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $reading->status->badgeClass() }}">{{ $reading->status->label() }}</span>
+                <span class="rounded-full px-2 py-0.5 text-caption font-semibold {{ $reading->status->badgeClass() }}">{{ $reading->status->label() }}</span>
                 @if ($reading->reading_code !== ReadingCode::Normal)
-                    <span class="rounded-full bg-panel px-2 py-0.5 text-[11px] text-ink-soft">{{ $reading->reading_code->label() }}</span>
+                    <span class="rounded-full bg-panel px-2 py-0.5 text-caption text-ink-soft">{{ $reading->reading_code->label() }}</span>
                 @endif
             </div>
 
             @if ($reading->status === MeterReadingStatus::Review)
-                <div class="rounded-md bg-warning-bg px-3 py-2 text-[12px] text-warning" role="status">
+                <div class="rounded-md bg-warning-bg px-3 py-2 text-caption text-warning" role="status">
                     {{ $reading->review_reason }}
                     @if ($access['edit'])
                         <div class="mt-2 flex gap-2">
-                            <button type="button" class="h-7 flex-1 rounded-xs bg-button text-xs font-semibold text-white hover:bg-button-hover" wire:click="confirm({{ $customer->id }})">Reading is correct</button>
-                            <button type="button" class="h-7 flex-1 rounded-xs border border-line bg-card text-xs text-ink-soft hover:border-line-hover" wire:click="reread({{ $customer->id }})" wire:confirm="Clear this reading so the meter can be read again?">Re-read meter</button>
+                            <button type="button" class="h-7 flex-1 rounded-xs bg-button text-caption font-semibold text-white hover:bg-button-hover" wire:click="confirm({{ $customer->id }})">Reading is correct</button>
+                            <button type="button" class="h-7 flex-1 rounded-xs border border-line bg-card text-caption text-ink-soft hover:border-line-hover" wire:click="reread({{ $customer->id }})" wire:confirm="Clear this reading so the meter can be read again?">Re-read meter</button>
                         </div>
                     @endif
                 </div>
             @elseif ($reading->confirmed_at && $reading->review_reason)
-                <p class="text-[11px] text-label">Confirmed by {{ $reading->confirmedBy?->name ?? 'a user' }}: {{ $reading->review_reason }}</p>
+                <p class="text-caption text-label">Confirmed by {{ $reading->confirmedBy?->name ?? 'a user' }}: {{ $reading->review_reason }}</p>
             @endif
         @elseif ($rowError && $panel['preview'] === null)
-            <div class="rounded-md bg-danger-bg px-3 py-2 text-[12px] text-danger" role="alert">{{ $rowError }}</div>
+            <div class="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger" role="alert">{{ $rowError }}</div>
         @else
             <p class="text-label">Not read yet for this month.</p>
         @endif
@@ -63,8 +63,8 @@
             @php($preview = $panel['preview'])
             <form wire:submit="saveSelected(true)" class="rounded-md border border-table-line bg-panel p-3" novalidate>
                 <div class="flex items-baseline justify-between gap-2">
-                    <label for="mr-present" class="text-[11px] font-semibold text-ink-strong">{{ $reading ? 'Correct the present reading' : 'Present reading' }}<x-required-mark /></label>
-                    <span class="text-[11px] text-label">Previous {{ $panel['previous'] === null ? '—' : Format::quantity($panel['previous']) }}</span>
+                    <label for="mr-present" class="text-caption font-semibold text-ink-strong">{{ $reading ? 'Correct the present reading' : 'Present reading' }}<x-required-mark /></label>
+                    <span class="text-caption text-label">Previous {{ $panel['previous'] === null ? '—' : Format::quantity($panel['previous']) }}</span>
                 </div>
                 <input
                     id="mr-present"
@@ -76,13 +76,13 @@
                     aria-required="true"
                     x-init="$nextTick(() => $el.focus())"
                     placeholder="{{ $reading?->present_reading !== null ? Format::quantity($reading->present_reading) : '0' }}"
-                    class="form-control mt-1 !h-11 text-right !text-lg font-semibold tabular-nums"
+                    class="form-control mt-1 !h-11 text-right !text-heading font-semibold tabular-nums"
                     @if ($preview['error'] ?? false) aria-invalid="true" @endif
                     aria-describedby="mr-present-preview"
                 >
                 @error('presentInput') <p class="form-error" role="alert">{{ $message }}</p> @enderror
 
-                <div id="mr-present-preview" class="mt-2 min-h-5 text-[12px]" aria-live="polite">
+                <div id="mr-present-preview" class="mt-2 min-h-5 text-caption" aria-live="polite">
                     @if ($preview === null)
                         <span class="text-label">Type the number on the meter. Nothing is saved until you click Save.</span>
                     @elseif ($preview['error'])
@@ -98,8 +98,8 @@
                 </div>
 
                 <div class="mt-2 flex gap-2">
-                    <button type="button" wire:click="saveSelected(false)" wire:loading.attr="disabled" wire:target="saveSelected" class="h-8 flex-1 rounded-xs border border-line bg-card text-xs text-ink-soft hover:border-line-hover" @disabled($preview === null || $preview['error'])>Save</button>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="saveSelected" class="h-8 flex-1 rounded-xs bg-button text-xs font-semibold text-white hover:bg-button-hover disabled:opacity-60" @disabled($preview === null || $preview['error'])>Save and next</button>
+                    <button type="button" wire:click="saveSelected(false)" wire:loading.attr="disabled" wire:target="saveSelected" class="h-8 flex-1 rounded-xs border border-line bg-card text-caption text-ink-soft hover:border-line-hover" @disabled($preview === null || $preview['error'])>Save</button>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="saveSelected" class="h-8 flex-1 rounded-xs bg-button text-caption font-semibold text-white hover:bg-button-hover disabled:opacity-60" @disabled($preview === null || $preview['error'])>Save and next</button>
                 </div>
             </form>
         @endif
@@ -135,14 +135,14 @@
         {{-- Other ways to record the reading --}}
         @if (! $billed && $periodLabel !== null && ($reading ? $access['edit'] : $access['add']))
             <div>
-                <p class="mb-1.5 text-[11px] font-semibold text-label">Couldn't read the meter?</p>
+                <p class="mb-1.5 text-caption font-semibold text-label">Couldn't read the meter?</p>
                 <div class="flex flex-wrap gap-1.5">
                     @foreach ([ReadingCode::NoAccess, ReadingCode::Defective] as $code)
                         <button
                             type="button"
                             wire:click="markEstimated({{ $customer->id }}, '{{ $code->value }}')"
                             @disabled($reading?->reading_code === $code)
-                            class="h-7 rounded-full border border-line px-3 text-xs text-ink-soft hover:border-line-hover disabled:border-accent disabled:text-ink-strong"
+                            class="h-7 rounded-full border border-line px-3 text-caption text-ink-soft hover:border-line-hover disabled:border-accent disabled:text-ink-strong"
                         >{{ $code->label() }}</button>
                     @endforeach
                     @if ($canRollOver && ($rowError || ($panel['preview']['error'] ?? null) || $reading?->reading_code === ReadingCode::Rollover))
@@ -150,18 +150,18 @@
                             type="button"
                             wire:click="saveRollover({{ $customer->id }})"
                             @disabled($reading?->reading_code === ReadingCode::Rollover)
-                            class="h-7 rounded-full border border-line px-3 text-xs text-ink-soft hover:border-line-hover disabled:border-accent disabled:text-ink-strong"
+                            class="h-7 rounded-full border border-line px-3 text-caption text-ink-soft hover:border-line-hover disabled:border-accent disabled:text-ink-strong"
                         >Meter rolled over</button>
                     @endif
                 </div>
-                <p class="mt-1 text-[11px] text-label">No access and defective meters are billed on an estimate (Rates → setup). The next actual reading deducts it.</p>
+                <p class="mt-1 text-caption text-label">No access and defective meters are billed on an estimate (Rates → setup). The next actual reading deducts it.</p>
             </div>
         @endif
 
         {{-- Recent usage --}}
         @if ($panel['history'] !== [] || $reading)
             <div>
-                <p class="mb-1.5 text-[11px] font-semibold text-label">
+                <p class="mb-1.5 text-caption font-semibold text-label">
                     Usage, last {{ count($panel['history']) }} billed month{{ count($panel['history']) === 1 ? '' : 's' }}
                     @if ($panel['average'] !== null) · 3-month average {{ Format::quantity($panel['average']) }} cu.m. @endif
                 </p>
@@ -179,9 +179,9 @@
         {{-- The bill it makes --}}
         @if ($reading)
             <div>
-                <p class="mb-1.5 text-[11px] font-semibold text-label">{{ $billed ? 'Billed on invoice '.$panel['billedInvoice'] : 'Bill preview' }}</p>
+                <p class="mb-1.5 text-caption font-semibold text-label">{{ $billed ? 'Billed on invoice '.$panel['billedInvoice'] : 'Bill preview' }}</p>
                 @if ($panel['error'])
-                    <p class="text-[12px] text-danger">{{ $panel['error'] }}</p>
+                    <p class="text-caption text-danger">{{ $panel['error'] }}</p>
                 @else
                     <dl class="space-y-0.5">
                         @foreach ($panel['lines'] as $line)
@@ -196,22 +196,22 @@
                         </div>
                     </dl>
                     @if ($billed)
-                        <a href="{{ route('invoices.print', $reading->invoice_id) }}" target="_blank" class="mt-1 inline-block text-[11px] font-semibold text-accent underline">Print bill</a>
+                        <a href="{{ route('invoices.print', $reading->invoice_id) }}" target="_blank" class="mt-1 inline-block text-caption font-semibold text-accent underline">Print bill</a>
                     @else
-                        <p class="mt-1 text-[11px] text-label">Previous balance and surcharges are worked out again when the bill is generated.</p>
+                        <p class="mt-1 text-caption text-label">Previous balance and surcharges are worked out again when the bill is generated.</p>
                     @endif
                 @endif
             </div>
 
             {{-- Notes --}}
             <form wire:submit="saveNotes">
-                <label for="mr-notes" class="mb-1 block text-[11px] font-semibold text-label">Notes</label>
-                <textarea id="mr-notes" wire:model="notes" rows="2" maxlength="500" class="form-control !min-h-0 !text-[13px]" placeholder="Dog in yard, meter box flooded…" @disabled(! $access['edit'])></textarea>
+                <label for="mr-notes" class="mb-1 block text-caption font-semibold text-label">Notes</label>
+                <textarea id="mr-notes" wire:model="notes" rows="2" maxlength="500" class="form-control !min-h-0 !text-body" placeholder="Dog in yard, meter box flooded…" @disabled(! $access['edit'])></textarea>
                 @error('notes') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                 @if ($access['edit'])
                     <div class="mt-1.5 flex items-center justify-between">
                         @if (! $billed && $reading->status !== MeterReadingStatus::Review)
-                            <button type="button" class="link-button text-xs" wire:click="reread({{ $customer->id }})" wire:confirm="Clear this reading so the meter can be read again?">Clear reading</button>
+                            <button type="button" class="link-button text-caption" wire:click="reread({{ $customer->id }})" wire:confirm="Clear this reading so the meter can be read again?">Clear reading</button>
                         @else
                             <span></span>
                         @endif

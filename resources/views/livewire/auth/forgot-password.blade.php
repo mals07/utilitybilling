@@ -27,7 +27,7 @@
                     <span wire:loading.remove wire:target="sendResetLink">Send Reset Link</span>
                     <span wire:loading wire:target="sendResetLink">Sending…</span>
                 </button>
-                <p class="text-center text-[13px] text-label">
+                <p class="text-center text-body text-label">
                     <a href="{{ route('login') }}" class="auth-link">Back to login</a>
                 </p>
             </div>

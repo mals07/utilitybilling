@@ -107,21 +107,21 @@
 
         {{-- Role Access Forms: which pages a role can open, and what it may do there. --}}
         <section aria-labelledby="role-access-heading" class="min-w-0 py-1">
-            <h2 id="role-access-heading" class="text-right text-base font-normal text-ink italic">Role Access Forms</h2>
+            <h2 id="role-access-heading" class="text-right text-heading font-normal text-ink italic">Role Access Forms</h2>
 
             <div class="mt-6 flex h-11 flex-col justify-center rounded-xs bg-panel px-2">
-                <span id="access-role-name-label" class="text-[10px] text-label">Role Name</span>
-                <output aria-labelledby="access-role-name-label" class="h-5 truncate text-sm text-ink">{{ $selected?->name }}</output>
+                <span id="access-role-name-label" class="text-caption text-label">Role Name</span>
+                <output aria-labelledby="access-role-name-label" class="h-5 truncate text-body text-ink">{{ $selected?->name }}</output>
             </div>
             @unless ($selected)
-                <p class="mt-1 text-xs text-placeholder">Click a role to set up its form access.</p>
+                <p class="mt-1 text-caption text-placeholder">Click a role to set up its form access.</p>
             @endunless
 
             @if ($canSubmitAccess)
                 <form wire:submit="saveFormAccess" novalidate class="mt-3">
                     <fieldset @disabled(! $selected) class="m-0 flex min-w-0 flex-wrap items-center justify-between gap-x-6 gap-y-3 border-0 p-0 disabled:opacity-60">
                         <div class="relative w-full sm:w-44">
-                            <label for="access-page" class="pointer-events-none absolute top-1 left-2 text-[10px] text-label">Pages/Forms<x-required-mark /></label>
+                            <label for="access-page" class="pointer-events-none absolute top-1 left-2 text-caption text-label">Pages/Forms<x-required-mark /></label>
                             <select
                                 id="access-page"
                                 wire:model="accessPage"
@@ -181,7 +181,7 @@
                             <tr wire:key="permission-{{ $permission->id }}" @class(['row-selected' => $permission->id === $editingPermissionId])>
                                 <td class="cell-number">{{ $index + 1 }}</td>
                                 <td class="cell-center">{{ $label }}</td>
-                                <td class="cell-center cell-muted text-xs">{{ $describe($permission->flags()) }}</td>
+                                <td class="cell-center cell-muted text-caption">{{ $describe($permission->flags()) }}</td>
                                 <td class="cell-actions">
                                     @if ($access['edit'])
                                         <button type="button" class="icon-button" wire:click="startEdit({{ $permission->id }})" aria-label="Change access to {{ $label }}">

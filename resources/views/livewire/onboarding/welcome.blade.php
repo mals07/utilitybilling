@@ -24,7 +24,7 @@
         <div x-show="index === 0" class="px-6 py-10 text-center sm:px-12 sm:py-14">
             <div class="flex justify-center"><x-app-logo :size="56" /></div>
             <h1 class="mt-5 text-2xl font-bold text-ink-strong sm:text-3xl">
-                Welcome! Thank you for signing up to {{ config('app.name') }}
+                Welcome! Thank you for signing up to Water Utility Management System
             </h1>
             <p class="mx-auto mt-3 max-w-xl text-base leading-7 text-ink-soft">
                 Before we start, I will walk you through the steps on how to configure your system.

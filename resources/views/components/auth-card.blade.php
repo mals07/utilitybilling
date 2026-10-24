@@ -21,9 +21,9 @@
     <section class="flex flex-col gap-[18px] px-5 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-8" @if ($title) aria-labelledby="auth-title" @endif>
         @if ($title)
             <header class="flex flex-col gap-2">
-                <h2 id="auth-title" class="text-lg font-bold tracking-tight text-ink-strong">{{ $title }}</h2>
+                <h2 id="auth-title" class="text-heading font-bold tracking-tight text-ink-strong">{{ $title }}</h2>
                 @if ($description)
-                    <p class="text-[13px] leading-relaxed text-label">{{ $description }}</p>
+                    <p class="text-body leading-relaxed text-label">{{ $description }}</p>
                 @endif
             </header>
         @endif

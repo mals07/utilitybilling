@@ -27,7 +27,7 @@
                         x-on:click.outside="open = false"
                         x-on:keydown.escape="if (open) { open = false; $event.stopPropagation(); }"
                     >
-                        <label for="work-order-account" class="mb-1 block text-xs font-semibold text-ink-strong">Account No.<x-required-mark /></label>
+                        <label for="work-order-account" class="mb-1 block text-caption font-semibold text-ink-strong">Account No.<x-required-mark /></label>
                         <div class="relative">
                             <input
                                 id="work-order-account"
@@ -42,7 +42,7 @@
                                 aria-controls="work-order-account-matches"
                                 x-bind:aria-expanded="open.toString()"
                                 aria-required="true"
-                                class="form-control !h-[34px] !pr-8 !text-[13px]"
+                                class="form-control !h-[34px] !pr-8 !text-body"
                                 @error('customerId') aria-invalid="true" aria-describedby="work-order-account-error" @enderror
                             >
                             <x-icon name="search" :size="14" class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-accent" />
@@ -59,7 +59,7 @@
                                     <li wire:key="match-{{ $match->id }}" role="option" aria-selected="false">
                                         <button
                                             type="button"
-                                            class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-[13px] hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
+                                            class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-body hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
                                             wire:click="chooseCustomer({{ $match->id }})"
                                             x-on:click="open = false"
                                         >
@@ -68,7 +68,7 @@
                                         </button>
                                     </li>
                                 @empty
-                                    <li class="px-3 py-1.5 text-[13px] text-placeholder">No customers match.</li>
+                                    <li class="px-3 py-1.5 text-body text-placeholder">No customers match.</li>
                                 @endforelse
                             </ul>
                         @endif
@@ -80,22 +80,22 @@
 
                     {{-- Name: filled in from the chosen customer. --}}
                     <div class="min-w-0 sm:col-span-2 lg:col-start-1 lg:row-start-1">
-                        <span class="mb-1 block text-xs font-semibold text-ink-strong" id="work-order-name-label">Name</span>
+                        <span class="mb-1 block text-caption font-semibold text-ink-strong" id="work-order-name-label">Name</span>
                         <div class="grid grid-cols-2 gap-3" role="group" aria-labelledby="work-order-name-label">
-                            <input type="text" readonly tabindex="-1" aria-label="First name" placeholder="First name" value="{{ $chosenCustomer?->first_name }}" class="form-control !h-[34px] !text-[13px]">
-                            <input type="text" readonly tabindex="-1" aria-label="Last name" placeholder="Last name" value="{{ $chosenCustomer?->last_name }}" class="form-control !h-[34px] !text-[13px]">
+                            <input type="text" readonly tabindex="-1" aria-label="First name" placeholder="First name" value="{{ $chosenCustomer?->first_name }}" class="form-control !h-[34px] !text-body">
+                            <input type="text" readonly tabindex="-1" aria-label="Last name" placeholder="Last name" value="{{ $chosenCustomer?->last_name }}" class="form-control !h-[34px] !text-body">
                         </div>
                     </div>
 
                     <div class="lg:col-start-4 lg:row-start-1">
                         @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'orderType', 'label' => 'Order Type', 'placeholder' => 'Select Order Type', 'choices' => $orderTypes, 'disabledChoices' => $ineligibleTypes, 'required' => true, 'live' => true])
                         @if ($chosenCustomer === null)
-                            <p class="mt-1 text-xs text-placeholder">Pick a customer to see which types apply to them.</p>
+                            <p class="mt-1 text-caption text-placeholder">Pick a customer to see which types apply to them.</p>
                         @endif
                     </div>
 
                     @if ($chosenType?->isOfficeWork())
-                        <p class="text-xs text-label sm:col-span-2 lg:col-span-2 lg:col-start-3 lg:row-start-2">
+                        <p class="text-caption text-label sm:col-span-2 lg:col-span-2 lg:col-start-3 lg:row-start-2">
                             {{ $chosenType->label() }} is office work, so no meter details are needed.
                         </p>
                     @else
@@ -115,17 +115,17 @@
                     <div class="lg:col-start-4 lg:row-start-3">
                         @include('livewire.work-orders.partials.field', ['model' => 'values', 'key' => 'assignedToId', 'label' => 'Assigned To', 'placeholder' => 'Select User', 'choices' => $assignees, 'required' => true])
                         @if ($assignees === [])
-                            <p class="mt-1 text-xs text-placeholder">
+                            <p class="mt-1 text-caption text-placeholder">
                                 {{ $assigneeRole ? "No active users have the {$assigneeRole->name} role." : 'No active users yet.' }}
                             </p>
                         @endif
                         @if ($access['edit'])
-                            <button type="button" class="mt-1 text-left text-xs text-accent italic underline underline-offset-2 hover:text-ink-strong" wire:click="openRoleChooser">
+                            <button type="button" class="mt-1 text-left text-caption text-accent italic underline underline-offset-2 hover:text-ink-strong" wire:click="openRoleChooser">
                                 Choose default user role for this field
                             </button>
                         @endif
                         @if ($assigneeRole)
-                            <p class="mt-0.5 text-xs text-label">Showing users with the {{ $assigneeRole->name }} role.</p>
+                            <p class="mt-0.5 text-caption text-label">Showing users with the {{ $assigneeRole->name }} role.</p>
                         @endif
                     </div>
 
@@ -163,7 +163,7 @@
 
         <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
             <x-search-box label="Search work orders" :width="200" wire:model.live.debounce.300ms="search" />
-            <label class="inline-flex items-center gap-2 text-sm font-semibold text-ink-strong">
+            <label class="inline-flex items-center gap-2 text-body font-semibold text-ink-strong">
                 <input type="checkbox" wire:model.live="pendingOnly" class="size-4 accent-accent">
                 Pending Work Orders
             </label>
@@ -194,15 +194,15 @@
                             <td class="whitespace-nowrap tabular-nums">
                                 <span class="block font-medium text-ink-strong">{{ $order->order_number }}</span>
                                 @if ($order->parent)
-                                    <span class="mt-0.5 block text-xs text-label">from {{ $order->parent->order_number }}</span>
+                                    <span class="mt-0.5 block text-caption text-label">from {{ $order->parent->order_number }}</span>
                                 @endif
                             </td>
                             <td><span class="font-medium text-ink-strong">{{ $order->order_type->label() }}</span></td>
                             <td>
                                 <span class="block">{{ $order->customer->first_name }} {{ $order->customer->last_name }}</span>
-                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $order->customer->account_number }}</span>
+                                <span class="mt-0.5 block text-caption whitespace-nowrap text-label tabular-nums">Acct No: {{ $order->customer->account_number }}</span>
                             </td>
-                            <td class="text-xs whitespace-nowrap tabular-nums">
+                            <td class="text-caption whitespace-nowrap tabular-nums">
                                 <span @class(['block', 'font-semibold text-danger' => $overdue, 'text-label' => ! $overdue]) @if ($overdue) title="Open for more than {{ WorkOrder::OVERDUE_AFTER_DAYS }} days" @endif>
                                     @if ($overdue)
                                         <x-icon name="warning" :size="12" class="inline align-[-2px]" />
@@ -220,9 +220,9 @@
                                 <span class="status-pill {{ $order->status->colorClass() }}">{{ $order->status->label() }}</span>
                                 @if ($order->review_flag)
                                     @if ($order->flag_resolved_at)
-                                        <span class="mx-auto mt-1 block w-max rounded bg-success-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-success" title="{{ $order->review_flag->label() }}">Resolved · {{ $order->flag_resolution }}</span>
+                                        <span class="mx-auto mt-1 block w-max rounded bg-success-bg px-1.5 py-0.5 text-caption whitespace-nowrap text-success" title="{{ $order->review_flag->label() }}">Resolved · {{ $order->flag_resolution }}</span>
                                     @else
-                                        <span class="mx-auto mt-1 block w-max rounded bg-danger-bg px-1.5 py-0.5 text-[11px] whitespace-nowrap text-danger">{{ $order->review_flag->label() }}</span>
+                                        <span class="mx-auto mt-1 block w-max rounded bg-danger-bg px-1.5 py-0.5 text-caption whitespace-nowrap text-danger">{{ $order->review_flag->label() }}</span>
                                     @endif
                                 @endif
                             </td>

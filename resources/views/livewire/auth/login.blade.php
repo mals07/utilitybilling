@@ -31,7 +31,7 @@
             />
 
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <label class="inline-flex items-center gap-2 text-[13px] text-label">
+                <label class="inline-flex items-center gap-2 text-body text-label">
                     <input type="checkbox" wire:model="remember" class="size-4 accent-accent">
                     Remember me
                 </label>
@@ -43,7 +43,7 @@
                     <span wire:loading.remove wire:target="authenticate">Login</span>
                     <span wire:loading wire:target="authenticate">Logging in…</span>
                 </button>
-                <p class="text-center text-[13px] text-label">
+                <p class="text-center text-body text-label">
                     Don't have an account?
                     <a href="{{ route('signup') }}" class="auth-link">Sign up</a>
                 </p>

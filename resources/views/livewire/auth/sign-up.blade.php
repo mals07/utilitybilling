@@ -30,7 +30,7 @@
                     <span wire:loading.remove wire:target="register">Create Account</span>
                     <span wire:loading wire:target="register">Creating account…</span>
                 </button>
-                <p class="text-center text-[13px] text-label">
+                <p class="text-center text-body text-label">
                     Already have an account?
                     <a href="{{ route('login') }}" class="auth-link">Log in</a>
                 </p>

@@ -4,7 +4,7 @@
     {{-- Step list (a progress bar on small screens) --}}
     <nav aria-label="Setup steps" class="shrink-0 lg:sticky lg:top-22 lg:w-56">
         <div class="lg:hidden">
-            <p class="text-sm font-medium text-ink-soft">Step {{ $number }} of {{ count($steps) }}</p>
+            <p class="text-body font-medium text-ink-soft">Step {{ $number }} of {{ count($steps) }}</p>
             <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-table-line">
                 <div class="h-full bg-button" style="width: {{ round($number / count($steps) * 100) }}%"></div>
             </div>
@@ -31,11 +31,11 @@
 
     <section aria-labelledby="setup-step-title" class="min-w-0 flex-1">
         <div class="rounded-xl border border-table-line bg-card px-4 py-5 shadow-card sm:px-6">
-            <p class="text-xs font-medium tracking-wide text-label uppercase">
+            <p class="text-caption font-medium tracking-wide text-label uppercase">
                 Step {{ $number }} of {{ count($steps) }} &middot; {{ $required ? 'Required' : 'Optional' }}
             </p>
-            <h1 id="setup-step-title" class="mt-1 text-xl font-bold text-ink-strong">{{ $current['title'] }}</h1>
-            <p class="mt-1 text-sm leading-6 text-ink-soft">{{ $current['intro'] }}</p>
+            <h1 id="setup-step-title" class="mt-1 text-title font-bold text-ink-strong">{{ $current['title'] }}</h1>
+            <p class="mt-1 text-body leading-6 text-ink-soft">{{ $current['intro'] }}</p>
 
             {{-- Starts the step's guide the first time the step is opened in this browser; "Show me how" runs it again. --}}
             <div
@@ -68,7 +68,7 @@
 
         <div class="mt-4 xl:hidden">
             <details class="group" @if ($step === 'profile') open @endif>
-                <summary class="cursor-pointer rounded-xl border border-table-line bg-card px-4 py-3 shadow-card text-sm font-semibold text-ink-strong">How to do this step, with an example</summary>
+                <summary class="cursor-pointer rounded-xl border border-table-line bg-card px-4 py-3 shadow-card text-body font-semibold text-ink-strong">How to do this step, with an example</summary>
                 @include('livewire.setup.partials.guide')
             </details>
         </div>
@@ -119,9 +119,9 @@
 
         <div class="sticky bottom-0 z-20 mt-4 rounded-xl border border-table-line bg-card/95 px-4 py-3 shadow-dialog backdrop-blur sm:px-6">
             @if ($error)
-                <p class="mb-2 text-sm text-danger" role="alert">{{ $error }}</p>
+                <p class="mb-2 text-body text-danger" role="alert">{{ $error }}</p>
             @elseif ($stepDone && $company)
-                <p class="mb-2 flex items-center gap-1.5 text-sm text-success" role="status">
+                <p class="mb-2 flex items-center gap-1.5 text-body text-success" role="status">
                     <x-icon name="check" :size="16" />
                     This step is done. Click {{ $isLast ? 'Finish setup' : 'Continue' }} to go on.
                 </p>
@@ -130,7 +130,7 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     @if ($number > 1)
-                        <button type="button" class="text-button text-sm" wire:click="back">&larr; Back</button>
+                        <button type="button" class="text-button text-body" wire:click="back">&larr; Back</button>
                     @endif
                 </div>
 
@@ -138,7 +138,7 @@
                     @unless ($required)
                         <button
                             type="button"
-                            class="link-button text-sm"
+                            class="link-button text-body"
                             wire:click="skip"
                             @if ($step !== 'team') wire:confirm="Skip the rest and finish setup? You can add customers, work orders and payments any time from the sidebar." @endif
                         >
@@ -151,7 +151,7 @@
                             {{ $isLast ? 'Finish setup' : 'Continue' }} &rarr;
                         </button>
                     @else
-                        <span class="text-sm text-label">Save your profile to continue.</span>
+                        <span class="text-body text-label">Save your profile to continue.</span>
                     @endif
                 </div>
             </div>

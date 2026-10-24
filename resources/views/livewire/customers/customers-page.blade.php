@@ -35,10 +35,10 @@
                         >
                             <td>
                                 <span class="block font-medium text-ink-strong">{{ $item->first_name }} {{ $item->last_name }}</span>
-                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $item->account_number }}</span>
+                                <span class="mt-0.5 block text-caption whitespace-nowrap text-label tabular-nums">Acct No: {{ $item->account_number }}</span>
                             </td>
                             <td>
-                                <span class="inline-block max-w-40 truncate rounded bg-panel px-2 py-0.5 align-middle text-xs text-ink-soft">{{ $item->accountType?->name }}</span>
+                                <span class="inline-block max-w-40 truncate rounded bg-panel px-2 py-0.5 align-middle text-caption text-ink-soft">{{ $item->accountType?->name }}</span>
                             </td>
                             <td>
                                 @if ($item->meterType)
@@ -47,7 +47,7 @@
                                     <span class="block text-placeholder">Not assigned</span>
                                 @endif
                                 @if ($item->meter_number)
-                                    <span class="mt-0.5 block text-xs text-label">No. {{ $item->meter_number }}</span>
+                                    <span class="mt-0.5 block text-caption text-label">No. {{ $item->meter_number }}</span>
                                 @endif
                             </td>
                             <td class="cell-center">

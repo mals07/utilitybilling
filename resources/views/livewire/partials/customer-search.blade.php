@@ -10,7 +10,7 @@
     x-on:click.outside="open = false"
     x-on:keydown.escape="if (open) { open = false; $event.stopPropagation(); }"
 >
-    <label for="{{ $fieldId }}" class="mb-1 block text-xs font-semibold text-ink-strong">{{ $label ?? 'Account No.' }}<x-required-mark /></label>
+    <label for="{{ $fieldId }}" class="mb-1 block text-caption font-semibold text-ink-strong">{{ $label ?? 'Account No.' }}<x-required-mark /></label>
     <div class="relative">
         <input
             id="{{ $fieldId }}"
@@ -25,7 +25,7 @@
             aria-autocomplete="list"
             aria-controls="{{ $fieldId }}-matches"
             x-bind:aria-expanded="open.toString()"
-            class="form-control !h-[34px] !pr-8 !text-[13px]"
+            class="form-control !h-[34px] !pr-8 !text-body"
             @error('customerId') aria-invalid="true" aria-describedby="{{ $fieldId }}-error" @enderror
         >
         <x-icon name="search" :size="14" class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-accent" />
@@ -42,7 +42,7 @@
                 <li wire:key="{{ $fieldId }}-match-{{ $match->id }}" role="option" aria-selected="false">
                     <button
                         type="button"
-                        class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-[13px] hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
+                        class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-body hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
                         wire:click="chooseCustomer({{ $match->id }})"
                         x-on:click="open = false"
                     >
@@ -51,13 +51,13 @@
                     </button>
                 </li>
             @empty
-                <li class="px-3 py-1.5 text-[13px] text-placeholder">No customers match.</li>
+                <li class="px-3 py-1.5 text-body text-placeholder">No customers match.</li>
             @endforelse
         </ul>
     @endif
 
     @if ($chosenCustomer === null)
-        <p class="mt-1 text-xs text-placeholder">Results appear as you type; click a customer to choose them.</p>
+        <p class="mt-1 text-caption text-placeholder">Results appear as you type; click a customer to choose them.</p>
     @endif
 
     @error('customerId')

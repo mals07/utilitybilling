@@ -12,13 +12,13 @@
 @endphp
 
 <div class="min-w-0">
-    <label for="{{ $id }}" class="mb-1 block text-xs font-semibold text-ink-strong">{{ $label }}@if ($required ?? false)<x-required-mark />@endif</label>
+    <label for="{{ $id }}" class="mb-1 block text-caption font-semibold text-ink-strong">{{ $label }}@if ($required ?? false)<x-required-mark />@endif</label>
     @if ($choices !== null)
         <select
             id="{{ $id }}"
             {{ $wireModel }}="{{ $name }}"
             @if ($required ?? false) aria-required="true" @endif
-            class="form-control !h-[34px] !text-[13px]"
+            class="form-control !h-[34px] !text-body"
             @error($name) aria-invalid="true" aria-describedby="{{ $id }}-error" @enderror
         >
             <option value="">{{ $placeholder ?? '' }}</option>
@@ -36,7 +36,7 @@
             placeholder="{{ $placeholder ?? '' }}"
             maxlength="2000"
             @if ($required ?? false) aria-required="true" @endif
-            class="form-control !text-[13px]"
+            class="form-control !text-body"
             @error($name) aria-invalid="true" aria-describedby="{{ $id }}-error" @enderror
         ></textarea>
     @else
@@ -50,7 +50,7 @@
             @if ($inputmode ?? null) inputmode="{{ $inputmode }}" @endif
             @if ($max ?? null) max="{{ $max }}" @endif
             @if ($required ?? false) aria-required="true" @endif
-            class="form-control !h-[34px] !text-[13px]"
+            class="form-control !h-[34px] !text-body"
             @error($name) aria-invalid="true" aria-describedby="{{ $id }}-error" @enderror
         >
     @endif
@@ -58,6 +58,6 @@
         <p id="{{ $id }}-error" class="form-error" role="alert">{{ $message }}</p>
     @enderror
     @if (($hint ?? null) && ($choices === null || $choices === []))
-        <p class="mt-1 text-xs text-placeholder">{{ $hint }}</p>
+        <p class="mt-1 text-caption text-placeholder">{{ $hint }}</p>
     @endif
 </div>

@@ -113,7 +113,7 @@
 
         {{-- Rate setup --}}
         <section aria-labelledby="rate-setup-heading" class="min-w-0 rounded-xl border border-table-line bg-card p-5 shadow-card sm:px-6">
-            <h2 id="rate-setup-heading" class="text-lg font-bold text-ink-strong">Rate Setup</h2>
+            <h2 id="rate-setup-heading" class="text-heading font-bold text-ink-strong">Rate Setup</h2>
 
             <form wire:submit="saveSetup" novalidate class="mt-5 grid grid-cols-1 gap-x-12 gap-y-4 sm:grid-cols-[minmax(0,1fr)_168px]">
                 <div class="min-w-0">
@@ -177,8 +177,8 @@
                     <div>
                         <span id="consumption-range-label" class="form-label">Consumption Range<x-required-mark /></span>
                         <div class="flex items-center gap-3" role="group" aria-labelledby="consumption-range-label">
-                            <output aria-label="Range from" class="flex h-8 min-w-12 items-center justify-center bg-panel px-2 text-sm text-accent">{{ $nextRangeFrom }}</output>
-                            <label for="range-to" class="text-sm font-bold text-ink-strong">To</label>
+                            <output aria-label="Range from" class="flex h-8 min-w-12 items-center justify-center bg-panel px-2 text-body text-accent">{{ $nextRangeFrom }}</output>
+                            <label for="range-to" class="text-body font-bold text-ink-strong">To</label>
                             <input
                                 id="range-to"
                                 type="number"

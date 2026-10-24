@@ -5,7 +5,7 @@
                 This invitation link is invalid or has expired. Invitation links can only be used once and expire after
                 7 days. Ask your administrator to resend the invitation.
             </x-alert>
-            <p class="text-center text-[13px] text-label">
+            <p class="text-center text-body text-label">
                 <a href="{{ route('login') }}" class="auth-link">Go to login</a>
             </p>
         </x-auth-card>

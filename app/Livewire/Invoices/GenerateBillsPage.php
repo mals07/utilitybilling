@@ -3,11 +3,13 @@
 namespace App\Livewire\Invoices;
 
 use App\Enums\Access;
+use App\Enums\InvoiceLineKind;
 use App\Enums\MeterReadingStatus;
 use App\Enums\Page;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Livewire\Concerns\ParsesIds;
 use App\Models\Customer;
+use App\Models\InvoiceLine;
 use App\Models\MeterReading;
 use App\Support\Billing\BillingException;
 use App\Support\Billing\BillingRun;
@@ -230,6 +232,32 @@ class GenerateBillsPage extends Component
         return $this->readings($period, $clusterId)->where('status', MeterReadingStatus::Ready)->whereNull('invoice_id');
     }
 
+    /**
+     * The lines a bill's total is worked out from, with the water brackets added up into one Water line.
+     *
+     * @param  iterable<array{kind: InvoiceLineKind, description: string, cents: int}>  $lines
+     * @return list<array{description: string, amount: string, added: bool}>
+     */
+    private static function chargeBreakdown(iterable $lines): array
+    {
+        $waterCents = null;
+        $charges = [];
+        foreach ($lines as $line) {
+            if ($line['kind'] === InvoiceLineKind::Water) {
+                $waterCents = ($waterCents ?? 0) + $line['cents'];
+
+                continue;
+            }
+            $charges[] = ['description' => $line['description'], 'amount' => Money::fromCents($line['cents']), 'added' => $line['cents'] > 0];
+        }
+
+        if ($waterCents !== null) {
+            array_unshift($charges, ['description' => 'Water', 'amount' => Money::fromCents($waterCents), 'added' => false]);
+        }
+
+        return $charges;
+    }
+
     public function render(): View
     {
         $company = $this->company();
@@ -248,7 +276,7 @@ class GenerateBillsPage extends Component
             ->when($search !== '', fn (Builder $query) => $query->whereIn('customer_id', Customer::idsMatching(
                 $company->id, $search, ['account_number', 'first_name', 'last_name', 'meter_number'],
             )))
-            ->with(['customer.rateType:id,name', 'invoice:id,invoice_number,total_amount'])
+            ->with(['customer.rateType:id,name', 'invoice:id,invoice_number,total_amount', 'invoice.lines:id,invoice_id,kind,description,amount,sort'])
             ->orderBy(Customer::query()->select('account_number')->whereColumn('customers.id', 'meter_readings.customer_id'))
             ->paginate(self::PER_PAGE);
 
@@ -258,17 +286,25 @@ class GenerateBillsPage extends Component
         foreach ($readings as $reading) {
             /** @var MeterReading $reading */
             if ($reading->isBilled()) {
+                $previews[$reading->id] = ['charges' => self::chargeBreakdown(($reading->invoice?->lines ?? collect())->map(fn (InvoiceLine $line): array => [
+                    'kind' => $line->kind,
+                    'description' => $line->description,
+                    'cents' => Money::toCents($line->amount),
+                ]))];
+
                 continue;
             }
             try {
                 $bill = BillingRun::bill($reading->customer, $reading->usage(), $date);
                 $notes = array_filter([
                     $bill['minimumApplied'] ? 'Minimum consumption' : null,
-                    $bill['fees']->isNotEmpty() ? 'Work order fees' : null,
-                    $bill['overdue']->isNotEmpty() ? 'Overdue surcharge' : null,
                     $bill['tax']['exemptCents'] > 0 ? 'Tax exempt' : null,
                 ]);
-                $previews[$reading->id] = ['total' => Money::fromCents($bill['totalCents']), 'note' => implode(' · ', $notes)];
+                $previews[$reading->id] = [
+                    'total' => Money::fromCents($bill['totalCents']),
+                    'note' => implode(' · ', $notes),
+                    'charges' => self::chargeBreakdown($bill['lines']),
+                ];
             } catch (BillingException $exception) {
                 $previews[$reading->id] = ['error' => $exception->getMessage()];
             }

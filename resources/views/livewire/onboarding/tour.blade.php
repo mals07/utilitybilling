@@ -49,7 +49,7 @@
 
         <div class="p-5">
             <div class="flex items-start justify-between gap-3">
-                <p class="text-xs font-medium uppercase tracking-wide text-label">
+                <p class="text-caption font-medium uppercase tracking-wide text-label">
                     Step <span x-text="index + 1"></span> of <span x-text="stops.length"></span>
                 </p>
                 <button type="button" class="modal-close" x-on:click="finish()" aria-label="Close tour">
@@ -57,8 +57,8 @@
                 </button>
             </div>
 
-            <h2 id="tour-title" class="mt-1 text-base font-bold text-ink-strong" x-text="stop.title"></h2>
-            <p class="mt-2 text-sm leading-6 text-ink-soft" x-text="stop.body"></p>
+            <h2 id="tour-title" class="mt-1 text-heading font-bold text-ink-strong" x-text="stop.title"></h2>
+            <p class="mt-2 text-body leading-6 text-ink-soft" x-text="stop.body"></p>
 
             <div class="mt-3 flex gap-1" aria-hidden="true">
                 <template x-for="(item, i) in stops" x-bind:key="item.key">
@@ -68,8 +68,8 @@
 
             <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-4">
-                    <button type="button" class="text-button text-sm" x-show="! last" x-on:click="finish()">Skip tour</button>
-                    <a x-show="stop.url && stop.key !== 'dashboard'" x-bind:href="stop.url" class="link-button text-sm" x-on:click="finish()">Open page</a>
+                    <button type="button" class="text-button text-body" x-show="! last" x-on:click="finish()">Skip tour</button>
+                    <a x-show="stop.url && stop.key !== 'dashboard'" x-bind:href="stop.url" class="link-button text-body" x-on:click="finish()">Open page</a>
                 </div>
 
                 <div class="flex items-center gap-2">

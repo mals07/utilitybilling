@@ -18,7 +18,7 @@
             <x-alert tone="error" class="mb-3">{{ $notice }}</x-alert>
         @endif
 
-        <div class="grid gap-1 rounded-xs bg-panel px-3 py-2 text-[13px]">
+        <div class="grid gap-1 rounded-xs bg-panel px-3 py-2 text-body">
             <p>
                 <span class="font-semibold text-ink-strong">{{ $editing->order_type->label() }}</span>
                 · <span class="{{ $editing->status->colorClass() }}">{{ $editing->status->label() }}</span>
@@ -69,7 +69,7 @@
 @if ($reasonFor !== '')
     <x-modal :title="$reasonFor === 'hold' ? 'Put Work Order On Hold' : 'Cancel Work Order'" close="$wire.closeReason()" width="sm">
         <form wire:submit="confirmReason" class="mt-3" novalidate>
-            <label for="work-order-reason" class="mb-1 block text-xs font-semibold text-ink-strong">
+            <label for="work-order-reason" class="mb-1 block text-caption font-semibold text-ink-strong">
                 {{ $reasonFor === 'hold' ? 'Why is it on hold?' : 'Why is it being cancelled?' }}<x-required-mark />
             </label>
             <textarea
@@ -80,14 +80,14 @@
                 maxlength="255"
                 autofocus
                 placeholder="{{ $reasonFor === 'hold' ? 'e.g. Waiting for materials' : 'e.g. Customer withdrew the request' }}"
-                class="form-control !text-[13px]"
+                class="form-control !text-body"
                 @error('reason') aria-invalid="true" aria-describedby="work-order-reason-error" @enderror
             ></textarea>
             @error('reason')
                 <p id="work-order-reason-error" class="form-error" role="alert">{{ $message }}</p>
             @enderror
             @if ($reasonFor === 'cancel')
-                <p class="mt-2 text-xs text-label">A cancelled order is final and can't be reopened.</p>
+                <p class="mt-2 text-caption text-label">A cancelled order is final and can't be reopened.</p>
             @endif
 
             <div class="form-actions mt-4">

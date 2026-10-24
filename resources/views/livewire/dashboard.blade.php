@@ -17,10 +17,10 @@
             </div>
 
             <div class="min-w-0 flex-1">
-                <p class="text-xs font-semibold tracking-[0.16em] text-cyan-100/80 uppercase">Water Utility</p>
-                <h2 class="mt-1 truncate text-2xl font-bold tracking-tight">{{ $company->company_name }}</h2>
-                <p class="mt-1.5 text-sm text-sky-100/90">{{ $company->location() }}</p>
-                <p class="mt-1 text-sm text-sky-100/90">
+                <p class="text-caption font-semibold tracking-[0.16em] text-cyan-100/80 uppercase">Water Utility</p>
+                <h2 class="mt-1 truncate text-title font-bold tracking-tight">{{ $company->company_name }}</h2>
+                <p class="mt-1.5 text-body text-sky-100/90">{{ $company->location() }}</p>
+                <p class="mt-1 text-body text-sky-100/90">
                     Point person:
                     <span class="font-medium text-white">{{ $company->point_person_first_name }} {{ $company->point_person_last_name }}</span>
                     &middot; {{ $company->point_person_email }}
@@ -30,7 +30,7 @@
             @if ($canEditCompany)
                 <a
                     href="{{ route('company') }}"
-                    class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xs bg-white px-6 text-sm font-semibold text-ocean shadow-md transition hover:-translate-y-px hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xs bg-white px-6 text-body font-semibold text-ocean shadow-md transition hover:-translate-y-px hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                     <x-icon name="pencil" :size="16" />
                     Edit company profile

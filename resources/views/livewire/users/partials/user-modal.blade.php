@@ -67,14 +67,14 @@
                     </select>
                     @error('departmentId') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                     @if ($departments->isEmpty())
-                        <p class="mt-1 text-xs text-placeholder">Add departments in Company Setup → Operation Setup.</p>
+                        <p class="mt-1 text-caption text-placeholder">Add departments in Company Setup → Operation Setup.</p>
                     @endif
                 </div>
             </div>
 
             <div class="mt-6 grid grid-cols-1 gap-x-5 gap-y-6 md:grid-cols-2">
                 <section aria-label="Access">
-                    <h3 class="mb-2 text-xs font-bold text-ink italic">Role Access</h3>
+                    <h3 class="mb-2 text-caption font-bold text-ink italic">Role Access</h3>
                     <label class="float">
                         <span class="float-label">Main User Role<x-required-mark /></span>
                         <select wire:model.live="roleId" aria-required="true" class="float-control chevron-select" aria-invalid="{{ $invalid('roleId') }}">
@@ -86,10 +86,10 @@
                     </label>
                     @error('roleId') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                     @if ($this->roles->isEmpty())
-                        <p class="mt-1 text-xs text-placeholder">Add roles on the Roles page first.</p>
+                        <p class="mt-1 text-caption text-placeholder">Add roles on the Roles page first.</p>
                     @endif
 
-                    <h3 class="mt-6 mb-2 text-xs font-bold text-ink italic">Special Role Access</h3>
+                    <h3 class="mt-6 mb-2 text-caption font-bold text-ink italic">Special Role Access</h3>
                     @unless ($readOnly)
                         <div class="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]">
                             <label class="float">
@@ -111,10 +111,10 @@
                             </label>
                         </div>
                         @unless ($chosenRole)
-                            <p class="mt-1 text-xs text-placeholder">Select a main user role first.</p>
+                            <p class="mt-1 text-caption text-placeholder">Select a main user role first.</p>
                         @endunless
                         @if ($chosenRole && $specialPages === [])
-                            <p class="mt-1 text-xs text-placeholder">This role already has every page.</p>
+                            <p class="mt-1 text-caption text-placeholder">This role already has every page.</p>
                         @endif
                         @foreach (['accessPage', 'startDate', 'endDate'] as $key)
                             @error($key) <p class="form-error" role="alert">{{ $message }}</p> @enderror
@@ -161,9 +161,9 @@
                                     >
                                         <td class="cell-number">{{ $index + 1 }}</td>
                                         <td class="cell-center">{{ $label }}{{ $row['id'] === null ? ' *' : '' }}</td>
-                                        <td class="cell-center cell-muted text-xs">{{ SpecialAccess::describe($row['flags']) }}</td>
-                                        <td class="cell-center text-xs whitespace-nowrap">{{ Format::isoDate($row['startDate']) }}</td>
-                                        <td class="cell-center text-xs whitespace-nowrap">{{ Format::isoDate($row['endDate']) }}</td>
+                                        <td class="cell-center cell-muted text-caption">{{ SpecialAccess::describe($row['flags']) }}</td>
+                                        <td class="cell-center text-caption whitespace-nowrap">{{ Format::isoDate($row['startDate']) }}</td>
+                                        <td class="cell-center text-caption whitespace-nowrap">{{ Format::isoDate($row['endDate']) }}</td>
                                         <td class="cell-actions">
                                             @if ($removable)
                                                 <button type="button" class="icon-button icon-button-danger" wire:click="removeAccess({{ $index }})" aria-label="Remove special access to {{ $label }}">
@@ -178,7 +178,7 @@
                         </table>
                     </div>
                     @if ($hasUnsaved)
-                        <p class="mt-1 text-xs text-placeholder">
+                        <p class="mt-1 text-caption text-placeholder">
                             * Not saved yet. Click {{ $updating ? 'Save Changes' : 'Send Email Invitation to User' }} to save.
                         </p>
                     @endif
@@ -199,7 +199,7 @@
                                     <tr wire:key="role-permission-{{ $permission->id }}">
                                         <td class="cell-number">{{ $index + 1 }}</td>
                                         <td class="cell-center">{{ Page::from($permission->page)->label() }}</td>
-                                        <td class="cell-center cell-muted text-xs">{{ SpecialAccess::describe($permission->flags()) }}</td>
+                                        <td class="cell-center cell-muted text-caption">{{ SpecialAccess::describe($permission->flags()) }}</td>
                                     </tr>
                                 @endforeach
                                 <x-filler-rows

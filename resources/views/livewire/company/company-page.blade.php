@@ -2,8 +2,8 @@
 
 <div class="mx-auto max-w-[1600px] px-4 pt-4 pb-8 sm:px-6 sm:pt-5 sm:pb-10">
     <div class="mb-2.5 flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-lg font-bold text-ink sm:text-xl">Company Setup</h1>
-        <button type="button" class="link-button inline-flex items-center gap-1.5 text-sm" x-data x-on:click="$dispatch('guide-start', 'company')">
+        <h1 class="text-title font-bold text-ink">Company Setup</h1>
+        <button type="button" class="link-button inline-flex items-center gap-1.5 text-body" x-data x-on:click="$dispatch('guide-start', 'company')">
             <x-icon name="document" :size="16" />
             Guide me
         </button>
@@ -84,7 +84,7 @@
         >
             <h2 class="sr-only">Operation Setup</h2>
             @if ($onboarding)
-                <p class="text-[13px] text-label">Save your company profile first to set up operations.</p>
+                <p class="text-body text-label">Save your company profile first to set up operations.</p>
             @else
                 <livewire:company.operation-settings-form />
 
@@ -107,8 +107,8 @@
             class="rounded-2xl border border-table-line bg-card shadow-card"
         >
             <section class="flex min-h-60 flex-col gap-2 px-4 py-6 sm:min-h-[420px] sm:px-8 sm:py-12">
-                <h2 class="text-base font-semibold text-ink">Linked Accounts</h2>
-                <p class="text-[13px] text-label">This section is coming soon.</p>
+                <h2 class="text-heading font-semibold text-ink">Linked Accounts</h2>
+                <p class="text-body text-label">This section is coming soon.</p>
             </section>
         </div>
     </div>

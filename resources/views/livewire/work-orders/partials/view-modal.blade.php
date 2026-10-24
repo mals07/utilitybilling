@@ -22,7 +22,7 @@
     $overdue = $viewing->isOverdue($timezone);
     $completed = $viewing->status === WorkOrderStatus::Completed;
     $answers = $completed ? WorkOrderCompletion::describe($viewing) : [];
-    $heading = 'mt-5 border-t border-table-line pt-3 text-[13px] font-semibold text-ink-strong';
+    $heading = 'mt-5 border-t border-table-line pt-3 text-body font-semibold text-ink-strong';
 @endphp
 
 <x-modal :title="'Work Order '.$viewing->order_number" close="$wire.closeModal()" width="form">
@@ -50,7 +50,7 @@
             <x-alert tone="info">Cancelled: {{ $viewing->cancel_reason }}</x-alert>
         @endif
         @if ($viewing->parent)
-            <p class="text-[13px] text-label">
+            <p class="text-body text-label">
                 Follow-up of
                 <button type="button" class="link-button" wire:click="openView({{ $viewing->parent->id }})">work order {{ $viewing->parent->order_number }}</button>
                 ({{ $viewing->parent->order_type->label() }}).
@@ -58,30 +58,30 @@
         @endif
     </div>
 
-    <dl class="mt-3 grid grid-cols-1 gap-x-5 gap-y-3 text-[13px] min-[560px]:grid-cols-2">
+    <dl class="mt-3 grid grid-cols-1 gap-x-5 gap-y-3 text-body min-[560px]:grid-cols-2">
         @foreach ($details as $label => $value)
             <div wire:key="detail-{{ $loop->index }}">
-                <dt class="text-xs font-medium text-label">{{ $label }}</dt>
+                <dt class="text-caption font-medium text-label">{{ $label }}</dt>
                 <dd @class(['mt-0.5', 'text-placeholder' => blank($value), 'font-semibold text-danger' => $label === 'Requested On' && $overdue])>{{ blank($value) ? '—' : $value }}</dd>
             </div>
         @endforeach
         <div class="min-[560px]:col-span-2">
-            <dt class="text-xs font-medium text-label">Description</dt>
+            <dt class="text-caption font-medium text-label">Description</dt>
             <dd @class(['mt-0.5 whitespace-pre-line', 'text-placeholder' => blank($viewing->description)])>{{ blank($viewing->description) ? '—' : $viewing->description }}</dd>
         </div>
     </dl>
 
     @if ($completed)
         <h3 class="{{ $heading }}">Completion</h3>
-        <dl class="mt-2 grid grid-cols-1 gap-x-5 gap-y-3 text-[13px] min-[560px]:grid-cols-2">
+        <dl class="mt-2 grid grid-cols-1 gap-x-5 gap-y-3 text-body min-[560px]:grid-cols-2">
             @foreach ($answers as $label => $value)
                 <div wire:key="answer-{{ $loop->index }}" @class(['min-[560px]:col-span-2' => mb_strlen($value) > 40])>
-                    <dt class="text-xs font-medium text-label">{{ $label }}</dt>
+                    <dt class="text-caption font-medium text-label">{{ $label }}</dt>
                     <dd class="mt-0.5 whitespace-pre-line">{{ $value }}</dd>
                 </div>
             @endforeach
             <div>
-                <dt class="text-xs font-medium text-label">Fee</dt>
+                <dt class="text-caption font-medium text-label">Fee</dt>
                 <dd class="mt-0.5">
                     @if ($viewing->fee_amount !== null)
                         {{ Format::amount($viewing->fee_amount) }}
@@ -98,14 +98,14 @@
             </div>
             @if ($viewing->completion_data['remarks'] ?? null)
                 <div class="min-[560px]:col-span-2">
-                    <dt class="text-xs font-medium text-label">Remarks</dt>
+                    <dt class="text-caption font-medium text-label">Remarks</dt>
                     <dd class="mt-0.5 whitespace-pre-line">{{ $viewing->completion_data['remarks'] }}</dd>
                 </div>
             @endif
         </dl>
 
         @if ($viewing->completion_data['checklist'] ?? [])
-            <ul class="mt-3 grid gap-1 text-[13px] min-[560px]:grid-cols-2">
+            <ul class="mt-3 grid gap-1 text-body min-[560px]:grid-cols-2">
                 @foreach ($viewing->completion_data['checklist'] as $item)
                     <li wire:key="checked-{{ $loop->index }}" class="flex items-center gap-1.5">
                         <x-icon name="check" :size="14" class="text-success" />
@@ -155,7 +155,7 @@
 
     @if ($viewing->followUps->isNotEmpty())
         <h3 class="{{ $heading }}">Follow-up orders</h3>
-        <ul class="mt-2 grid gap-1 text-[13px]">
+        <ul class="mt-2 grid gap-1 text-body">
             @foreach ($viewing->followUps as $followUp)
                 <li wire:key="follow-up-{{ $followUp->id }}">
                     <button type="button" class="link-button" wire:click="openView({{ $followUp->id }})">{{ $followUp->order_number }}</button>
@@ -167,13 +167,13 @@
 
     <h3 class="{{ $heading }}">Timeline</h3>
     @if ($viewing->activities->isEmpty())
-        <p class="mt-2 text-[13px] text-placeholder">No activity recorded.</p>
+        <p class="mt-2 text-body text-placeholder">No activity recorded.</p>
     @else
-        <ol class="mt-2 grid gap-2 border-l-2 border-table-line pl-3 text-[13px]">
+        <ol class="mt-2 grid gap-2 border-l-2 border-table-line pl-3 text-body">
             @foreach ($viewing->activities->sortByDesc('id') as $activity)
                 <li wire:key="activity-{{ $activity->id }}">
                     <p>{{ $activity->description }}</p>
-                    <p class="text-xs text-label">
+                    <p class="text-caption text-label">
                         {{ $activity->user?->name ?? 'System' }} · {{ Format::date($activity->created_at, $timezone) }}
                         {{ $activity->created_at->copy()->setTimezone($timezone ?? Format::DEFAULT_TIMEZONE)->format('g:i A') }}
                     </p>

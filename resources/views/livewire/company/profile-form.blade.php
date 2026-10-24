@@ -69,7 +69,7 @@
         <section aria-labelledby="point-person-heading" class="mt-8 flex min-w-0 flex-col border-t border-divider pt-8 lg:mt-0 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
             <x-text-field label="Head of Company (Firstname,MI,Lastname)" id="company-head" required wire:model.live.blur="values.headOfCompany" autocomplete="off" :error="$error('headOfCompany')" />
 
-            <h2 id="point-person-heading" class="mt-[38px] mb-4 text-sm font-normal text-label italic">Point Person</h2>
+            <h2 id="point-person-heading" class="mt-[38px] mb-4 text-body font-normal text-label italic">Point Person</h2>
 
             <div class="grid grid-cols-1 items-start gap-x-4 gap-y-3.5 sm:grid-cols-2">
                 <x-text-field variant="inset" label="Firstname" id="pp-first-name" required wire:model.live.blur="values.pointPersonFirstName" autocomplete="given-name" :error="$error('pointPersonFirstName')" />
@@ -80,7 +80,7 @@
                 <x-text-field variant="inset" label="Employee Title/Position" id="pp-employee-title" wire:model.live.blur="values.employeeTitle" autocomplete="organization-title" :error="$error('employeeTitle')" />
             </div>
 
-            <p class="mt-[22px] text-xs leading-[1.7] text-label italic">
+            <p class="mt-[22px] text-caption leading-[1.7] text-label italic">
                 Note : Point person's name will be used as a contact person to assist and provide support to your clients
                 or partners inquiries. It will be placed in all clients profiles such as billings, etc.
             </p>
@@ -88,7 +88,7 @@
             <div class="mt-auto flex flex-col-reverse items-stretch gap-4 pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                 @if ($status)
                     <p
-                        @class(['flex-[1_1_180px] text-center text-xs sm:text-right', 'text-success' => $status['type'] === 'success', 'text-danger' => $status['type'] === 'error'])
+                        @class(['flex-[1_1_180px] text-center text-caption sm:text-right', 'text-success' => $status['type'] === 'success', 'text-danger' => $status['type'] === 'error'])
                         role="{{ $status['type'] === 'error' ? 'alert' : 'status' }}"
                     >
                         {{ $status['message'] }}
@@ -98,7 +98,7 @@
                 @if ($canSave)
                     <button
                         type="submit"
-                        class="h-12 w-full min-w-[140px] rounded-xs bg-button px-6 text-[13px] text-white transition-colors hover:enabled:bg-button-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-default disabled:bg-button-idle disabled:text-[#eef0f2] sm:h-[54px] sm:w-auto"
+                        class="h-12 w-full min-w-[140px] rounded-xs bg-button px-6 text-body text-white transition-colors hover:enabled:bg-button-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-default disabled:bg-button-idle disabled:text-[#eef0f2] sm:h-[54px] sm:w-auto"
                         wire:loading.attr="disabled"
                         wire:target="save"
                     >

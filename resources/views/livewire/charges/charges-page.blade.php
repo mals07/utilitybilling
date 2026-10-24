@@ -77,7 +77,7 @@
                             >
                                 <td class="cell-number">{{ $chargeTypes->firstItem() + $index }}</td>
                                 <td class="font-medium text-ink-strong">{{ $chargeType->name }}</td>
-                                <td class="cell-muted text-xs whitespace-nowrap">{{ Format::shortDateIn($chargeType->created_at, $timezone) }}</td>
+                                <td class="cell-muted text-caption whitespace-nowrap">{{ Format::shortDateIn($chargeType->created_at, $timezone) }}</td>
                                 <td class="cell-actions">
                                     <button
                                         type="button"
@@ -107,7 +107,7 @@
 
         {{-- Charge elements --}}
         <section aria-labelledby="charge-elements-heading" class="min-w-0 py-1">
-            <h2 id="charge-elements-heading" class="text-right text-base font-normal text-ink italic">Charge Elements</h2>
+            <h2 id="charge-elements-heading" class="text-right text-heading font-normal text-ink italic">Charge Elements</h2>
 
             <form wire:submit="addElement" novalidate class="mt-6">
                 @include('livewire.charges.partials.element-fields', [

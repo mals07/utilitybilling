@@ -21,7 +21,7 @@
             <x-alert tone="error" class="mx-5 mt-3 sm:mx-6">{{ $notice }}</x-alert>
         @endif
         @if ($updating && $selected)
-            <p class="px-5 pt-2.5 text-xs text-label sm:px-6">
+            <p class="px-5 pt-2.5 text-caption text-label sm:px-6">
                 Account Number: {{ $selected->account_number }}
                 ·
                 @if ($selected->hasMeter())
@@ -50,7 +50,7 @@
                             aria-label="{{ $photoUrl ? 'Change photo' : 'Upload photo' }}"
                             @error('photo') aria-describedby="customer-photo-error" @enderror
                         >
-                            <span x-show="uploading" class="text-xs text-muted">Uploading…</span>
+                            <span x-show="uploading" class="text-caption text-muted">Uploading…</span>
                             <span x-show="! uploading" class="contents">
                                 @if ($photoUrl)
                                     <img src="{{ $photoUrl }}" alt="" class="size-full object-cover">
@@ -91,14 +91,14 @@
                                     <div role="dialog" aria-modal="true" aria-labelledby="crop-title" class="modal-dialog" data-width="sm" x-trap.noscroll="cropping">
                                         <div class="modal-content">
                                             <div class="flex items-start justify-between gap-3">
-                                                <h2 id="crop-title" class="text-base font-bold text-ink-strong">Adjust Photo</h2>
+                                                <h2 id="crop-title" class="text-heading font-bold text-ink-strong">Adjust Photo</h2>
                                                 <button type="button" class="modal-close" x-on:click="cancel()" aria-label="Close">
                                                     <x-icon name="close" />
                                                 </button>
                                             </div>
 
                                             <div class="mt-3 grid justify-items-center gap-3">
-                                                <p class="justify-self-stretch text-[13px] text-label">Drag to centre the face. Use the slider or scroll to zoom.</p>
+                                                <p class="justify-self-stretch text-body text-label">Drag to centre the face. Use the slider or scroll to zoom.</p>
                                                 <div
                                                     class="relative shrink-0 cursor-grab touch-none overflow-hidden rounded-xs bg-[#e8f0f7] select-none active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
                                                     x-bind:style="`width: ${frame}px; height: ${frame}px`"
@@ -124,7 +124,7 @@
                                                     >
                                                 </div>
 
-                                                <label class="flex items-center gap-3 justify-self-stretch text-[13px] text-label">
+                                                <label class="flex items-center gap-3 justify-self-stretch text-body text-label">
                                                     <span>Zoom</span>
                                                     <input
                                                         type="range"

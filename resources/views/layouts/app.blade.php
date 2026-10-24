@@ -75,18 +75,18 @@
                         <img src="{{ $logoUrl }}" alt="{{ $company->company_name }}" class="h-9 max-w-48 object-contain lg:h-11">
                     @else
                         <x-app-logo :size="36" />
-                        <span class="truncate text-lg font-bold tracking-tight">{{ $company?->company_name ?? config('app.name') }}</span>
+                        <span class="truncate text-heading font-bold tracking-tight">{{ $company?->company_name ?? config('app.name') }}</span>
                     @endif
                 </a>
 
                 <div class="ml-auto hidden items-center gap-3 sm:flex">
                     <div class="text-right leading-tight">
-                        <p class="max-w-48 truncate text-sm font-semibold text-ink-strong">{{ $user->name }}</p>
+                        <p class="max-w-48 truncate text-body font-semibold text-ink-strong">{{ $user->name }}</p>
                         @if ($company)
-                            <p class="max-w-48 truncate text-xs text-label">{{ $company->company_name }}</p>
+                            <p class="max-w-48 truncate text-caption text-label">{{ $company->company_name }}</p>
                         @endif
                     </div>
-                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-ocean to-aqua text-sm font-bold text-white uppercase shadow-[0_4px_12px_-4px_rgba(3,105,161,0.6)] ring-2 ring-white" aria-hidden="true">
+                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-ocean to-aqua text-body font-bold text-white uppercase shadow-[0_4px_12px_-4px_rgba(3,105,161,0.6)] ring-2 ring-white" aria-hidden="true">
                         {{ mb_substr($user->name, 0, 1) }}
                     </span>
                 </div>
@@ -117,8 +117,8 @@
                                     <x-app-logo :size="44" class="drop-shadow-[0_6px_12px_rgba(6,182,212,0.35)]" />
                                 @endif
                                 <span class="min-w-0 lg:sidebar-collapsed:sr-only">
-                                    <span class="line-clamp-2 text-sm leading-tight font-bold text-white">{{ $company?->company_name ?? config('app.name') }}</span>
-                                    <span class="mt-0.5 block text-[11px] text-cyan-200/70">Water Billing</span>
+                                    <span class="line-clamp-2 text-body leading-tight font-bold text-white">{{ $company?->company_name ?? config('app.name') }}</span>
+                                    <span class="mt-0.5 block text-caption text-cyan-200/70">Water Billing</span>
                                 </span>
                             </a>
                             <button
@@ -190,8 +190,8 @@
 
                         <div class="border-t border-white/10 px-3 py-4 lg:sidebar-collapsed:px-2">
                             <div class="flex items-center gap-3 rounded-[10px] bg-white/5 px-2.5 py-2 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:bg-transparent lg:sidebar-collapsed:px-0">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-ocean-bright to-aqua text-xs font-bold text-white uppercase" aria-hidden="true">{{ mb_substr($user->name, 0, 1) }}</span>
-                                <p class="min-w-0 truncate text-xs font-medium text-white/85 lg:sidebar-collapsed:sr-only">{{ $user->name }}</p>
+                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-ocean-bright to-aqua text-caption font-bold text-white uppercase" aria-hidden="true">{{ mb_substr($user->name, 0, 1) }}</span>
+                                <p class="min-w-0 truncate text-caption font-medium text-white/85 lg:sidebar-collapsed:sr-only">{{ $user->name }}</p>
                             </div>
 
                             <x-restart-onboarding class="mt-2 h-9 w-full rounded-xs px-2.5 text-amber-300! hover:bg-white/5 lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0" />
@@ -201,7 +201,7 @@
                                 <button
                                     type="submit"
                                     x-bind:title="collapsed ? 'Log out' : null"
-                                    class="mt-1 flex h-9 w-full items-center gap-3 rounded-xs px-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0"
+                                    class="mt-1 flex h-9 w-full items-center gap-3 rounded-xs px-2.5 text-body font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white lg:sidebar-collapsed:justify-center lg:sidebar-collapsed:px-0"
                                 >
                                     <x-icon name="logout" />
                                     <span class="lg:sidebar-collapsed:sr-only">Log out</span>

@@ -75,7 +75,7 @@ class OnboardingTest extends TestCase
         $this->actingAs($user)->get(route('setup'))->assertRedirect(route('welcome'));
         $this->actingAs($user)->get(route('welcome'))
             ->assertOk()
-            ->assertSee('Welcome! Thank you for signing up to '.config('app.name'))
+            ->assertSee('Welcome! Thank you for signing up to Water Utility Management System')
             ->assertSee('Before we start, I will walk you through the steps on how to configure your system.')
             ->assertSee('Lookup lists')
             ->assertSee('Post the fee payment');

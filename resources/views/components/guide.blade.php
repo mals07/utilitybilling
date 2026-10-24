@@ -26,7 +26,7 @@
                 x-on:pointerleave="hovering = false"
             >
                 <div class="flex items-start justify-between gap-3">
-                    <p class="text-xs font-medium tracking-wide text-label uppercase">
+                    <p class="text-caption font-medium tracking-wide text-label uppercase">
                         <span x-text="guide.title"></span> &middot; <span x-text="index + 1"></span> of <span x-text="guide.steps.length"></span>
                     </p>
                     <button type="button" class="modal-close" x-on:click="close()" aria-label="Close guide">
@@ -34,12 +34,12 @@
                     </button>
                 </div>
 
-                <h2 id="guide-title" class="mt-1 text-[15px] font-bold text-ink-strong" x-text="step.title"></h2>
-                <p class="mt-1.5 text-sm leading-6 text-ink-soft" x-text="step.body"></p>
-                <p x-show="step.grows || step.until" class="mt-2 text-xs text-label italic">This moves on by itself once you've done it.</p>
+                <h2 id="guide-title" class="mt-1 text-heading font-bold text-ink-strong" x-text="step.title"></h2>
+                <p class="mt-1.5 text-body leading-6 text-ink-soft" x-text="step.body"></p>
+                <p x-show="step.grows || step.until" class="mt-2 text-caption text-label italic">This moves on by itself once you've done it.</p>
 
                 <div class="mt-4 flex items-center justify-between gap-3">
-                    <button type="button" class="text-button text-sm" x-on:click="close()">Skip guide</button>
+                    <button type="button" class="text-button text-body" x-on:click="close()">Skip guide</button>
                     <div class="flex items-center gap-2">
                         <button type="button" class="form-button form-button-sm bg-transparent text-ink-soft ring-1 ring-line hover:bg-hover" x-show="index > 0" x-on:click="go(-1)">Back</button>
                         <button type="button" class="form-button form-button-sm" x-on:click="go(1)" x-text="last ? 'Done' : 'Next'"></button>

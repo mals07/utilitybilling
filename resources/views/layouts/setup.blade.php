@@ -19,15 +19,15 @@
         <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-table-line bg-topbar px-4 backdrop-blur-md lg:px-6">
             <div class="flex min-w-0 flex-1 items-center gap-2">
                 <x-app-logo :size="34" />
-                <span class="truncate text-lg font-bold tracking-tight text-ink-strong">{{ $company?->company_name ?? config('app.name') }}</span>
-                <span class="hidden text-sm text-label sm:inline">&middot; Company setup</span>
+                <span class="truncate text-heading font-bold tracking-tight text-ink-strong">{{ $company?->company_name ?? config('app.name') }}</span>
+                <span class="hidden text-body text-label sm:inline">&middot; Company setup</span>
             </div>
 
             <x-restart-onboarding class="mr-4 hidden sm:flex" />
 
             <form method="POST" action="{{ route('logout') }}" x-data x-on:submit="if (! confirm('Sign out and finish setup later? Your progress is saved, and you will continue from this step when you sign in again.')) $event.preventDefault()">
                 @csrf
-                <button type="submit" class="text-button inline-flex items-center gap-2 text-sm">
+                <button type="submit" class="text-button inline-flex items-center gap-2 text-body">
                     <x-icon name="logout" :size="18" />
                     Finish later
                 </button>

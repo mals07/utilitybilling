@@ -20,8 +20,8 @@
 <div class="flex min-w-0 flex-col gap-1.5">
     <div class="flex items-start justify-between gap-4">
         <div class="flex min-w-0 flex-col gap-2 pt-0.5">
-            <label for="{{ $inputId }}" class="text-[13px] font-semibold text-ink">{{ $label }}</label>
-            <p id="{{ $helpId }}" class="flex flex-col text-right text-xs leading-[1.55] text-muted italic">
+            <label for="{{ $inputId }}" class="text-body font-semibold text-ink">{{ $label }}</label>
+            <p id="{{ $helpId }}" class="flex flex-col text-right text-caption leading-[1.55] text-muted italic">
                 @foreach ($help as $line)
                     <span>{{ $line }}</span>
                 @endforeach
@@ -31,7 +31,7 @@
         <div class="upload-wrap relative flex-none">
             {{-- Decorative click target; the visible label above names the input. --}}
             <label for="{{ $inputId }}" class="upload-box" aria-hidden="true" data-invalid="{{ $error ? 'true' : 'false' }}">
-                <span wire:loading wire:target="{{ $model }}" class="text-xs text-muted">Uploading…</span>
+                <span wire:loading wire:target="{{ $model }}" class="text-caption text-muted">Uploading…</span>
                 <span wire:loading.remove wire:target="{{ $model }}" class="contents">
                     @if ($previewUrl)
                         <img src="{{ $previewUrl }}" alt="" class="max-h-full max-w-full object-contain">
@@ -58,9 +58,9 @@
     </div>
 
     @if ($fileName && ! $error)
-        <p class="max-w-full self-end truncate text-xs text-muted" title="{{ $fileName }}">{{ $fileName }}</p>
+        <p class="max-w-full self-end truncate text-caption text-muted" title="{{ $fileName }}">{{ $fileName }}</p>
     @endif
     @if ($error)
-        <p id="{{ $errorId }}" class="text-xs leading-tight text-danger" role="alert">{{ $error }}</p>
+        <p id="{{ $errorId }}" class="text-caption leading-tight text-danger" role="alert">{{ $error }}</p>
     @endif
 </div>

@@ -62,7 +62,7 @@
                 x-on:focusout="if (! $el.contains($event.relatedTarget)) open = false"
             >
                 <div class="flex h-11 min-w-0 flex-col justify-center rounded-xs border border-table-line bg-card px-2 focus-within:border-line-focus">
-                    <label for="setup-element" class="text-[10px] text-label">Charge Element<x-required-mark /></label>
+                    <label for="setup-element" class="text-caption text-label">Charge Element<x-required-mark /></label>
                     <div class="flex items-center">
                         <input
                             id="setup-element"
@@ -81,7 +81,7 @@
                             x-on:keydown.enter="if (open && filtered.length > 0) { $event.preventDefault(); choose(filtered[active]); }"
                             x-on:keydown.escape="if (open) { $event.preventDefault(); $event.stopPropagation(); open = false; }"
                             @error('setupElementId') aria-invalid="true" @enderror
-                            class="h-5 w-full border-0 bg-transparent p-0 text-sm text-ink focus:outline-none"
+                            class="h-5 w-full border-0 bg-transparent p-0 text-body text-ink focus:outline-none"
                         >
                         <x-icon name="search" :size="14" class="text-accent" />
                     </div>
@@ -93,7 +93,7 @@
                     wire:ignore
                     x-show="open"
                     x-cloak
-                    class="absolute inset-x-0 top-full z-10 mt-1 max-h-48 list-none overflow-y-auto rounded-xs border border-table-line bg-card py-1 text-sm shadow-dialog"
+                    class="absolute inset-x-0 top-full z-10 mt-1 max-h-48 list-none overflow-y-auto rounded-xs border border-table-line bg-card py-1 text-body shadow-dialog"
                 >
                     <template x-for="(option, index) in filtered" x-bind:key="option.id">
                         <li
@@ -105,10 +105,10 @@
                             x-on:mouseenter="active = index"
                         >
                             <span class="truncate" x-text="option.name"></span>
-                            <span class="text-xs text-muted" x-text="option.type"></span>
+                            <span class="text-caption text-muted" x-text="option.type"></span>
                         </li>
                     </template>
-                    <li x-show="filtered.length === 0" class="px-3 py-1.5 text-xs text-placeholder" x-text="options.length === 0 ? 'No charge elements left to add.' : 'No charge elements match.'"></li>
+                    <li x-show="filtered.length === 0" class="px-3 py-1.5 text-caption text-placeholder" x-text="options.length === 0 ? 'No charge elements left to add.' : 'No charge elements match.'"></li>
                 </ul>
             </div>
 
@@ -125,7 +125,7 @@
             </fieldset>
 
             <div class="flex h-11 w-28 min-w-0 flex-col justify-center rounded-xs border border-table-line bg-card px-2 focus-within:border-line-focus">
-                <label for="setup-value" class="text-[10px] text-label"><span wire:ignore x-data x-text="$wire.setupValueType === 'percentage' ? 'Value (%)' : 'Value'">Value</span><x-required-mark /></label>
+                <label for="setup-value" class="text-caption text-label"><span wire:ignore x-data x-text="$wire.setupValueType === 'percentage' ? 'Value (%)' : 'Value'">Value</span><x-required-mark /></label>
                 <input
                     id="setup-value"
                     type="number"
@@ -136,15 +136,15 @@
                     aria-required="true"
                     placeholder="0.00"
                     @error('setupValue') aria-invalid="true" @enderror
-                    class="h-5 w-full border-0 bg-transparent p-0 text-right text-sm text-ink focus:outline-none"
+                    class="h-5 w-full border-0 bg-transparent p-0 text-right text-body text-ink focus:outline-none"
                 >
             </div>
 
             <div class="flex h-11 w-28 min-w-0 flex-col justify-center rounded-xs border border-table-line bg-card px-2">
-                <span id="setup-distribution-label" class="text-[10px] text-label">Distribution Type</span>
+                <span id="setup-distribution-label" class="text-caption text-label">Distribution Type</span>
                 <output
                     aria-labelledby="setup-distribution-label"
-                    class="h-5 text-sm text-ink"
+                    class="h-5 text-body text-ink"
                     wire:ignore
                     x-data="{ type: '' }"
                     x-on:setup-element-chosen.window="type = $event.detail"
@@ -155,7 +155,7 @@
             @if ($access['add'])
                 <button
                     type="submit"
-                    class="h-11 w-full bg-button px-6 text-xs font-medium text-white hover:enabled:bg-button-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus disabled:cursor-progress disabled:opacity-70 sm:w-28"
+                    class="h-11 w-full bg-button px-6 text-caption font-medium text-white hover:enabled:bg-button-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus disabled:cursor-progress disabled:opacity-70 sm:w-28"
                     wire:loading.attr="disabled"
                     wire:target="addSetupElement"
                 >
@@ -195,7 +195,7 @@
                                 @if ($isEditing)
                                     <div class="flex items-center justify-end gap-1">
                                         <label for="edit-row-type-{{ $row->id }}" class="sr-only">Value type</label>
-                                        <select id="edit-row-type-{{ $row->id }}" wire:model="rowValueType" class="h-7 rounded-xs border border-line bg-card px-1 text-xs">
+                                        <select id="edit-row-type-{{ $row->id }}" wire:model="rowValueType" class="h-7 rounded-xs border border-line bg-card px-1 text-caption">
                                             <option value="fixed">Fixed</option>
                                             <option value="percentage">%</option>
                                         </select>
@@ -211,7 +211,7 @@
                                             x-on:keydown.escape.prevent.stop="$wire.cancelRowEdit()"
                                             x-init="$el.focus()"
                                             @error('rowValue') aria-invalid="true" @enderror
-                                            class="form-control !h-7 !w-20 !px-1.5 text-right !text-xs"
+                                            class="form-control !h-7 !w-20 !px-1.5 text-right !text-caption"
                                         >
                                     </div>
                                 @else

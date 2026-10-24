@@ -24,8 +24,8 @@
             <div class="mb-6 flex flex-col items-center gap-3 text-center">
                 <x-app-logo :size="52" class="drop-shadow-[0_10px_18px_rgba(3,105,161,0.35)]" />
                 <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight text-ink-strong">Utility Billing</h1>
-                    <p class="mt-0.5 text-sm text-label">Water billing &amp; customer management</p>
+                    <h1 class="text-title font-extrabold tracking-tight text-ink-strong">Utility Billing</h1>
+                    <p class="mt-0.5 text-body text-label">Water billing &amp; customer management</p>
                 </div>
             </div>
             {{ $slot }}

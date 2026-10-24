@@ -42,7 +42,7 @@
                             <td class="cell-number">{{ $users->firstItem() + $index }}</td>
                             <td>
                                 <span @class(['block', 'font-medium text-ink-strong' => ! $isDisabled])>{{ $member->first_name }} {{ $member->last_name }}</span>
-                                <span class="mt-0.5 block text-xs text-label">{{ $member->email }}</span>
+                                <span class="mt-0.5 block text-caption text-label">{{ $member->email }}</span>
                             </td>
                             <td>
                                 @if ($member->username)

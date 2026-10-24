@@ -19,14 +19,14 @@
         @endif
     </div>
 
-    <div class="mt-3 grid gap-4 text-[13px] sm:grid-cols-3">
+    <div class="mt-3 grid gap-4 text-body sm:grid-cols-3">
         <div>
-            <p class="text-xs font-medium text-label">Customer</p>
+            <p class="text-caption font-medium text-label">Customer</p>
             <p class="mt-0.5 font-semibold text-ink-strong">{{ $customer->first_name }} {{ $customer->last_name }}</p>
             <p class="text-label">Account {{ $customer->account_number }}{{ $customer->meter_number ? ' · Meter '.$customer->meter_number : '' }}</p>
         </div>
         <div>
-            <p class="text-xs font-medium text-label">For</p>
+            <p class="text-caption font-medium text-label">For</p>
             <p class="mt-0.5">{{ $invoice->kind->label() }}</p>
             @if ($invoice->periodLabel())
                 <p class="text-label">{{ $invoice->periodLabel() }}</p>
@@ -36,18 +36,18 @@
             @endif
         </div>
         <div>
-            <p class="text-xs font-medium text-label">Dates</p>
+            <p class="text-caption font-medium text-label">Dates</p>
             <p class="mt-0.5">Issued {{ Format::longDate($invoice->invoice_date) }} · Due <span @class(['font-semibold text-danger' => $invoice->isOverdue($today)])>{{ Format::longDate($invoice->due_date) }}</span></p>
             <p class="{{ $invoice->statusColorClass($today) }}">{{ $invoice->statusLabel($today) }}</p>
         </div>
     </div>
 
     @if ($reading)
-        <div class="mt-3 grid grid-cols-2 gap-2 rounded-xs bg-panel px-3 py-2 text-[13px] sm:grid-cols-4">
-            <p><span class="block text-xs text-label">Previous reading</span>{{ Format::quantity($reading->previous_reading) }}</p>
-            <p><span class="block text-xs text-label">Present reading</span>{{ $reading->present_reading === null ? 'Defective meter' : Format::quantity($reading->present_reading) }}</p>
-            <p><span class="block text-xs text-label">Billed consumption</span>{{ Format::quantity($reading->consumption) }} cu.m.</p>
-            <p><span class="block text-xs text-label">Read on</span>{{ Format::longDate($reading->read_on) }}</p>
+        <div class="mt-3 grid grid-cols-2 gap-2 rounded-xs bg-panel px-3 py-2 text-body sm:grid-cols-4">
+            <p><span class="block text-caption text-label">Previous reading</span>{{ Format::quantity($reading->previous_reading) }}</p>
+            <p><span class="block text-caption text-label">Present reading</span>{{ $reading->present_reading === null ? 'Defective meter' : Format::quantity($reading->present_reading) }}</p>
+            <p><span class="block text-caption text-label">Billed consumption</span>{{ Format::quantity($reading->consumption) }} cu.m.</p>
+            <p><span class="block text-caption text-label">Read on</span>{{ Format::longDate($reading->read_on) }}</p>
         </div>
     @endif
 
@@ -95,8 +95,8 @@
     </div>
 
     @if ($payments->isNotEmpty())
-        <h3 class="mt-4 text-[13px] font-semibold text-ink-strong">Payments applied</h3>
-        <ul class="mt-1 grid gap-1 text-[13px]">
+        <h3 class="mt-4 text-body font-semibold text-ink-strong">Payments applied</h3>
+        <ul class="mt-1 grid gap-1 text-body">
             @foreach ($payments as $allocation)
                 <li wire:key="allocation-{{ $allocation->id }}">
                     OR {{ $allocation->payment->receipt_number }} · {{ Format::longDate($allocation->payment->paid_on) }}
@@ -107,8 +107,8 @@
     @endif
 
     @if ($invoice->adjustments->isNotEmpty())
-        <h3 class="mt-4 text-[13px] font-semibold text-ink-strong">Credit and debit memos</h3>
-        <ul class="mt-1 grid gap-2 text-[13px]">
+        <h3 class="mt-4 text-body font-semibold text-ink-strong">Credit and debit memos</h3>
+        <ul class="mt-1 grid gap-2 text-body">
             @foreach ($invoice->adjustments as $memo)
                 <li wire:key="memo-{{ $memo->id }}" @class(['rounded-xs border border-table-line px-3 py-2', 'opacity-60' => $memo->isVoid()])>
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
@@ -122,7 +122,7 @@
                         </p>
                     </div>
                     <p class="text-ink-soft">{{ $memo->reason }}</p>
-                    <p class="text-xs text-label">
+                    <p class="text-caption text-label">
                         By {{ $memo->createdBy?->name ?? '—' }}
                         @if ($memo->isVoid())
                             · <span class="text-danger">Void: {{ $memo->void_reason }}</span>
@@ -136,10 +136,10 @@
                     </div>
                     @if ($voidingMemoId === (string) $memo->id)
                         <form wire:submit="voidMemo" class="mt-2 rounded-xs border border-danger bg-danger-bg p-2" novalidate>
-                            <label for="void-memo-reason" class="block text-xs font-semibold text-danger">Why is {{ $memo->label() }} being voided?<x-required-mark /></label>
-                            <input id="void-memo-reason" aria-required="true" type="text" maxlength="255" wire:model="memoVoidReason" class="form-control mt-1 !h-[32px] !text-[13px]" @error('memoVoidReason') aria-invalid="true" @enderror>
+                            <label for="void-memo-reason" class="block text-caption font-semibold text-danger">Why is {{ $memo->label() }} being voided?<x-required-mark /></label>
+                            <input id="void-memo-reason" aria-required="true" type="text" maxlength="255" wire:model="memoVoidReason" class="form-control mt-1 !h-[32px] !text-body" @error('memoVoidReason') aria-invalid="true" @enderror>
                             @error('memoVoidReason') <p class="form-error" role="alert">{{ $message }}</p> @enderror
-                            <p class="mt-1 text-xs text-ink-soft">A reversing line puts the invoice back to its amount before the memo.</p>
+                            <p class="mt-1 text-caption text-ink-soft">A reversing line puts the invoice back to its amount before the memo.</p>
                             <div class="form-actions mt-2">
                                 <button type="button" class="text-button" wire:click="$set('voidingMemoId', '')">Back</button>
                                 <button type="submit" class="form-button form-button-sm min-w-[110px]">Void Memo</button>
@@ -159,14 +159,14 @@
             x-data
         >
             <fieldset class="m-0 min-w-0 border-0 p-0" wire:loading.attr="disabled" wire:target="saveAdjustment">
-                <legend class="text-[13px] font-semibold text-ink-strong">Adjust invoice {{ $invoice->invoice_number }}</legend>
+                <legend class="text-body font-semibold text-ink-strong">Adjust invoice {{ $invoice->invoice_number }}</legend>
 
-                <div class="mt-2 flex flex-wrap gap-4 text-[13px]">
+                <div class="mt-2 flex flex-wrap gap-4 text-body">
                     <label class="flex items-start gap-2">
                         <input type="radio" name="adjust-type" value="credit" wire:model.live="adjust.type" class="mt-0.5 size-4 accent-accent" @disabled(! $access['delete'])>
                         <span>
                             <span class="font-semibold">Credit memo</span> — lowers what the customer owes
-                            @unless ($access['delete']) <span class="block text-xs text-label">Needs Delete access on Invoices.</span> @endunless
+                            @unless ($access['delete']) <span class="block text-caption text-label">Needs Delete access on Invoices.</span> @endunless
                         </span>
                     </label>
                     <label class="flex items-start gap-2">
@@ -179,8 +179,8 @@
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     @if ($adjustType === AdjustmentType::Credit && $flaggedWorkOrders->isNotEmpty())
                         <div class="sm:col-span-2">
-                            <label for="adjust-work-order" class="mb-1 block text-xs font-semibold text-ink-strong">Resolves flagged work order (optional)</label>
-                            <select id="adjust-work-order" wire:model.live="adjust.workOrderId" class="form-control !h-[34px] !text-[13px]" @error('adjust.workOrderId') aria-invalid="true" @enderror>
+                            <label for="adjust-work-order" class="mb-1 block text-caption font-semibold text-ink-strong">Resolves flagged work order (optional)</label>
+                            <select id="adjust-work-order" wire:model.live="adjust.workOrderId" class="form-control !h-[34px] !text-body" @error('adjust.workOrderId') aria-invalid="true" @enderror>
                                 <option value="">None</option>
                                 @foreach ($flaggedWorkOrders as $order)
                                     <option value="{{ $order->id }}" wire:key="flagged-{{ $order->id }}">
@@ -189,12 +189,12 @@
                                 @endforeach
                             </select>
                             @error('adjust.workOrderId') <p class="form-error" role="alert">{{ $message }}</p> @enderror
-                            <p class="mt-1 text-xs text-label">Picking one fills in the reason and marks its flag resolved.</p>
+                            <p class="mt-1 text-caption text-label">Picking one fills in the reason and marks its flag resolved.</p>
                         </div>
                     @endif
                     <div>
-                        <label for="adjust-category" class="mb-1 block text-xs font-semibold text-ink-strong">Reason<x-required-mark /></label>
-                        <select id="adjust-category" aria-required="true" wire:model="adjust.category" class="form-control !h-[34px] !text-[13px]" @error('adjust.category') aria-invalid="true" @enderror>
+                        <label for="adjust-category" class="mb-1 block text-caption font-semibold text-ink-strong">Reason<x-required-mark /></label>
+                        <select id="adjust-category" aria-required="true" wire:model="adjust.category" class="form-control !h-[34px] !text-body" @error('adjust.category') aria-invalid="true" @enderror>
                             <option value="">Select</option>
                             @foreach ($adjustReasons as $value => $label)
                                 <option value="{{ $value }}" wire:key="reason-{{ $value }}">{{ $label }}</option>
@@ -204,22 +204,22 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label for="adjust-amount" class="mb-1 block text-xs font-semibold text-ink-strong">Amount<x-required-mark /></label>
-                            <input id="adjust-amount" aria-required="true" type="text" inputmode="decimal" maxlength="14" placeholder="0.00" wire:model="adjust.amount" class="form-control !h-[34px] text-right !text-[13px]" @error('adjust.amount') aria-invalid="true" @enderror>
+                            <label for="adjust-amount" class="mb-1 block text-caption font-semibold text-ink-strong">Amount<x-required-mark /></label>
+                            <input id="adjust-amount" aria-required="true" type="text" inputmode="decimal" maxlength="14" placeholder="0.00" wire:model="adjust.amount" class="form-control !h-[34px] text-right !text-body" @error('adjust.amount') aria-invalid="true" @enderror>
                         </div>
                         <div>
-                            <label for="adjust-date" class="mb-1 block text-xs font-semibold text-ink-strong">Memo date<x-required-mark /></label>
-                            <input id="adjust-date" aria-required="true" type="date" max="{{ $today }}" wire:model="adjust.issuedOn" class="form-control !h-[34px] !text-[13px]" @error('adjust.issuedOn') aria-invalid="true" @enderror>
+                            <label for="adjust-date" class="mb-1 block text-caption font-semibold text-ink-strong">Memo date<x-required-mark /></label>
+                            <input id="adjust-date" aria-required="true" type="date" max="{{ $today }}" wire:model="adjust.issuedOn" class="form-control !h-[34px] !text-body" @error('adjust.issuedOn') aria-invalid="true" @enderror>
                         </div>
                         @error('adjust.amount') <p class="form-error col-span-2" role="alert">{{ $message }}</p> @enderror
                         @error('adjust.issuedOn') <p class="form-error col-span-2" role="alert">{{ $message }}</p> @enderror
                         @if ($adjustType === AdjustmentType::Credit)
-                            <p class="col-span-2 text-xs text-label">Up to the unpaid balance of {{ Format::amount($invoice->balance) }}.</p>
+                            <p class="col-span-2 text-caption text-label">Up to the unpaid balance of {{ Format::amount($invoice->balance) }}.</p>
                         @endif
                     </div>
                     <div class="sm:col-span-2">
-                        <label for="adjust-reason" class="mb-1 block text-xs font-semibold text-ink-strong">Explanation<x-required-mark /></label>
-                        <textarea id="adjust-reason" aria-required="true" rows="2" maxlength="500" wire:model="adjust.reason" placeholder="Printed on the memo, e.g. Reading was entered as 150 instead of 105." class="form-control !text-[13px]" @error('adjust.reason') aria-invalid="true" @enderror></textarea>
+                        <label for="adjust-reason" class="mb-1 block text-caption font-semibold text-ink-strong">Explanation<x-required-mark /></label>
+                        <textarea id="adjust-reason" aria-required="true" rows="2" maxlength="500" wire:model="adjust.reason" placeholder="Printed on the memo, e.g. Reading was entered as 150 instead of 105." class="form-control !text-body" @error('adjust.reason') aria-invalid="true" @enderror></textarea>
                         @error('adjust.reason') <p class="form-error" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -236,10 +236,10 @@
 
     @if ($voiding)
         <form wire:submit="voidInvoice" class="mt-4 rounded-xs border border-danger bg-danger-bg p-3" novalidate>
-            <label for="void-invoice-reason" class="block text-xs font-semibold text-danger">Why is this invoice being voided?<x-required-mark /></label>
-            <textarea id="void-invoice-reason" aria-required="true" wire:model="voidReason" rows="2" maxlength="255" class="form-control mt-1 !text-[13px]" placeholder="e.g. Wrong reading entered" @error('voidReason') aria-invalid="true" @enderror></textarea>
+            <label for="void-invoice-reason" class="block text-caption font-semibold text-danger">Why is this invoice being voided?<x-required-mark /></label>
+            <textarea id="void-invoice-reason" aria-required="true" wire:model="voidReason" rows="2" maxlength="255" class="form-control mt-1 !text-body" placeholder="e.g. Wrong reading entered" @error('voidReason') aria-invalid="true" @enderror></textarea>
             @error('voidReason') <p class="form-error" role="alert">{{ $message }}</p> @enderror
-            <p class="mt-2 text-xs text-ink-soft">
+            <p class="mt-2 text-caption text-ink-soft">
                 Voiding can't be undone. Payments applied to it become advance credit and go to the customer's other bills.
                 @if ($reading) Its reading is released so the month can be billed again on Generate Bills. @endif
             </p>

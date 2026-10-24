@@ -135,6 +135,22 @@ class BillingTest extends TestCase
         $this->assertSame(0, $invoice->lines()->where('kind', InvoiceLineKind::Surcharge)->count());
     }
 
+    public function test_the_billing_run_page_lists_the_charges_behind_each_amount(): void
+    {
+        $this->addElement('Maintenance fee', DistributionType::Credit, ChargeValueType::Fixed, '50.00');
+        $this->addElement('Senior Discount', DistributionType::Debit, ChargeValueType::Percentage, '20.00');
+        $customer = $this->customer();
+        MeterReadings::save($customer, now()->format('Y-m'), '15', ReadingCode::Normal, now()->toDateString(), $this->owner);
+        $breakdown = ['Water', '225.00', 'Maintenance fee', '50.00', 'Senior Discount (20.00%)', '-45.00', '230.00'];
+
+        // Before billing the breakdown is the preview; after, it's read from the issued invoice.
+        Livewire::actingAs($this->owner)
+            ->test(GenerateBillsPage::class)
+            ->assertSeeInOrder($breakdown)
+            ->call('generate')
+            ->assertSeeInOrder($breakdown);
+    }
+
     public function test_the_billing_run_page_issues_bills_for_ready_readings(): void
     {
         $customer = $this->customer();

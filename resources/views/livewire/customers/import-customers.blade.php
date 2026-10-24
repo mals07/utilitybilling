@@ -3,11 +3,11 @@
 @use('App\Support\Format')
 
 <div class="contents">
-    <button type="button" class="link-button text-[11px]" wire:click="openImport">Import Customers</button>
+    <button type="button" class="link-button text-caption" wire:click="openImport">Import Customers</button>
 
     @if ($open)
         <x-modal title="Import Customers" close="$wire.closeImport()" width="lg">
-            <div class="mt-3 grid gap-4 text-[13px] text-ink">
+            <div class="mt-3 grid gap-4 text-body text-ink">
                 @if ($imported)
                     {{-- Result --}}
                     <x-alert tone="success">
@@ -18,7 +18,7 @@
                     </x-alert>
                     <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
                         @if ($imported->skipped_count > 0)
-                            <button type="button" class="link-button text-[13px]" wire:click="downloadSkipped({{ $imported->id }})">Download skipped rows</button>
+                            <button type="button" class="link-button text-body" wire:click="downloadSkipped({{ $imported->id }})">Download skipped rows</button>
                         @endif
                         <button type="button" class="text-button" wire:click="resetImport">Import another file</button>
                         <button type="button" class="form-button min-w-[120px]" wire:click="closeImport">Done</button>
@@ -29,12 +29,12 @@
 
                     <div class="flex flex-wrap gap-3">
                         <div class="min-w-36 rounded-xs bg-panel px-4 py-3">
-                            <p class="text-xl font-bold text-success">{{ number_format($preview['readyCount']) }}</p>
-                            <p class="text-xs text-label">Ready to import</p>
+                            <p class="text-title font-bold text-success">{{ number_format($preview['readyCount']) }}</p>
+                            <p class="text-caption text-label">Ready to import</p>
                         </div>
                         <div class="min-w-36 rounded-xs bg-panel px-4 py-3">
-                            <p @class(['text-xl font-bold', 'text-danger' => $preview['skippedCount'] > 0, 'text-muted' => $preview['skippedCount'] === 0])>{{ number_format($preview['skippedCount']) }}</p>
-                            <p class="text-xs text-label">With problems</p>
+                            <p @class(['text-title font-bold', 'text-danger' => $preview['skippedCount'] > 0, 'text-muted' => $preview['skippedCount'] === 0])>{{ number_format($preview['skippedCount']) }}</p>
+                            <p class="text-caption text-label">With problems</p>
                         </div>
                     </div>
 
@@ -67,7 +67,7 @@
                                 </table>
                             </div>
                             @if ($preview['skippedCount'] > count($preview['skipped']))
-                                <p class="mt-1 text-xs text-muted">Showing the first {{ count($preview['skipped']) }}. Download the list to see all {{ number_format($preview['skippedCount']) }}.</p>
+                                <p class="mt-1 text-caption text-muted">Showing the first {{ count($preview['skipped']) }}. Download the list to see all {{ number_format($preview['skippedCount']) }}.</p>
                             @endif
                         </div>
                     @endif
@@ -96,9 +96,9 @@
                     <ol class="grid gap-1 pl-5 text-label [list-style:decimal]">
                         <li>
                             Download the template:
-                            <button type="button" class="link-button text-[13px]" wire:click="downloadTemplate('xlsx')">Excel template</button>
+                            <button type="button" class="link-button text-body" wire:click="downloadTemplate('xlsx')">Excel template</button>
                             or
-                            <button type="button" class="link-button text-[13px]" wire:click="downloadTemplate('csv')">CSV template</button>
+                            <button type="button" class="link-button text-body" wire:click="downloadTemplate('csv')">CSV template</button>
                         </li>
                         <li>Fill in one customer per row. The Excel template has dropdowns and instructions.</li>
                         <li>Upload the file. You'll see which rows are ready before anything is added.</li>
@@ -115,7 +115,7 @@
                         <x-icon name="upload" :size="22" />
                         <span wire:loading.remove wire:target="file" class="font-semibold text-ink-strong">Choose an Excel or CSV file</span>
                         <span wire:loading wire:target="file" class="text-muted">Checking the file…</span>
-                        <span class="text-xs text-muted">.xlsx or .csv, up to {{ CustomerSpreadsheet::MAX_KILOBYTES / 1024 }}MB and {{ number_format(CustomerImporter::MAX_ROWS) }} customers</span>
+                        <span class="text-caption text-muted">.xlsx or .csv, up to {{ CustomerSpreadsheet::MAX_KILOBYTES / 1024 }}MB and {{ number_format(CustomerImporter::MAX_ROWS) }} customers</span>
                     </label>
                     <input
                         id="customer-import-file"
@@ -134,10 +134,10 @@
                 <section class="border-t border-line pt-3">
                     <h3 class="font-semibold text-ink-strong">Import history</h3>
                     @if ($this->history->isEmpty())
-                        <p class="mt-1 text-xs text-muted">No imports yet.</p>
+                        <p class="mt-1 text-caption text-muted">No imports yet.</p>
                     @else
                         <div class="table-scroller mt-2">
-                            <table class="data-table text-xs">
+                            <table class="data-table text-caption">
                                 <thead>
                                     <tr>
                                         <th scope="col">Date</th>

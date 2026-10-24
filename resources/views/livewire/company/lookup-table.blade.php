@@ -22,7 +22,7 @@
                 </label>
                 <button
                     type="submit"
-                    class="inline-flex w-[88px] shrink-0 items-center justify-center gap-1 rounded-r-xs bg-button text-[13px] font-semibold text-white shadow-button transition-colors hover:enabled:bg-button-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-line-focus disabled:cursor-progress disabled:opacity-70"
+                    class="inline-flex w-[88px] shrink-0 items-center justify-center gap-1 rounded-r-xs bg-button text-body font-semibold text-white shadow-button transition-colors hover:enabled:bg-button-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-line-focus disabled:cursor-progress disabled:opacity-70"
                     wire:loading.attr="disabled"
                 >
                     <span aria-hidden="true">+</span> Add
@@ -40,7 +40,7 @@
 
     {{-- Fixed column widths so the table always fits its card and never scrolls sideways. --}}
     <div class="relative mt-3 h-[296px] overflow-x-hidden overflow-y-auto rounded-xl border border-table-line bg-card">
-        <table class="data-table table-fixed border-0 text-[13px] [&_td]:px-3 [&_td]:py-1 [&_td]:leading-tight [&_th]:sticky [&_th]:top-0 [&_th]:z-[1] [&_th]:h-10 [&_th]:px-3 [&_th]:py-0 [&_th]:text-[10px] [&_th]:leading-tight [&_th]:whitespace-normal [&_tbody_tr]:h-[42px]">
+        <table class="data-table table-fixed border-0 text-body [&_td]:px-3 [&_td]:py-1 [&_td]:leading-tight [&_th]:sticky [&_th]:top-0 [&_th]:z-[1] [&_th]:h-10 [&_th]:px-3 [&_th]:py-0 [&_th]:text-caption [&_th]:leading-tight [&_th]:whitespace-normal [&_tbody_tr]:h-[42px]">
             <colgroup>
                 <col>
                 @if ($config->tracksDialDigits())
@@ -84,7 +84,7 @@
                                     @disabled(! $access['edit'])
                                     x-on:change="$wire.setDialDigits({{ $item->id }}, $el.value)"
                                     aria-label="Number of dials of {{ $item->name }}"
-                                    class="h-7 w-9 rounded-xs border border-transparent bg-transparent text-center text-[13px]hover:border-line focus:border-line-focus focus:outline-none disabled:cursor-not-allowed"
+                                    class="h-7 w-9 rounded-xs border border-transparent bg-transparent text-center text-body hover:border-line focus:border-line-focus focus:outline-none disabled:cursor-not-allowed"
                                 >
                             </td>
                         @endif
@@ -156,7 +156,7 @@
                                 <button
                                     type="button"
                                     role="menuitem"
-                                    class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-danger hover:bg-danger-bg focus-visible:bg-danger-bg focus-visible:outline-none"
+                                    class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-danger hover:bg-danger-bg focus-visible:bg-danger-bg focus-visible:outline-none"
                                     x-on:click="open = false"
                                     wire:click="remove({{ $item->id }})"
                                     wire:confirm="Remove {{ $item->name }}?"
@@ -206,7 +206,7 @@
                             @foreach ($removed as $item)
                                 <tr wire:key="removed-{{ $item['id'] }}">
                                     <td>{{ $item['name'] }}</td>
-                                    <td class="cell-center cell-muted text-xs"><time datetime="{{ $item['removedAt'] }}">{{ $item['removedOn'] }}</time></td>
+                                    <td class="cell-center cell-muted text-caption"><time datetime="{{ $item['removedAt'] }}">{{ $item['removedOn'] }}</time></td>
                                     <td class="cell-actions">
                                         <button
                                             type="button"

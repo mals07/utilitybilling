@@ -89,9 +89,9 @@
     <div class="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {{-- Tax --}}
         <fieldset class="min-w-0 rounded-xs border border-line bg-card px-4 pt-2 pb-4">
-            <legend class="px-1 text-[13px] font-semibold text-ink-strong">Tax</legend>
+            <legend class="px-1 text-body font-semibold text-ink-strong">Tax</legend>
 
-            <label class="check !text-[13px] !text-ink">
+            <label class="check !text-body !text-ink">
                 <input type="checkbox" wire:model.live="taxEnabled" @disabled(! $canEdit)>
                 Charge tax on bills (e.g. 12% VAT)
             </label>
@@ -115,25 +115,25 @@
 
             <div @class(['mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2', 'opacity-60' => ! $taxEnabled])>
                 <fieldset class="min-w-0">
-                    <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Your rates and charges are<x-required-mark /></legend>
-                    <label class="check !text-[13px]">
+                    <legend class="mb-1.5 text-caption font-semibold text-ink-strong">Your rates and charges are<x-required-mark /></legend>
+                    <label class="check !text-body">
                         <input type="radio" wire:model="taxMode" value="exclusive" @disabled(! $canEdit || ! $taxEnabled) class="check-square">
                         Before tax: add the tax on top
                     </label>
-                    <label class="check mt-1 !text-[13px]">
+                    <label class="check mt-1 !text-body">
                         <input type="radio" wire:model="taxMode" value="inclusive" @disabled(! $canEdit || ! $taxEnabled) class="check-square">
                         Tax included: only show it on the bill
                     </label>
                 </fieldset>
                 <fieldset class="min-w-0">
-                    <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Tax applies to</legend>
-                    <label class="check !text-[13px]"><input type="checkbox" wire:model="taxOnWater" @disabled(! $canEdit || ! $taxEnabled)> Water consumption</label>
-                    <label class="check mt-1 !text-[13px]"><input type="checkbox" wire:model="taxOnFees" @disabled(! $canEdit || ! $taxEnabled)> Work order fees</label>
-                    <label class="check mt-1 !text-[13px]"><input type="checkbox" wire:model="taxOnSurcharges" @disabled(! $canEdit || ! $taxEnabled)> Overdue surcharges</label>
+                    <legend class="mb-1.5 text-caption font-semibold text-ink-strong">Tax applies to</legend>
+                    <label class="check !text-body"><input type="checkbox" wire:model="taxOnWater" @disabled(! $canEdit || ! $taxEnabled)> Water consumption</label>
+                    <label class="check mt-1 !text-body"><input type="checkbox" wire:model="taxOnFees" @disabled(! $canEdit || ! $taxEnabled)> Work order fees</label>
+                    <label class="check mt-1 !text-body"><input type="checkbox" wire:model="taxOnSurcharges" @disabled(! $canEdit || ! $taxEnabled)> Overdue surcharges</label>
                 </fieldset>
             </div>
 
-            <p class="mt-3 text-xs text-label">
+            <p class="mt-3 text-caption text-label">
                 Also taxed: charge elements ticked <em>Taxable</em> on the Charges page. Customers of an account type ticked <em>Tax exempt</em> below (e.g. Government) are billed without tax.
                 Check the rate and what is taxable with your accountant.
             </p>
@@ -141,8 +141,8 @@
 
         {{-- Meter reading review --}}
         <fieldset class="min-w-0 rounded-xs border border-line bg-card px-4 pt-2 pb-4">
-            <legend class="px-1 text-[13px] font-semibold text-ink-strong">Meter reading review</legend>
-            <p class="text-xs text-label">Readings that look wrong wait in <em>Needs review</em> on the Meter Readings page until someone confirms them.</p>
+            <legend class="px-1 text-body font-semibold text-ink-strong">Meter reading review</legend>
+            <p class="text-caption text-label">Readings that look wrong wait in <em>Needs review</em> on the Meter Readings page until someone confirms them.</p>
 
             <div class="mt-3">
                 <label class="float">
@@ -152,11 +152,11 @@
                 @error('reviewUsageMultiplier')
                     <p id="ops-reviewUsageMultiplier-error" class="form-error" role="alert">{{ $message }}</p>
                 @else
-                    <p class="mt-1 text-xs text-label">2 means double the usual usage. 0 turns this check off.</p>
+                    <p class="mt-1 text-caption text-label">2 means double the usual usage. 0 turns this check off.</p>
                 @enderror
             </div>
 
-            <label class="check mt-3 !text-[13px]">
+            <label class="check mt-3 !text-body">
                 <input type="checkbox" wire:model="reviewZeroUsage" @disabled(! $canEdit)>
                 Review readings with no usage
             </label>
@@ -165,8 +165,8 @@
 
     {{-- Disconnection --}}
     <fieldset class="mt-3 min-w-0 rounded-xs border border-line bg-card px-4 pt-2 pb-4">
-        <legend class="px-1 text-[13px] font-semibold text-ink-strong">Disconnection for non-payment</legend>
-        <p class="text-xs text-label">Customers with this many overdue bills are listed on the Disconnections page, where staff issue the notices and create the work orders.</p>
+        <legend class="px-1 text-body font-semibold text-ink-strong">Disconnection for non-payment</legend>
+        <p class="text-caption text-label">Customers with this many overdue bills are listed on the Disconnections page, where staff issue the notices and create the work orders.</p>
 
         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[200px_200px_minmax(0,1fr)]">
             <div>
@@ -177,7 +177,7 @@
                 @error('disconnectionOverdueBills')
                     <p id="ops-disconnectionOverdueBills-error" class="form-error" role="alert">{{ $message }}</p>
                 @else
-                    <p class="mt-1 text-xs text-label">Paying until fewer are overdue clears the notice.</p>
+                    <p class="mt-1 text-caption text-label">Paying until fewer are overdue clears the notice.</p>
                 @enderror
             </div>
             <div>
@@ -188,14 +188,14 @@
                 @error('disconnectionNoticeDays')
                     <p id="ops-disconnectionNoticeDays-error" class="form-error" role="alert">{{ $message }}</p>
                 @else
-                    <p class="mt-1 text-xs text-label">Time to pay before disconnection.</p>
+                    <p class="mt-1 text-caption text-label">Time to pay before disconnection.</p>
                 @enderror
             </div>
             <fieldset class="min-w-0 sm:col-span-2 lg:col-span-1">
-                <legend class="mb-1.5 text-xs font-semibold text-ink-strong">Days not counted as working days</legend>
+                <legend class="mb-1.5 text-caption font-semibold text-ink-strong">Days not counted as working days</legend>
                 <div class="flex flex-wrap gap-x-4 gap-y-1">
                     @foreach ([1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun'] as $day => $label)
-                        <label class="check !text-[13px]" wire:key="skip-day-{{ $day }}">
+                        <label class="check !text-body" wire:key="skip-day-{{ $day }}">
                             <input type="checkbox" wire:model="disconnectionSkipDays" value="{{ $day }}" @disabled(! $canEdit)>
                             {{ $label }}
                         </label>

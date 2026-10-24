@@ -23,7 +23,7 @@
     <div>
         <x-flash class="mb-4" />
 
-        <p class="text-[13px] text-label">
+        <p class="text-body text-label">
             Customers are flagged with <span class="font-semibold text-ink-strong">{{ $company->disconnection_overdue_bills }} or more overdue bills</span>.
             Notices give <span class="font-semibold text-ink-strong">{{ $company->disconnection_notice_days }} working days</span> to pay{{ $skipDays !== [] ? ', not counting '.implode(', ', $skipDays) : '' }}.
             @if (auth()->user()->canAccessPage(\App\Enums\Page::CompanySetup))
@@ -40,9 +40,9 @@
                     aria-pressed="{{ $tab === $key ? 'true' : 'false' }}"
                     @class(['rounded-md px-4 py-3 text-left', 'bg-row-selected ring-1 ring-accent' => $tab === $key, 'bg-panel hover:bg-row-selected' => $tab !== $key])
                 >
-                    <p class="text-xs text-label">{{ DisconnectionsPage::TABS[$key] }}</p>
-                    <p @class(['mt-0.5 text-xl font-semibold', 'text-danger' => $key === 'due' && $counts[$key] > 0, 'text-ink-strong' => ! ($key === 'due' && $counts[$key] > 0)])>{{ Format::integer($counts[$key]) }}</p>
-                    <p class="mt-1 text-[11px] text-label">{{ $hint }}</p>
+                    <p class="text-caption text-label">{{ DisconnectionsPage::TABS[$key] }}</p>
+                    <p @class(['mt-0.5 text-title font-semibold', 'text-danger' => $key === 'due' && $counts[$key] > 0, 'text-ink-strong' => ! ($key === 'due' && $counts[$key] > 0)])>{{ Format::integer($counts[$key]) }}</p>
+                    <p class="mt-1 text-caption text-label">{{ $hint }}</p>
                 </button>
             @endforeach
         </div>
@@ -55,7 +55,7 @@
                     wire:click="$set('tab', '{{ $value }}')"
                     aria-pressed="{{ $tab === $value ? 'true' : 'false' }}"
                     @class([
-                        'h-7 rounded-full border px-3 text-xs',
+                        'h-7 rounded-full border px-3 text-caption',
                         'border-accent bg-accent text-white' => $tab === $value,
                         'border-line text-ink-soft hover:border-line-hover' => $tab !== $value,
                     ])
@@ -68,7 +68,7 @@
             @endforeach
             <div class="ml-auto flex flex-wrap items-center gap-2">
                 <label for="dc-cluster" class="sr-only">Cluster</label>
-                <select id="dc-cluster" wire:model.live="clusterId" class="form-control form-control-sm w-44 !text-[13px]">
+                <select id="dc-cluster" wire:model.live="clusterId" class="form-control form-control-sm w-44 !text-body">
                     <option value="">All clusters</option>
                     @foreach ($clusters as $id => $name)
                         <option value="{{ $id }}" wire:key="cluster-{{ $id }}">{{ $name }}</option>
@@ -91,7 +91,7 @@
 
         {{-- Actions for the tab --}}
         @if ($selectable)
-            <div class="mt-4 flex flex-wrap items-end gap-3 rounded-md border border-table-line bg-panel px-4 py-3 text-[13px]" wire:loading.class="opacity-60" wire:target="issueNotices,createWorkOrders,emailSelected">
+            <div class="mt-4 flex flex-wrap items-end gap-3 rounded-md border border-table-line bg-panel px-4 py-3 text-body" wire:loading.class="opacity-60" wire:target="issueNotices,createWorkOrders,emailSelected">
                 <p class="mr-auto">
                     <span class="font-semibold text-ink-strong">{{ count($selected) }}</span> selected
                     <button type="button" class="link-button ml-2" wire:click="selectAll">Select all</button>
@@ -101,7 +101,7 @@
                 </p>
 
                 @if ($tab === 'eligible' && $access['add'])
-                    <label class="check !text-[13px]">
+                    <label class="check !text-body">
                         <input type="checkbox" wire:model="emailNotices">
                         Email customers with an email address
                     </label>
@@ -124,8 +124,8 @@
 
                 @if ($tab === 'due' && $access['add'])
                     <div>
-                        <label for="dc-assignee" class="mb-1 block text-xs font-semibold text-ink-strong">Assign to</label>
-                        <select id="dc-assignee" wire:model="assigneeId" class="form-control form-control-sm w-48 !text-[13px]" @error('assigneeId') aria-invalid="true" @enderror>
+                        <label for="dc-assignee" class="mb-1 block text-caption font-semibold text-ink-strong">Assign to</label>
+                        <select id="dc-assignee" wire:model="assigneeId" class="form-control form-control-sm w-48 !text-body" @error('assigneeId') aria-invalid="true" @enderror>
                             <option value="">Nobody yet</option>
                             @foreach ($assignees as $id => $name)
                                 <option value="{{ $id }}" wire:key="assignee-{{ $id }}">{{ $name }}</option>
@@ -140,7 +140,7 @@
             </div>
 
             @if ($tab === 'due')
-                <p class="mt-2 text-xs text-label">Each customer's balance is checked again before its work order is created. Paying later cancels the work order automatically.</p>
+                <p class="mt-2 text-caption text-label">Each customer's balance is checked again before its work order is created. Paying later cancels the work order automatically.</p>
             @endif
         @endif
 
@@ -160,13 +160,13 @@
             <form wire:submit="exempt" novalidate class="mt-4 grid gap-3 rounded-md border border-table-line bg-panel px-4 py-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_auto] md:items-start">
                 @include('livewire.partials.customer-search', ['fieldId' => 'exempt-customer', 'label' => 'Exempt a customer'])
                 <div>
-                    <label for="exempt-reason" class="mb-1 block text-xs font-semibold text-ink-strong">Reason<x-required-mark /></label>
-                    <input id="exempt-reason" aria-required="true" type="text" maxlength="200" wire:model="exemptReason" placeholder="e.g. Hospital, Government" class="form-control !h-[34px] !text-[13px]" @error('exemptReason') aria-invalid="true" aria-describedby="exempt-reason-error" @enderror>
+                    <label for="exempt-reason" class="mb-1 block text-caption font-semibold text-ink-strong">Reason<x-required-mark /></label>
+                    <input id="exempt-reason" aria-required="true" type="text" maxlength="200" wire:model="exemptReason" placeholder="e.g. Hospital, Government" class="form-control !h-[34px] !text-body" @error('exemptReason') aria-invalid="true" aria-describedby="exempt-reason-error" @enderror>
                     @error('exemptReason') <p id="exempt-reason-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label for="exempt-until" class="mb-1 block text-xs font-semibold text-ink-strong">Until (optional)</label>
-                    <input id="exempt-until" type="date" min="{{ $today }}" wire:model="exemptUntil" class="form-control !h-[34px] !text-[13px]" @error('exemptUntil') aria-invalid="true" aria-describedby="exempt-until-error" @enderror>
+                    <label for="exempt-until" class="mb-1 block text-caption font-semibold text-ink-strong">Until (optional)</label>
+                    <input id="exempt-until" type="date" min="{{ $today }}" wire:model="exemptUntil" class="form-control !h-[34px] !text-body" @error('exemptUntil') aria-invalid="true" aria-describedby="exempt-until-error" @enderror>
                     @error('exemptUntil') <p id="exempt-until-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                 </div>
                 <div class="md:pt-5">
@@ -220,7 +220,7 @@
                             @endif
                             <td>
                                 <span class="block font-medium text-ink-strong">{{ $customer->fullName() }}</span>
-                                <span class="mt-0.5 block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $customer->account_number }}</span>
+                                <span class="mt-0.5 block text-caption whitespace-nowrap text-label tabular-nums">Acct No: {{ $customer->account_number }}</span>
                             </td>
                             <td>{{ $customer->clusterType?->name }}</td>
 
@@ -230,32 +230,32 @@
                                 @if ($tab === 'hold')
                                     <td class="text-warning">{{ ucfirst((string) $holdReasons[$row->id]) }}</td>
                                 @else
-                                    <td class="text-xs whitespace-nowrap text-label tabular-nums">{{ Format::shortDate(\Illuminate\Support\Carbon::parse($row->oldest_due_date)) }}</td>
+                                    <td class="text-caption whitespace-nowrap text-label tabular-nums">{{ Format::shortDate(\Illuminate\Support\Carbon::parse($row->oldest_due_date)) }}</td>
                                 @endif
                             @elseif ($tab === 'history')
-                                <td class="text-xs whitespace-nowrap text-label tabular-nums">{{ Format::shortDate($row->issued_on) }}</td>
+                                <td class="text-caption whitespace-nowrap text-label tabular-nums">{{ Format::shortDate($row->issued_on) }}</td>
                                 <td>
                                     <span class="status-pill {{ $row->status->colorClass() }}">{{ $row->status->label() }}</span>
                                     @if ($row->closed_at)
-                                        <span class="mt-1 block text-xs text-label tabular-nums">{{ Format::shortDateIn($row->closed_at, $timezone) }}</span>
+                                        <span class="mt-1 block text-caption text-label tabular-nums">{{ Format::shortDateIn($row->closed_at, $timezone) }}</span>
                                     @endif
                                 </td>
                                 <td class="text-ink-soft">
                                     <span class="block">{{ $row->close_reason }}</span>
                                     @if ($row->closedBy)
-                                        <span class="mt-0.5 block text-xs text-label">by {{ $row->closedBy->name }}</span>
+                                        <span class="mt-0.5 block text-caption text-label">by {{ $row->closedBy->name }}</span>
                                     @endif
                                 </td>
                             @else
                                 <td class="cell-right font-semibold text-ink-strong">{{ Format::amount($row->overdue_amount) }}</td>
-                                <td class="text-xs whitespace-nowrap tabular-nums">
+                                <td class="text-caption whitespace-nowrap tabular-nums">
                                     <span class="block text-label">{{ Format::shortDate($row->deadline) }}</span>
                                     @if ($tab === 'sent')
                                         @php($left = Disconnections::workingDaysLeft($company, $today, $row->deadline->toDateString()))
                                         <span @class(['mt-0.5 block', 'text-label' => $left > 0, 'font-semibold text-warning' => $left === 0])>{{ $left > 0 ? $left.' '.Str::plural('day', $left).' left' : 'Last day' }}</span>
                                     @endif
                                 </td>
-                                <td class="text-[13px]">
+                                <td class="text-body">
                                     @if ($tab === 'field')
                                         <a href="{{ route('work-orders', ['q' => $row->workOrder?->order_number]) }}" class="link-button">{{ $row->workOrder?->order_number }}</a>
                                         <span class="text-label">· {{ $row->workOrder?->assignedTo?->name ?? 'Unassigned' }}</span>
@@ -300,8 +300,8 @@
 
         {{-- Exemptions in force --}}
         @if ($tab === 'hold')
-            <h2 class="mt-6 text-[13px] font-semibold text-ink-strong">Exempt customers</h2>
-            <p class="text-xs text-label">Never flagged for disconnection while the exemption lasts, whatever they owe.</p>
+            <h2 class="mt-6 text-body font-semibold text-ink-strong">Exempt customers</h2>
+            <p class="text-caption text-label">Never flagged for disconnection while the exemption lasts, whatever they owe.</p>
             <div class="table-scroller mt-2">
                 <table class="data-table table-compact">
                     <thead>
@@ -318,10 +318,10 @@
                             <tr wire:key="exempt-{{ $customer->id }}">
                                 <td>
                                     <span class="block font-medium text-ink-strong">{{ $customer->fullName() }}</span>
-                                    <span class="block text-xs whitespace-nowrap text-label tabular-nums">Acct No: {{ $customer->account_number }}</span>
+                                    <span class="block text-caption whitespace-nowrap text-label tabular-nums">Acct No: {{ $customer->account_number }}</span>
                                 </td>
                                 <td>{{ $customer->disconnection_exempt_reason }}</td>
-                                <td class="text-xs whitespace-nowrap text-label tabular-nums">{{ $customer->disconnection_exempt_until ? Format::shortDate($customer->disconnection_exempt_until) : 'No end date' }}</td>
+                                <td class="text-caption whitespace-nowrap text-label tabular-nums">{{ $customer->disconnection_exempt_until ? Format::shortDate($customer->disconnection_exempt_until) : 'No end date' }}</td>
                                 <td>{{ $customer->disconnectionExemptedBy?->name }}</td>
                                 <td class="cell-actions">
                                     @if ($access['edit'])
@@ -340,15 +340,15 @@
 
     @if ($cancelling)
         <x-modal :title="'Cancel notice '.$cancelling->notice_number" close="$wire.closeCancel()" width="md">
-            <form wire:submit="cancelNotice" novalidate class="mt-3 text-[13px]">
+            <form wire:submit="cancelNotice" novalidate class="mt-3 text-body">
                 <p>
                     {{ $cancelling->customer->fullName() }} ({{ $cancelling->customer->account_number }}) will not be disconnected on this notice.
                     @if ($cancelling->workOrder?->status->isOpen())
                         Work order <span class="font-semibold">{{ $cancelling->workOrder->order_number }}</span> will be cancelled too.
                     @endif
                 </p>
-                <label for="cancel-reason" class="mt-3 block text-xs font-semibold text-ink-strong">Why?<x-required-mark /></label>
-                <textarea id="cancel-reason" aria-required="true" wire:model="cancelReason" rows="2" maxlength="200" class="form-control mt-1 !text-[13px]" placeholder="e.g. Promised to pay on Friday" @error('cancelReason') aria-invalid="true" aria-describedby="cancel-reason-error" @enderror></textarea>
+                <label for="cancel-reason" class="mt-3 block text-caption font-semibold text-ink-strong">Why?<x-required-mark /></label>
+                <textarea id="cancel-reason" aria-required="true" wire:model="cancelReason" rows="2" maxlength="200" class="form-control mt-1 !text-body" placeholder="e.g. Promised to pay on Friday" @error('cancelReason') aria-invalid="true" aria-describedby="cancel-reason-error" @enderror></textarea>
                 @error('cancelReason') <p id="cancel-reason-error" class="form-error" role="alert">{{ $message }}</p> @enderror
                 <div class="form-actions mt-4">
                     <button type="button" class="text-button" wire:click="closeCancel">Back</button>
