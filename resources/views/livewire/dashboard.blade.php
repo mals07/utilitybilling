@@ -73,7 +73,7 @@
                         'change' => $revenue['efficiency'] !== null && $revenue['previousEfficiency'] !== null ? round($revenue['efficiency'] - $revenue['previousEfficiency'], 1) : null,
                         'changeUnit' => ' pts',
                         'previousLabel' => $previousMonthLabel,
-                        'note' => $revenue['efficiency'] === null ? 'Nothing was billed this month.' : 'Collected ÷ billed in the month.',
+                        'note' => $revenue['efficiency'] === null ? 'Nothing was billed this month.' : null,
                     ])
                 @endif
                 @if ($sees['invoices'])
@@ -150,15 +150,15 @@
                     <dl class="mt-4 grid grid-cols-1 gap-3 border-t border-table-line pt-4 sm:grid-cols-3">
                         <div>
                             <dt class="text-caption font-semibold text-label uppercase">High</dt>
-                            <dd class="text-body font-semibold text-ink-strong" x-text="summary?.high"></dd>
+                            <dd class="text-body font-semibold text-ink-strong" x-html="summary?.high"></dd>
                         </div>
                         <div>
                             <dt class="text-caption font-semibold text-label uppercase">Low</dt>
-                            <dd class="text-body font-semibold text-ink-strong" x-text="summary?.low"></dd>
+                            <dd class="text-body font-semibold text-ink-strong" x-html="summary?.low"></dd>
                         </div>
                         <div>
                             <dt class="text-caption font-semibold text-label uppercase">6-month average</dt>
-                            <dd class="text-body font-semibold text-ink-strong" x-text="summary?.average"></dd>
+                            <dd class="text-body font-semibold text-ink-strong" x-html="summary?.average"></dd>
                         </div>
                     </dl>
                 </section>
@@ -216,18 +216,18 @@
                             ])
                         </section>
 
-                        <section aria-labelledby="adjustments-heading" class="rounded-xl border border-table-line bg-card p-4 shadow-card sm:p-5">
+                        <section aria-labelledby="adjustments-heading" class="flex flex-col rounded-xl border border-table-line bg-card p-4 shadow-card sm:p-5">
                             <h2 id="adjustments-heading" class="text-heading font-semibold text-ink-strong">Bill adjustments</h2>
                             <p class="mb-4 text-caption text-label">Credit and debit memos issued in {{ $monthLabel }} (voided memos left out).</p>
-                            <dl class="grid grid-cols-2 gap-3">
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">Credits given</dt>
-                                    <dd class="text-heading font-bold text-ink-strong">{{ $money($adjustments['credits']) }}</dd>
+                            <dl class="my-auto grid grid-cols-2 gap-3">
+                                <div class="flex min-h-36 flex-col items-center justify-center rounded-xs bg-panel p-4 text-center">
+                                    <dt class="mb-2 text-caption font-semibold text-label">Credits given</dt>
+                                    <dd class="text-heading font-bold text-ink-strong"><x-figure :value="$money($adjustments['credits'])" decimals="text-body" /></dd>
                                     <dd class="text-caption text-label">{{ Format::integer($adjustments['creditCount']) }} {{ Str::plural('memo', $adjustments['creditCount']) }}</dd>
                                 </div>
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">Debits added</dt>
-                                    <dd class="text-heading font-bold text-ink-strong">{{ $money($adjustments['debits']) }}</dd>
+                                <div class="flex min-h-36 flex-col items-center justify-center rounded-xs bg-panel p-4 text-center">
+                                    <dt class="mb-2 text-caption font-semibold text-label">Debits added</dt>
+                                    <dd class="text-heading font-bold text-ink-strong"><x-figure :value="$money($adjustments['debits'])" decimals="text-body" /></dd>
                                     <dd class="text-caption text-label">{{ Format::integer($adjustments['debitCount']) }} {{ Str::plural('memo', $adjustments['debitCount']) }}</dd>
                                 </div>
                             </dl>
@@ -268,7 +268,7 @@
                                             <td>{{ $account['name'] }}</td>
                                             <td class="cell-right">{{ Format::integer($account['bills']) }}</td>
                                             <td>{{ $account['oldestDue'] }}</td>
-                                            <td class="cell-right font-semibold">{{ $money($account['cents']) }}</td>
+                                            <td class="cell-right font-semibold"><x-figure :value="$money($account['cents'])" decimals="text-caption" /></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -287,17 +287,17 @@
                             <p class="mb-4 text-caption text-label">Status as of today; connection work completed in {{ $monthLabel }}.</p>
                             <dl class="grid grid-cols-3 gap-3">
                                 @foreach (['Connected' => $customers['connected'], 'Disconnected' => $customers['disconnected'], 'Pending' => $customers['pending']] as $label => $count)
-                                    <div class="rounded-xs bg-panel p-3" wire:key="customer-status-{{ $loop->index }}">
-                                        <dt class="text-caption font-semibold text-label">{{ $label }}</dt>
+                                    <div class="rounded-xs bg-panel p-3 text-right" wire:key="customer-status-{{ $loop->index }}">
+                                        <dt class="mb-2 text-caption font-semibold text-label">{{ $label }}</dt>
                                         <dd class="text-heading font-bold text-ink-strong">{{ Format::integer($count) }}</dd>
                                     </div>
                                 @endforeach
                             </dl>
-                            <dl class="mt-3 grid grid-cols-3 gap-3 border-t border-table-line pt-3">
+                            <dl class="mt-3 grid grid-cols-3 gap-3">
                                 @foreach (['New installations' => $customers['newInstallations'], 'Disconnections' => $customers['disconnections'], 'Reconnections' => $customers['reconnections']] as $label => $count)
-                                    <div wire:key="customer-movement-{{ $loop->index }}">
-                                        <dt class="text-caption text-label">{{ $label }}</dt>
-                                        <dd class="text-body font-semibold text-ink-strong">{{ Format::integer($count) }}</dd>
+                                    <div class="rounded-xs bg-panel p-3 text-right" wire:key="customer-movement-{{ $loop->index }}">
+                                        <dt class="mb-2 text-caption font-semibold text-label">{{ $label }}</dt>
+                                        <dd class="text-heading font-bold text-ink-strong">{{ Format::integer($count) }}</dd>
                                     </div>
                                 @endforeach
                             </dl>
@@ -305,7 +305,7 @@
                     @endif
 
                     @if ($sees['readings'])
-                        <section aria-labelledby="readings-heading" class="rounded-xl border border-table-line bg-card p-4 shadow-card sm:p-5">
+                        <section aria-labelledby="readings-heading" class="flex flex-col rounded-xl border border-table-line bg-card p-4 shadow-card sm:p-5">
                             <h2 id="readings-heading" class="text-heading font-semibold text-ink-strong">Meter reading progress</h2>
                             <p class="mb-4 text-caption text-label">Readings for the {{ $monthLabel }} billing period, out of {{ Format::integer($readingProgress['expected']) }} connected {{ Str::plural('meter', $readingProgress['expected']) }}.</p>
                             @php
@@ -317,24 +317,26 @@
                                 ];
                                 $readingTotal = max(1, array_sum(array_column($readingSteps, 'count')));
                             @endphp
-                            <div class="flex h-3 gap-0.5 overflow-hidden rounded-full bg-panel" aria-hidden="true">
-                                @foreach ($readingSteps as $step)
-                                    @if ($step['count'] > 0)
-                                        <div wire:key="reading-bar-{{ $loop->index }}" class="h-full" style="width: {{ $step['count'] / $readingTotal * 100 }}%; background-color: {{ $step['color'] }}" title="{{ $step['label'] }}: {{ $step['count'] }}"></div>
-                                    @endif
-                                @endforeach
+                            <div class="my-auto py-4">
+                                <div class="flex h-3 gap-0.5 overflow-hidden rounded-full bg-panel" aria-hidden="true">
+                                    @foreach ($readingSteps as $step)
+                                        @if ($step['count'] > 0)
+                                            <div wire:key="reading-bar-{{ $loop->index }}" class="h-full" style="width: {{ $step['count'] / $readingTotal * 100 }}%; background-color: {{ $step['color'] }}" title="{{ $step['label'] }}: {{ $step['count'] }}"></div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                <dl class="mt-4 grid grid-cols-4 gap-2">
+                                    @foreach ($readingSteps as $step)
+                                        <div class="text-center" wire:key="reading-step-{{ $loop->index }}">
+                                            <dt class="flex items-center justify-center gap-1.5 text-caption text-label">
+                                                <span class="inline-block size-2 shrink-0 rounded-full" style="background-color: {{ $step['color'] }}" aria-hidden="true"></span>
+                                                {{ $step['label'] }}
+                                            </dt>
+                                            <dd class="mt-1 text-heading font-bold text-ink-strong">{{ Format::integer($step['count']) }}</dd>
+                                        </div>
+                                    @endforeach
+                                </dl>
                             </div>
-                            <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-                                @foreach ($readingSteps as $step)
-                                    <div wire:key="reading-step-{{ $loop->index }}">
-                                        <dt class="flex items-center gap-1.5 text-caption text-label">
-                                            <span class="inline-block size-2 rounded-full" style="background-color: {{ $step['color'] }}" aria-hidden="true"></span>
-                                            {{ $step['label'] }}
-                                        </dt>
-                                        <dd class="text-body font-semibold text-ink-strong">{{ Format::integer($step['count']) }}</dd>
-                                    </div>
-                                @endforeach
-                            </dl>
                             <p class="mt-3 border-t border-table-line pt-3 text-caption text-label">
                                 Problem readings: <span class="font-semibold text-ink-strong">{{ Format::integer($readingProgress['noAccess']) }}</span> no access ·
                                 <span class="font-semibold text-ink-strong">{{ Format::integer($readingProgress['defective']) }}</span> defective meter
@@ -352,20 +354,20 @@
                             <h2 id="work-orders-heading" class="text-heading font-semibold text-ink-strong">Work orders</h2>
                             <p class="mb-4 text-caption text-label">Open orders as of today; completed orders in {{ $monthLabel }}.</p>
                             <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">In progress</dt>
+                                <div class="rounded-xs bg-panel p-3 text-right">
+                                    <dt class="mb-2 text-caption font-semibold text-label">In progress</dt>
                                     <dd class="text-heading font-bold text-ink-strong">{{ Format::integer($workOrders['inProgress']) }}</dd>
                                 </div>
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">On hold</dt>
+                                <div class="rounded-xs bg-panel p-3 text-right">
+                                    <dt class="mb-2 text-caption font-semibold text-label">On hold</dt>
                                     <dd class="text-heading font-bold text-ink-strong">{{ Format::integer($workOrders['onHold']) }}</dd>
                                 </div>
-                                <div @class(['rounded-xs p-3', 'bg-danger-bg' => $workOrders['overdue'] > 0, 'bg-panel' => $workOrders['overdue'] === 0])>
-                                    <dt class="text-caption font-semibold text-label" title="Open for more than {{ \App\Models\WorkOrder::OVERDUE_AFTER_DAYS }} days">Overdue</dt>
+                                <div @class(['rounded-xs p-3 text-right', 'bg-danger-bg' => $workOrders['overdue'] > 0, 'bg-panel' => $workOrders['overdue'] === 0])>
+                                    <dt class="mb-2 text-caption font-semibold text-label" title="Open for more than {{ \App\Models\WorkOrder::OVERDUE_AFTER_DAYS }} days">Overdue</dt>
                                     <dd @class(['text-heading font-bold', 'text-danger' => $workOrders['overdue'] > 0, 'text-ink-strong' => $workOrders['overdue'] === 0])>{{ Format::integer($workOrders['overdue']) }}</dd>
                                 </div>
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">Completed</dt>
+                                <div class="rounded-xs bg-panel p-3 text-right">
+                                    <dt class="mb-2 text-caption font-semibold text-label">Completed</dt>
                                     <dd class="text-heading font-bold text-ink-strong">{{ Format::integer($workOrders['completed']) }}</dd>
                                 </div>
                             </dl>
@@ -391,20 +393,20 @@
                             <h2 id="disconnections-heading" class="text-heading font-semibold text-ink-strong">Disconnections</h2>
                             <p class="mb-4 text-caption text-label">Notices running as of today; notices closed in {{ $monthLabel }}.</p>
                             <dl class="grid grid-cols-3 gap-3">
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">Pending</dt>
+                                <div class="rounded-xs bg-panel p-3 text-right">
+                                    <dt class="mb-2 text-caption font-semibold text-label">Pending</dt>
                                     <dd class="text-heading font-bold text-ink-strong">{{ Format::integer($disconnections['pending']) }}</dd>
                                 </div>
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">Scheduled</dt>
+                                <div class="rounded-xs bg-panel p-3 text-right">
+                                    <dt class="mb-2 text-caption font-semibold text-label">Scheduled</dt>
                                     <dd class="text-heading font-bold text-ink-strong">{{ Format::integer($disconnections['scheduled']) }}</dd>
                                 </div>
-                                <div class="rounded-xs bg-panel p-3">
-                                    <dt class="text-caption font-semibold text-label">Amount at risk</dt>
-                                    <dd class="truncate text-heading font-bold text-ink-strong">{{ $money($disconnections['atRisk']) }}</dd>
+                                <div class="rounded-xs bg-panel p-3 text-right">
+                                    <dt class="mb-2 text-caption font-semibold text-label">Amount at risk</dt>
+                                    <dd class="truncate text-heading font-bold text-ink-strong"><x-figure :value="$money($disconnections['atRisk'])" decimals="text-body" /></dd>
                                 </div>
                             </dl>
-                            <dl class="mt-3 grid grid-cols-3 gap-3 border-t border-table-line pt-3">
+                            <dl class="mt-3 grid grid-cols-3 gap-3 border-t border-table-line pt-3 text-right">
                                 <div>
                                     <dt class="text-caption text-label">Settled before cut-off</dt>
                                     <dd class="text-body font-semibold text-ink-strong">{{ Format::integer($disconnections['settled']) }}</dd>
@@ -415,7 +417,7 @@
                                 </div>
                                 <div>
                                     <dt class="text-caption text-label">Settlement rate</dt>
-                                    <dd class="text-body font-semibold text-ink-strong">{{ $disconnections['settledRate'] === null ? '—' : number_format($disconnections['settledRate'], 1).'%' }}</dd>
+                                    <dd class="text-body font-semibold text-ink-strong"><x-figure :value="$disconnections['settledRate'] === null ? '—' : number_format($disconnections['settledRate'], 1).'%'" decimals="text-caption" /></dd>
                                 </div>
                             </dl>
                         </section>

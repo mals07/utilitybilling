@@ -13,7 +13,7 @@
             <li wire:key="{{ $listKey }}-{{ $loop->index }}" title="{{ $row['label'] }}: {{ $row['text'] }}">
                 <div class="mb-1 flex items-baseline justify-between gap-3 text-body">
                     <span class="truncate text-ink">{{ $row['label'] }}</span>
-                    <span class="shrink-0 font-semibold text-ink-strong tabular-nums">{{ $row['text'] }}</span>
+                    <span class="shrink-0 font-semibold text-ink-strong tabular-nums"><x-figure :value="$row['text']" decimals="text-caption" /></span>
                 </div>
                 <div class="h-2 overflow-hidden rounded-full bg-panel" aria-hidden="true">
                     <div class="h-full rounded-full" style="width: {{ $row['amount'] > 0 ? max(1, round($row['amount'] / $largest * 100, 1)) : 0 }}%; background-color: {{ $row['color'] ?? '#0369a1' }}"></div>

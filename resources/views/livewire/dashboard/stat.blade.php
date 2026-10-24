@@ -9,9 +9,9 @@
     $note ??= null;
     $isGood = $change !== null && ($change >= 0) === $upIsGood;
 @endphp
-<div class="flex min-w-0 flex-col gap-1 rounded-xl border border-table-line bg-card p-4 shadow-card">
-    <p class="text-caption font-semibold tracking-wide text-label uppercase">{{ $label }}</p>
-    <p class="truncate text-title font-bold text-ink-strong" title="{{ $value }}">{{ $value }}</p>
+<div class="flex min-w-0 flex-col gap-1 rounded-xl border border-table-line bg-card p-4 text-right shadow-card">
+    <p class="mb-2 text-caption font-semibold tracking-wide text-label uppercase">{{ $label }}</p>
+    <p class="truncate text-title font-bold text-ink-strong" title="{{ $value }}"><x-figure :value="$value" decimals="text-heading" /></p>
     @if ($change !== null)
         <p class="text-caption text-label">
             <span @class(['font-semibold', 'text-success' => $isGood, 'text-danger' => ! $isGood])>

@@ -569,6 +569,15 @@ function formatValue(value, format, currency, compact = false) {
     }
 }
 
+const escapeHtml = (text) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
+
+/** The text as HTML with its first decimal part (".50" of "PHP 1,234.50") one step smaller on the type scale. */
+function figureHtml(text) {
+    const parts = /^(.*?\d)(\.\d+)(.*)$/s.exec(text);
+    if (!parts) return escapeHtml(text);
+    return `${escapeHtml(parts[1])}<span class="text-caption">${escapeHtml(parts[2])}</span>${escapeHtml(parts[3])}`;
+}
+
 /** Indexes of the highest and lowest months of a series, skipping months with no value. */
 function extremes(values) {
     let high = null;
@@ -637,9 +646,9 @@ function trendChart({ months, measures, currency }) {
             const known = values.filter((value) => value !== null);
             const average = known.length ? known.reduce((sum, value) => sum + value, 0) / known.length : null;
             return {
-                high: high === null ? '—' : `${months[high]} · ${formatValue(values[high], measure.format, currency)}`,
-                low: low === null ? '—' : `${months[low]} · ${formatValue(values[low], measure.format, currency)}`,
-                average: formatValue(average, measure.format, currency),
+                high: high === null ? '—' : `${escapeHtml(months[high])} · ${figureHtml(formatValue(values[high], measure.format, currency))}`,
+                low: low === null ? '—' : `${escapeHtml(months[low])} · ${figureHtml(formatValue(values[low], measure.format, currency))}`,
+                average: figureHtml(formatValue(average, measure.format, currency)),
             };
         },
 
