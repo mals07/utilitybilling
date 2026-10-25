@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ReadingKind;
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['company_id', 'customer_id', 'work_order_id', 'meter_number', 'kind', 'reading', 'read_on', 'used_at'])]
 class WorkOrderReading extends Model
 {
+    use BelongsToCompany;
+
     /**
      * @return array<string, string>
      */

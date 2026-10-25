@@ -3,6 +3,7 @@
 use App\Enums\OverdueHandling;
 use App\Models\Company;
 use App\Support\Billing\Surcharges;
+use App\Support\CurrentCompany;
 use App\Support\Disconnections;
 use App\Support\Format;
 use App\Support\PhotoResizer;
@@ -37,7 +38,7 @@ Artisan::command('mail:test {email : The address to send the test email to}', fu
 Artisan::command('invoices:surcharge-overdue', function () {
     $total = 0;
     foreach (Company::query()->where('overdue_handling', OverdueHandling::SameInvoice)->get() as $company) {
-        $total += Surcharges::applyToOverdueInvoices($company, Format::todayIn($company->timezone));
+        $total += CurrentCompany::as($company, fn (): int => Surcharges::applyToOverdueInvoices($company, Format::todayIn($company->timezone)));
     }
     $this->info("Surcharged {$total} overdue invoice(s).");
 })->purpose('Add after-due charges to overdue invoices, for companies that surcharge the invoice itself');
@@ -47,7 +48,7 @@ Schedule::command('invoices:surcharge-overdue')->dailyAt('00:30');
 Artisan::command('disconnections:review', function () {
     $total = 0;
     foreach (Company::query()->get() as $company) {
-        $total += Disconnections::reviewAll($company);
+        $total += CurrentCompany::as($company, fn (): int => Disconnections::reviewAll($company));
     }
     $this->info("Closed {$total} disconnection notice(s) that no longer apply.");
 })->purpose('Settle or cancel notices of disconnection whose customers have paid or are no longer connected');

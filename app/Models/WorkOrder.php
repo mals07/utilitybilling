@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\WorkOrderFlag;
 use App\Enums\WorkOrderStatus;
 use App\Enums\WorkOrderType;
+use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\NumberedPerCompany;
 use App\Support\Format;
 use Database\Factories\WorkOrderFactory;
@@ -24,7 +25,7 @@ use Illuminate\Support\Carbon;
 class WorkOrder extends Model
 {
     /** @use HasFactory<WorkOrderFactory> */
-    use HasFactory, NumberedPerCompany;
+    use BelongsToCompany, HasFactory, NumberedPerCompany;
 
     /**
      * Days an order may stay open after it was requested before it is overdue.

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCompany;
 use Database\Factories\RateTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class RateType extends Model
 {
     /** @use HasFactory<RateTypeFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * @return BelongsTo<Company, $this>

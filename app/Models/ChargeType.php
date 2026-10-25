@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCompany;
 use Database\Factories\ChargeTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ChargeType extends Model
 {
     /** @use HasFactory<ChargeTypeFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * @return BelongsTo<Company, $this>

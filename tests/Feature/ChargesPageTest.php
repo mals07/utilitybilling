@@ -16,6 +16,18 @@ class ChargesPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_another_companys_charge_element_cannot_be_edited(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        $stranger = ChargeElement::factory()->create();
+
+        Livewire::actingAs($owner)
+            ->test(ChargesPage::class)
+            ->call('editElement', $stranger->id)
+            ->assertDispatched('flash', message: 'That charge element no longer exists. The page has been refreshed.')
+            ->assertSet('editingElementId', null);
+    }
+
     public function test_charge_types_are_added_and_updated(): void
     {
         [$owner, $company] = $this->ownerWithCompany();

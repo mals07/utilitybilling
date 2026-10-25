@@ -15,6 +15,18 @@ class RolesPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_another_companys_role_is_not_deleted(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        $stranger = Role::factory()->create();
+
+        Livewire::actingAs($owner)
+            ->test(RolesPage::class)
+            ->call('deleteRole', $stranger->id);
+
+        $this->assertModelExists($stranger);
+    }
+
     public function test_roles_are_added_and_must_be_unique(): void
     {
         [$owner, $company] = $this->ownerWithCompany();

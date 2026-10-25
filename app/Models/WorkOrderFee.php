@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FeeBilling;
 use App\Enums\WorkOrderType;
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['company_id', 'order_type', 'amount', 'billing'])]
 class WorkOrderFee extends Model
 {
+    use BelongsToCompany;
+
     /**
      * @return array<string, string>
      */

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCompany;
 use Database\Factories\CustomerImportFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CustomerImport extends Model
 {
     /** @use HasFactory<CustomerImportFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * @return array<string, string>

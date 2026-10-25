@@ -119,6 +119,18 @@ class MeterReadingsTest extends TestCase
         $this->assertNotNull($unread);
     }
 
+    public function test_another_companys_meter_cannot_be_read(): void
+    {
+        $stranger = Customer::factory()->connected()->create(['meter_number' => 'MTR-9']);
+
+        Livewire::actingAs($this->owner)
+            ->test(MeterReadingsPage::class)
+            ->call('save', $stranger->id, '40')
+            ->assertDispatched('flash', message: 'That customer no longer exists. The list has been refreshed.');
+
+        $this->assertDatabaseMissing('meter_readings', ['customer_id' => $stranger->id]);
+    }
+
     public function test_typed_readings_are_saved_and_unusual_ones_need_review(): void
     {
         $customer = $this->customer();

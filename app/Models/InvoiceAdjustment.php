@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AdjustmentReason;
 use App\Enums\AdjustmentType;
+use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\NumberedPerCompany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class InvoiceAdjustment extends Model
 {
-    use NumberedPerCompany;
+    use BelongsToCompany, NumberedPerCompany;
 
     public const NUMBER_COLUMN = 'memo_number';
 

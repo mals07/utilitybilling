@@ -55,6 +55,20 @@ class CustomersPageTest extends TestCase
         ];
     }
 
+    public function test_another_companys_customer_cannot_be_opened_and_its_photo_is_not_found(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        $stranger = Customer::factory()->create(['first_name' => 'Imelda', 'last_name' => 'Outsider', 'photo_data' => 'photo-bytes', 'photo_mime_type' => 'image/jpeg']);
+
+        Livewire::actingAs($owner)
+            ->test(CustomersPage::class)
+            ->call('openCustomer', $stranger->id)
+            ->assertSet('customer', '')
+            ->assertDontSee('Outsider');
+
+        $this->actingAs($owner)->get(route('customers.photo', $stranger))->assertNotFound();
+    }
+
     public function test_customers_are_added_with_the_next_account_number(): void
     {
         [$owner, $company] = $this->ownerWithCompany();

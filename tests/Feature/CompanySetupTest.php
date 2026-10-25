@@ -169,6 +169,19 @@ class CompanySetupTest extends TestCase
         $this->assertSame('Statement of Account', $company->billing_header_1);
     }
 
+    public function test_another_companys_lookup_entry_is_not_removed(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        $stranger = AccountType::factory()->create();
+
+        Livewire::actingAs($owner)
+            ->test(LookupTable::class, ['type' => 'account-types'])
+            ->call('remove', $stranger->id)
+            ->assertSet('rowError', 'That entry no longer exists. The list has been refreshed.');
+
+        $this->assertNotSoftDeleted($stranger);
+    }
+
     public function test_lookup_entries_can_be_added_toggled_removed_and_restored(): void
     {
         [$owner, $company] = $this->ownerWithCompany();

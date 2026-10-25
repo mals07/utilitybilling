@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['company_id', 'name', 'is_active'])]
 abstract class CompanyLookup extends Model
 {
-    use SoftDeletes;
+    use BelongsToCompany, SoftDeletes;
 
     /**
      * @return array<string, string>

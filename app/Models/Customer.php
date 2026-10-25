@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CustomerStatus;
+use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\DefersBinaryColumns;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
-    use DefersBinaryColumns, HasFactory;
+    use BelongsToCompany, DefersBinaryColumns, HasFactory;
 
     /**
      * @return list<string>

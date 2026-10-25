@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PaymentMethod;
+use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\NumberedPerCompany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Payment extends Model
 {
-    use NumberedPerCompany;
+    use BelongsToCompany, NumberedPerCompany;
 
     public const NUMBER_COLUMN = 'receipt_number';
 

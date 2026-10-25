@@ -24,6 +24,18 @@ class UsersPageTest extends TestCase
         return now('Asia/Manila')->toDateString();
     }
 
+    public function test_another_companys_user_cannot_be_opened(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        [$stranger] = $this->ownerWithCompany();
+
+        Livewire::actingAs($owner)
+            ->test(UsersPage::class)
+            ->call('openUser', $stranger->id)
+            ->assertSet('userId', '')
+            ->assertDontSee($stranger->email);
+    }
+
     public function test_inviting_a_user_saves_them_and_emails_an_invitation(): void
     {
         [$owner, $company] = $this->ownerWithCompany();

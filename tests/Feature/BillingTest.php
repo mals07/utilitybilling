@@ -502,6 +502,46 @@ class BillingTest extends TestCase
         $this->actingAs($stranger)->get(route('customers.statement', $customer))->assertNotFound();
     }
 
+    public function test_another_companys_receipt_and_memo_prints_are_not_found(): void
+    {
+        $customer = $this->customer();
+        $invoice = $this->bill($customer, now()->format('Y-m'), '15');
+        $payment = Ledger::recordPayment($customer, ['paid_on' => now()->toDateString(), 'amount' => '100.00', 'method' => 'cash', 'reference_number' => null, 'notes' => null], $this->owner);
+        $memo = Adjustments::issue($invoice, AdjustmentType::Credit, AdjustmentReason::BillingError, 'Correction', 10_00, now()->toDateString(), null, $this->owner);
+        [$stranger] = $this->ownerWithCompany();
+
+        $this->actingAs($stranger)->get(route('payments.receipt', $payment))->assertNotFound();
+        $this->actingAs($stranger)->get(route('invoices.memo', $memo))->assertNotFound();
+    }
+
+    public function test_another_companys_invoices_payments_and_memos_cannot_be_opened_or_voided(): void
+    {
+        $customer = $this->customer();
+        $invoice = $this->bill($customer, now()->format('Y-m'), '15');
+        $payment = Ledger::recordPayment($customer, ['paid_on' => now()->toDateString(), 'amount' => '100.00', 'method' => 'cash', 'reference_number' => null, 'notes' => null], $this->owner);
+        $memo = Adjustments::issue($invoice, AdjustmentType::Credit, AdjustmentReason::BillingError, 'Correction', 10_00, now()->toDateString(), null, $this->owner);
+        [$stranger] = $this->ownerWithCompany();
+
+        Livewire::actingAs($stranger)
+            ->test(InvoicesPage::class)
+            ->call('openInvoice', $invoice->id)
+            ->assertDontSee($invoice->invoice_number)
+            ->call('askVoidMemo', $memo->id)
+            ->set('memoVoidReason', 'Not ours')
+            ->call('voidMemo');
+
+        Livewire::actingAs($stranger)
+            ->test(PaymentsPage::class)
+            ->call('openPayment', $payment->id)
+            ->assertDontSee($payment->receipt_number)
+            ->set('voiding', true)
+            ->set('voidReason', 'Not ours')
+            ->call('voidPayment');
+
+        $this->assertDatabaseHas('invoice_adjustments', ['id' => $memo->id, 'voided_at' => null]);
+        $this->assertDatabaseHas('payments', ['id' => $payment->id, 'voided_at' => null]);
+    }
+
     public function test_users_need_access_to_bill_record_and_void(): void
     {
         $customer = $this->customer();

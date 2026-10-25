@@ -356,6 +356,26 @@ class WorkOrdersPageTest extends TestCase
             ->assertSee('Replace the broken meter.');
     }
 
+    public function test_another_companys_work_order_cannot_be_opened_and_its_photo_is_not_found(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        $stranger = WorkOrder::factory()->create(['description' => 'Outsider leak']);
+        $photo = $stranger->photos()->create(['photo_data' => 'photo-bytes', 'mime_type' => 'image/jpeg', 'file_name' => 'meter.jpg']);
+        $gone = 'That work order no longer exists. The table has been refreshed.';
+
+        Livewire::actingAs($owner)
+            ->test(WorkOrdersPage::class)
+            ->call('openView', $stranger->id)
+            ->assertDispatched('flash', message: $gone)
+            ->assertDontSee('Outsider leak')
+            ->call('openEdit', $stranger->id)
+            ->assertSet('editingId', '')
+            ->call('openComplete', $stranger->id)
+            ->assertSet('completingId', '');
+
+        $this->actingAs($owner)->get(route('work-orders.photo', $photo))->assertNotFound();
+    }
+
     public function test_viewers_cannot_submit_or_update_work_orders(): void
     {
         [, $company] = $this->ownerWithCompany();

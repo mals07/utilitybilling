@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\InvoiceKind;
 use App\Enums\InvoiceStatus;
+use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\NumberedPerCompany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Invoice extends Model
 {
-    use NumberedPerCompany;
+    use BelongsToCompany, NumberedPerCompany;
 
     public const NUMBER_COLUMN = 'invoice_number';
 

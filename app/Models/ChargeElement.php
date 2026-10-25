@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DistributionType;
+use App\Models\Concerns\BelongsToCompany;
 use Database\Factories\ChargeElementFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ChargeElement extends Model
 {
     /** @use HasFactory<ChargeElementFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * @return array<string, string>
