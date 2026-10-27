@@ -26,12 +26,15 @@ use App\Livewire\Dashboard;
 use App\Livewire\Disconnections\DisconnectionsPage;
 use App\Livewire\Invoices\GenerateBillsPage;
 use App\Livewire\Invoices\InvoicesPage;
+use App\Livewire\MeterReadings\DiscrepanciesPage;
 use App\Livewire\MeterReadings\MeterReadingsPage;
+use App\Livewire\MeterReadings\ReadingAssignmentsPage;
 use App\Livewire\Onboarding\Welcome;
 use App\Livewire\Payments\PaymentsPage;
 use App\Livewire\Rates\RatesPage;
 use App\Livewire\Roles\RolesPage;
 use App\Livewire\Setup\SetupWizard;
+use App\Livewire\Users\DevicesPage;
 use App\Livewire\Users\UsersPage;
 use App\Livewire\WorkOrders\WorkOrdersPage;
 use Illuminate\Http\Request;
@@ -75,6 +78,8 @@ Route::middleware(['auth', 'verified.email'])->group(function () {
         Route::livewire('/customers', CustomersPage::class)->middleware('page:'.Page::Customers->value)->name('customers');
         Route::livewire('/work-orders', WorkOrdersPage::class)->middleware('page:'.Page::WorkOrders->value)->name('work-orders');
         Route::livewire('/meter-readings', MeterReadingsPage::class)->middleware('page:'.Page::MeterReadings->value)->name('meter-readings');
+        Route::livewire('/meter-readings/assignments', ReadingAssignmentsPage::class)->middleware('page:'.Page::MeterReadings->value)->name('meter-readings.assignments');
+        Route::livewire('/meter-readings/discrepancies', DiscrepanciesPage::class)->middleware('page:'.Page::MeterReadings->value)->name('meter-readings.discrepancies');
         Route::livewire('/invoices', InvoicesPage::class)->middleware('page:'.Page::Invoices->value)->name('invoices');
         Route::livewire('/invoices/generate', GenerateBillsPage::class)->middleware('page:'.Page::Invoices->value)->name('invoices.generate');
         Route::get('/invoices/{invoice}/print', InvoicePrintController::class)
@@ -100,6 +105,7 @@ Route::middleware(['auth', 'verified.email'])->group(function () {
         Route::livewire('/rates', RatesPage::class)->middleware('page:'.Page::Rates->value)->name('rates');
         Route::livewire('/charges', ChargesPage::class)->middleware('page:'.Page::Charges->value)->name('charges');
         Route::livewire('/users', UsersPage::class)->middleware('page:'.Page::Users->value)->name('users');
+        Route::livewire('/users/devices', DevicesPage::class)->middleware('page:'.Page::Users->value)->name('users.devices');
         Route::livewire('/roles', RolesPage::class)->middleware('page:'.Page::Roles->value)->name('roles');
 
         Route::get('/customers/{customer}/photo', CustomerPhotoController::class)

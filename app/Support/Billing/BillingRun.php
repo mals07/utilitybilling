@@ -169,11 +169,18 @@ final class BillingRun
     /**
      * Issues the bill for a saved reading that is Ready to bill.
      *
+     * A bill printed by a meter reader's device keeps the invoice number it was printed with
+     * ($invoiceNumber, from the device's reserved block). With $printed, the invoice is issued with the
+     * device's lines and tax instead of the ones worked out here, when a supervisor accepts a printed
+     * bill that differs.
+     *
+     * @param  array{lines: list<Line>, tax: TaxSummary}|null  $printed
+     *
      * @throws BillingException
      */
-    public static function generateFor(MeterReading $reading, string $invoiceDate, User $actor): Invoice
+    public static function generateFor(MeterReading $reading, string $invoiceDate, User $actor, ?string $invoiceNumber = null, ?array $printed = null): Invoice
     {
-        return DB::transaction(function () use ($reading, $invoiceDate, $actor): Invoice {
+        return DB::transaction(function () use ($reading, $invoiceDate, $actor, $invoiceNumber, $printed): Invoice {
             $customer = Customer::query()->lockForUpdate()->findOrFail($reading->customer_id);
             $reading = MeterReading::query()->lockForUpdate()->findOrFail($reading->id);
             $period = $reading->billing_period;
@@ -196,6 +203,18 @@ final class BillingRun
             $bill = self::bill($customer, $evaluated['usage'], $invoiceDate);
             $company = $customer->company;
 
+            if ($printed !== null) {
+                $feeIds = array_filter(array_column($printed['lines'], 'work_order_id'));
+                $overdueIds = array_filter(array_column($printed['lines'], 'source_invoice_id'));
+                $bill = [
+                    ...$bill,
+                    'lines' => $printed['lines'],
+                    'tax' => $printed['tax'],
+                    'fees' => $bill['fees']->whereIn('id', $feeIds)->values(),
+                    'overdue' => $customer->invoices()->whereIn('id', $overdueIds)->get(),
+                ];
+            }
+
             $invoice = self::issue($company, $customer, [
                 'kind' => InvoiceKind::Monthly,
                 'billing_period' => $period,
@@ -203,7 +222,7 @@ final class BillingRun
                 'invoice_date' => $invoiceDate,
                 'previous_balance' => Money::fromCents($bill['previousBalanceCents']),
                 ...Tax::invoiceAttributes($bill['tax']),
-            ], $bill['lines'], $actor);
+            ], $bill['lines'], $actor, $invoiceNumber);
 
             $reading->update([
                 'status' => MeterReadingStatus::Billed,
@@ -225,17 +244,22 @@ final class BillingRun
     }
 
     /**
-     * Creates an invoice with its lines, due the company's due-date days after the invoice date.
+     * Creates an invoice with its lines, due the company's due-date days after the invoice date. It
+     * takes the next invoice number, or $invoiceNumber when one was reserved for it.
      *
      * @param  array<string, mixed>  $attributes
      * @param  list<Line>  $lines
      */
-    public static function issue(Company $company, Customer $customer, array $attributes, array $lines, User $actor): Invoice
+    public static function issue(Company $company, Customer $customer, array $attributes, array $lines, User $actor, ?string $invoiceNumber = null): Invoice
     {
         $total = Money::fromCents(max(array_sum(array_column($lines, 'cents')), 0));
         $dueDate = Carbon::parse($attributes['invoice_date'])->addDays($company->due_date_days ?? 0)->toDateString();
 
-        $invoice = Invoice::createNumbered($company, [
+        $create = fn (array $attributes): Invoice => $invoiceNumber === null
+            ? Invoice::createNumbered($company, $attributes)
+            : Invoice::query()->create([...$attributes, 'company_id' => $company->id, 'invoice_number' => $invoiceNumber]);
+
+        $invoice = $create([
             ...$attributes,
             'customer_id' => $customer->id,
             'due_date' => $dueDate,

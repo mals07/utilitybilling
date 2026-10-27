@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'invoice_date', 'due_date', 'total_amount', 'amount_paid', 'balance', 'previous_balance', 'status',
     'surcharged_at', 'surcharged_on_invoice_id', 'void_reason', 'voided_at', 'voided_by_id', 'created_by_id',
     'tax_name', 'tax_rate', 'tax_inclusive', 'taxable_amount', 'tax_amount', 'tax_exempt_amount',
+    'device_id', 'printed_at', 'reprint_count', 'is_corrected',
 ])]
 class Invoice extends Model
 {
@@ -47,6 +48,9 @@ class Invoice extends Model
             'tax_exempt_amount' => 'decimal:2',
             'surcharged_at' => 'datetime',
             'voided_at' => 'datetime',
+            'printed_at' => 'datetime',
+            'reprint_count' => 'integer',
+            'is_corrected' => 'boolean',
         ];
     }
 

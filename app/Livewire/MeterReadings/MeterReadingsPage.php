@@ -7,10 +7,12 @@ use App\Enums\CustomerStatus;
 use App\Enums\MeterReadingStatus;
 use App\Enums\Page;
 use App\Enums\ReadingCode;
+use App\Enums\SyncItemStatus;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Livewire\Concerns\ParsesIds;
 use App\Models\Customer;
 use App\Models\MeterReading;
+use App\Models\SyncItem;
 use App\Support\Billing\BillCalculator;
 use App\Support\Billing\BillingException;
 use App\Support\Billing\BillingRun;
@@ -454,6 +456,7 @@ class MeterReadingsPage extends Component
             'customers' => $customers,
             'rows' => $rows,
             'stats' => $stats,
+            'heldFromPhones' => SyncItem::query()->where('status', SyncItemStatus::Held)->count(),
             'panel' => $this->panel($periodValid, $today),
             'clusters' => $company->clusterTypes()->orderBy('name')->pluck('name', 'id')->all(),
             'periodLabel' => $periodValid ? BillingRun::periodLabel($this->period) : null,

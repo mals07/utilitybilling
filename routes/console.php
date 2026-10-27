@@ -7,6 +7,7 @@ use App\Support\CurrentCompany;
 use App\Support\Disconnections;
 use App\Support\Format;
 use App\Support\PhotoResizer;
+use App\Support\Reader\BillingVectors;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +55,25 @@ Artisan::command('disconnections:review', function () {
 })->purpose('Settle or cancel notices of disconnection whose customers have paid or are no longer connected');
 
 Schedule::command('disconnections:review')->dailyAt('00:45');
+
+Artisan::command('billing:export-vectors
+    {company : The id of the company whose customers, rates and charges to use}
+    {--period= : The billing month, e.g. 2026-10 (default: the current one)}
+    {--limit=50 : How many customers to take}
+    {--output=storage/app/private/billing-vectors.json : Where to write the file}', function (string $company) {
+    $found = Company::query()->find($company);
+    if ($found === null) {
+        $this->error("No company with id {$company}.");
+
+        return 1;
+    }
+
+    $period = $this->option('period') ?: substr(Format::todayIn($found->timezone), 0, 7);
+    $vectors = CurrentCompany::as($found, fn (): array => BillingVectors::export($found, $period, (int) $this->option('limit')));
+
+    file_put_contents(base_path($this->option('output')), json_encode($vectors, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION));
+    $this->info('Wrote '.count($vectors['cases']).' case(s) to '.$this->option('output').'.');
+})->purpose('Write billing test cases for the meter reader app, from a company\'s real customers and rates');
 
 Artisan::command('photos:shrink', function () {
     // Photos are read ten at a time, since each may be a few megabytes. A photo is saved again only when

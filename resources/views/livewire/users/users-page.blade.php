@@ -13,6 +13,7 @@
 
         <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
             <x-search-box label="Search users" :width="200" wire:model.live.debounce.300ms="search" />
+            <a href="{{ route('users.devices') }}" class="link-button ml-auto">Reader devices</a>
             @if ($access['add'])
                 <button type="button" class="form-button form-button-sm" wire:click="openAdd">Add User</button>
             @endif

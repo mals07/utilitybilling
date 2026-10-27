@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'work_order_assignee_role_id', 'overdue_handling',
     'tax_enabled', 'tax_name', 'tax_rate', 'tax_inclusive', 'tax_on_water', 'tax_on_fees', 'tax_on_surcharges',
     'review_usage_multiplier', 'review_zero_usage',
+    'reader_block_margin', 'reader_clock_drift_minutes', 'reader_gps_limit_meters', 'readers_confirm_flagged',
     'disconnection_overdue_bills', 'disconnection_notice_days', 'disconnection_skip_days',
     'setup_step', 'setup_completed_at',
 ])]
@@ -60,10 +61,22 @@ class Company extends Model
             'tax_on_surcharges' => 'boolean',
             'review_usage_multiplier' => 'decimal:1',
             'review_zero_usage' => 'boolean',
+            'reader_block_margin' => 'integer',
+            'reader_clock_drift_minutes' => 'integer',
+            'reader_gps_limit_meters' => 'integer',
+            'readers_confirm_flagged' => 'boolean',
             'disconnection_overdue_bills' => 'integer',
             'disconnection_notice_days' => 'integer',
             'setup_completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return HasMany<ReadingAssignment, $this>
+     */
+    public function readingAssignments(): HasMany
+    {
+        return $this->hasMany(ReadingAssignment::class);
     }
 
     /**

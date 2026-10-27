@@ -15,13 +15,24 @@
 
         {{-- Month, reading date and route --}}
         <div class="flex flex-wrap items-end justify-between gap-3">
-            <p class="text-body text-label">
-                @if ($periodLabel)
-                    {{ $periodLabel }} · <span class="font-semibold text-ink-strong">{{ Format::integer($stats['read']) }}</span> of {{ Format::integer($stats['total']) }} meters read
-                @else
-                    Choose a billing month.
-                @endif
-            </p>
+            <div>
+                <p class="text-body text-label">
+                    @if ($periodLabel)
+                        {{ $periodLabel }} · <span class="font-semibold text-ink-strong">{{ Format::integer($stats['read']) }}</span> of {{ Format::integer($stats['total']) }} meters read
+                    @else
+                        Choose a billing month.
+                    @endif
+                </p>
+                <p class="mt-1 flex flex-wrap gap-x-4 text-caption">
+                    <a href="{{ route('meter-readings.assignments', ['period' => $period]) }}" class="link-button">Reader assignments</a>
+                    <a href="{{ route('meter-readings.discrepancies') }}" class="link-button">
+                        Discrepancies
+                        @if ($heldFromPhones > 0)
+                            <span class="ml-1 rounded-full bg-warning-bg px-1.5 text-warning">{{ Format::integer($heldFromPhones) }}</span>
+                        @endif
+                    </a>
+                </p>
+            </div>
             <div class="flex flex-wrap items-end gap-2">
                 <div>
                     <label for="mr-period" class="mb-1 block text-caption font-semibold text-ink-strong">Billing month<x-required-mark /></label>

@@ -45,6 +45,22 @@ trait NumberedPerCompany
     }
 
     /**
+     * Takes the next $count numbers of the company's sequence without creating records, e.g. for a
+     * meter reader's device to print invoices with offline. Records created later continue after them.
+     *
+     * @param  array<string, mixed>  $attributes  The columns that pick the sequence (see numberSequence()).
+     * @return array{int, int} The first and last number taken.
+     */
+    public static function reserveNumbers(Company $company, int $count, array $attributes = []): array
+    {
+        return DB::transaction(function () use ($company, $count, $attributes): array {
+            $last = self::takeNextNumber($company, $attributes, catchUp: false, count: $count);
+
+            return [$last - $count + 1, $last];
+        });
+    }
+
+    /**
      * Columns that split the company's numbers into separate sequences, e.g. credit and debit memos.
      *
      * @param  array<string, mixed>  $attributes
@@ -56,12 +72,12 @@ trait NumberedPerCompany
     }
 
     /**
-     * Advances the company's counter for this sequence and returns the new number. The counter
-     * starts from the highest number already in the table.
+     * Advances the company's counter for this sequence by $count and returns the new last number. The
+     * counter starts from the highest number already in the table.
      *
      * @param  array<string, mixed>  $attributes
      */
-    private static function takeNextNumber(Company $company, array $attributes, bool $catchUp): int
+    private static function takeNextNumber(Company $company, array $attributes, bool $catchUp, int $count = 1): int
     {
         $split = static::numberSequence($attributes);
         $name = collect($split)->map(fn (mixed $value, string $column): string => "{$column}={$value}")
@@ -82,7 +98,7 @@ trait NumberedPerCompany
             $last = max((int) $counter()->lockForUpdate()->value('last_number'), $highest);
         }
 
-        $next = (int) $last + 1;
+        $next = (int) $last + $count;
         $counter()->update(['last_number' => $next]);
 
         return $next;

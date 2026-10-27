@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'company_id', 'customer_id', 'meter_number', 'billing_period', 'status', 'reading_code', 'previous_reading',
     'present_reading', 'consumption', 'actual_consumption', 'replaced_meter_consumption', 'estimate_deducted',
     'is_defective', 'review_reason', 'notes', 'read_on', 'invoice_id', 'created_by_id', 'confirmed_by_id', 'confirmed_at',
+    'device_id', 'read_at', 'latitude', 'longitude', 'photo_path', 'confirmed_by_reader',
 ])]
 class MeterReading extends Model
 {
@@ -38,6 +39,10 @@ class MeterReading extends Model
             'is_defective' => 'boolean',
             'read_on' => 'date',
             'confirmed_at' => 'datetime',
+            'read_at' => 'datetime',
+            'latitude' => 'float',
+            'longitude' => 'float',
+            'confirmed_by_reader' => 'boolean',
         ];
     }
 
