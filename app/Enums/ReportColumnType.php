@@ -45,6 +45,15 @@ enum ReportColumnType: string
     }
 
     /**
+     * Orders two filled-in values of the column: numbers by size, text in natural order ignoring case
+     * ("Zone 2" before "Zone 10"), dates by day.
+     */
+    public function compare(mixed $a, mixed $b): int
+    {
+        return $this->isNumeric() ? (float) $a <=> (float) $b : strnatcasecmp((string) $a, (string) $b);
+    }
+
+    /**
      * The value as a spreadsheet cell: plain numbers without thousands separators, ISO dates.
      */
     public function csv(mixed $value): string

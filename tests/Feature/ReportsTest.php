@@ -14,6 +14,7 @@ use App\Enums\Page;
 use App\Enums\PaymentMethod;
 use App\Enums\ReadingCode;
 use App\Enums\WorkOrderType;
+use App\Livewire\Reports\ReportPage;
 use App\Models\ClusterType;
 use App\Models\Company;
 use App\Models\Customer;
@@ -30,7 +31,10 @@ use App\Support\Reports\Reports;
 use App\Support\Reports\ReportTable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Livewire\Features\SupportTesting\Testable;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
 class ReportsTest extends TestCase
@@ -399,6 +403,130 @@ class ReportsTest extends TestCase
         $this->assertStringContainsString("{$payment->receipt_number},2026-10-19,{$customer->account_number}", $csv);
         $this->assertStringContainsString(',1234.50', $csv);
         $this->assertStringNotContainsString('1,234.50', $csv);
+    }
+
+    /**
+     * The Daily Collections page as the owner of a company with $receipts receipts received today.
+     */
+    private function collectionsPageWithReceipts(int $receipts): Testable
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $customer = $this->customerIn($company);
+        foreach (range(1, $receipts) as $index) {
+            $this->payment($customer, '2026-10-19', '10.00');
+        }
+
+        return Livewire::actingAs($owner)->test(ReportPage::class, ['report' => Page::CollectionsReport->value]);
+    }
+
+    /**
+     * Receipt numbers on the Receipts table's current page.
+     *
+     * @return list<string>
+     */
+    private function receiptsShown(Testable $component): array
+    {
+        $receipts = collect($component->viewData('tables'))->firstWhere('table.title', 'Receipts');
+
+        return array_column($receipts['paginator']->items(), 0);
+    }
+
+    public function test_long_tables_show_twenty_rows_a_page_with_totals_for_every_row(): void
+    {
+        $component = $this->collectionsPageWithReceipts(25);
+
+        $this->assertSame(range(1, 20), array_map('intval', $this->receiptsShown($component)));
+        $component->assertSee('Showing 1–20 of 25')->assertSee('250.00');
+
+        $component->call('setPage', 2, 'receipts');
+
+        $this->assertSame(range(21, 25), array_map('intval', $this->receiptsShown($component)));
+    }
+
+    #[TestWith(['10', 10])]
+    #[TestWith(['50', 25])]
+    #[TestWith(['all', 25])]
+    #[TestWith(['1000', 20])]
+    public function test_rows_per_page_can_be_chosen_for_a_table(string $choice, int $rowsShown): void
+    {
+        $component = $this->collectionsPageWithReceipts(25);
+
+        $component->call('setRowsPerPage', 'receipts', $choice);
+
+        $this->assertCount($rowsShown, $this->receiptsShown($component));
+    }
+
+    public function test_choosing_rows_per_page_or_changing_a_filter_returns_to_the_first_page(): void
+    {
+        $component = $this->collectionsPageWithReceipts(25);
+
+        $component->call('setPage', 2, 'receipts')->call('setRowsPerPage', 'receipts', '10');
+        $this->assertSame('000001', $this->receiptsShown($component)[0]);
+
+        $component->call('setPage', 3, 'receipts')->set('to', '2026-10-19');
+        $this->assertSame('000001', $this->receiptsShown($component)[0]);
+    }
+
+    public function test_short_tables_and_printouts_are_not_paged(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $customer = $this->customerIn($company);
+        foreach (range(1, 25) as $index) {
+            $this->payment($customer, '2026-10-19', '10.00');
+        }
+
+        $this->actingAs($owner)->get(route('reports.collections.print'))
+            ->assertSee('000025')
+            ->assertDontSee('Rows per page');
+        Livewire::actingAs($owner)->test(ReportPage::class, ['report' => Page::CollectionsReport->value])
+            ->assertSeeHtml('id="report-table-0-rows"')
+            ->assertDontSeeHtml('id="report-table-1-rows"');
+    }
+
+    public function test_a_column_sorts_ascending_then_descending_then_back_to_the_report_order(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $customer = $this->customerIn($company);
+        foreach (['30.00', '1200.00', '5.00'] as $amount) {
+            $this->payment($customer, '2026-10-19', $amount);
+        }
+        $component = Livewire::actingAs($owner)->test(ReportPage::class, ['report' => Page::CollectionsReport->value]);
+        $amounts = fn (): array => array_column(collect($component->viewData('tables'))->firstWhere('table.title', 'Receipts')['paginator']->items(), 8);
+
+        $component->call('sortBy', 'receipts', 8);
+        $this->assertSame([500, 3000, 120000], $amounts());
+
+        $component->call('sortBy', 'receipts', 8);
+        $this->assertSame([120000, 3000, 500], $amounts());
+
+        $component->call('sortBy', 'receipts', 8);
+        $this->assertSame([3000, 120000, 500], $amounts());
+    }
+
+    public function test_text_sorts_in_natural_order_with_empty_values_last(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $customer = $this->customerIn($company);
+        foreach ([null, 'ref 10', 'Ref 2'] as $reference) {
+            $this->payment($customer, '2026-10-19', '10.00', ['reference_number' => $reference]);
+        }
+        $component = Livewire::actingAs($owner)->test(ReportPage::class, ['report' => Page::CollectionsReport->value]);
+        $references = fn (): array => array_column(collect($component->viewData('tables'))->firstWhere('table.title', 'Receipts')['paginator']->items(), 6);
+
+        $component->call('sortBy', 'receipts', 6);
+        $this->assertSame(['Ref 2', 'ref 10', null], $references());
+
+        $component->call('sortBy', 'receipts', 6);
+        $this->assertSame(['ref 10', 'Ref 2', null], $references());
+    }
+
+    public function test_sorting_spans_every_page_and_starts_from_the_first(): void
+    {
+        $component = $this->collectionsPageWithReceipts(25);
+
+        $component->call('setPage', 2, 'receipts')->call('sortBy', 'receipts', 0)->call('sortBy', 'receipts', 0);
+
+        $this->assertSame('000025', $this->receiptsShown($component)[0]);
     }
 
     public function test_operation_setup_calls_cluster_types_zones(): void

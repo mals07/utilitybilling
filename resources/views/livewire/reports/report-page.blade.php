@@ -104,8 +104,14 @@
                 </section>
             @endif
 
-            @foreach ($report->tables() as $table)
-                @include('livewire.reports.partials.table', ['table' => $table, 'tableId' => 'report-table-'.$loop->index])
+            @foreach ($tables as $shown)
+                @include('livewire.reports.partials.table', [
+                    'table' => $shown['table'],
+                    'tableId' => 'report-table-'.$loop->index,
+                    'paginator' => $shown['paginator'],
+                    'rowsPerPage' => $shown['rowsPerPage'],
+                    'sort' => $shown['sort'],
+                ])
             @endforeach
 
             @if ($report->note())
