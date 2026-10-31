@@ -28,8 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo(fn (Request $request): string => route($request->user()->homeRoute()));
 
-        // Remembers the collapsed sidebar; read on the server so the first paint matches.
-        $middleware->encryptCookies(except: ['ub_sidebar']);
+        // Remember the collapsed sidebar and its open group; read on the server so the first paint matches.
+        $middleware->encryptCookies(except: ['ub_sidebar', 'ub_sidebar_group']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

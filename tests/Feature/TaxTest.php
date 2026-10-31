@@ -44,6 +44,10 @@ class TaxTest extends TestCase
         parent::setUp();
 
         [$this->owner, $this->company] = $this->ownerWithCompany();
+
+        // The billing code runs for a signed-in user, so it sees only the owner's company.
+
+        $this->actingAs($this->owner);
         $this->company->update(['tax_enabled' => true, 'tax_name' => 'VAT', 'tax_rate' => '12.00']);
 
         // 0–10 @ 10.00, 11+ @ 25.00, minimum 10 cu.m.

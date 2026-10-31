@@ -85,7 +85,7 @@
     </table>
 
     @if ($invoice->tax_name !== null)
-        <section class="mt-4 ml-auto grid max-w-sm grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-[13px] text-label" aria-label="Tax breakdown">
+        <section class="mt-4 ml-auto grid max-w-sm grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-[12px] text-label" aria-label="Tax breakdown">
             <p>{{ strtoupper($invoice->tax_name) === 'VAT' ? 'VATable' : 'Taxable' }} amount</p><p class="text-right">{{ Format::amount($invoice->taxable_amount) }}</p>
             <p>{{ $invoice->tax_name }} ({{ Format::amount($invoice->tax_rate) }}%){{ $invoice->tax_inclusive ? ', included in the amounts above' : '' }}</p>
             <p class="text-right">{{ Format::amount($invoice->tax_amount) }}</p>

@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\Company;
+use App\Models\Scopes\CompanyScope;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -89,7 +90,9 @@ trait NumberedPerCompany
 
         if ($last === null || $catchUp) {
             // "+ 0" compares the stored text as numbers, so 1000000 comes after 999999.
+            // Filtered by the given company here, so this works with no current company too (e.g. factories).
             $highest = (int) static::query()
+                ->withoutGlobalScope(CompanyScope::class)
                 ->where('company_id', $company->id)
                 ->where($split)
                 ->max(DB::raw(static::NUMBER_COLUMN.' + 0'));

@@ -1,6 +1,6 @@
 @use('App\Support\Format')
 
-<x-page title="Reader Assignments">
+<x-page title="Reader Assignments" guide="reader-assignments">
     <div class="max-w-[960px]">
         <x-flash class="mb-4" />
 

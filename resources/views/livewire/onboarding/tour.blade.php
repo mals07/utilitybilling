@@ -27,6 +27,7 @@
             document.querySelectorAll('[data-tour-active]').forEach((el) => el.removeAttribute('data-tour-active'));
             if (! this.open || ! this.stop.target) return;
             document.querySelectorAll(`[data-tour='${this.stop.target}']`).forEach((el) => el.setAttribute('data-tour-active', ''));
+            this.$dispatch('tour-highlight', { target: this.stop.target });
         },
     }"
     x-init="@if ($autoStart) $nextTick(() => start()) @endif"

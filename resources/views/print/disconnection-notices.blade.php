@@ -21,14 +21,14 @@
     <body class="bg-panel font-sans text-ink">
         <div class="no-print mx-auto flex max-w-[800px] items-center justify-between gap-3 px-4 py-3">
             <button type="button" onclick="history.length > 1 ? history.back() : window.close()" class="link-button">← Back</button>
-            <p class="text-[13px] text-label">{{ $notices->count() }} {{ Str::plural('notice', $notices->count()) }}</p>
+            <p class="text-[12px] text-label">{{ $notices->count() }} {{ Str::plural('notice', $notices->count()) }}</p>
             <button type="button" onclick="window.print()" class="form-button form-button-sm min-w-32">Print / Save as PDF</button>
         </div>
 
         @foreach ($notices as $notice)
             @php($customer = $notice->customer)
             @php($bills = $overdueBills[$notice->id])
-            <main class="print-sheet mx-auto mb-8 max-w-[800px] border border-table-line bg-card px-8 py-8 text-[13px]">
+            <main class="print-sheet mx-auto mb-8 max-w-[800px] border border-table-line bg-card px-8 py-8 text-[12px]">
                 <x-print-letterhead :company="$company" title="Notice of Disconnection">
                     <p>No. <span class="font-semibold">{{ $notice->notice_number }}</span></p>
                     <p>Date {{ Format::longDate($notice->issued_on) }}</p>

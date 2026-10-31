@@ -9,14 +9,22 @@
     --font-sans: Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
     /* Type scale: the four sizes the app uses (welcome page and printed documents keep their own). */
-    --text-caption: 12px;
-    --text-caption--line-height: calc(16 / 12);
-    --text-body: 14px;
+    --text-caption: 11px;
+    --text-caption--line-height: calc(15 / 11);
+    --text-body: 13px;
     --text-body--line-height: 1.45;
-    --text-heading: 16px;
+    --text-heading: 15px;
     --text-heading--line-height: 1.5;
-    --text-title: 20px;
+    --text-title: 18px;
     --text-title--line-height: 1.4;
+
+    /* Tailwind's default steps, each nudged down to match the app scale. */
+    --text-xs: 0.6875rem;
+    --text-sm: 0.8125rem;
+    --text-base: 0.9375rem;
+    --text-lg: 1.0625rem;
+    --text-2xl: 1.375rem;
+    --text-3xl: 1.6875rem;
 
     /* Brand: deep ocean */
     --color-navy: #0b2545;
@@ -913,7 +921,7 @@
         padding-bottom: 6px;
         background: none;
         color: var(--color-accent);
-        font-size: 12px;
+        font-size: 11px;
         letter-spacing: 0;
         text-transform: none;
     }
@@ -1369,11 +1377,62 @@
         box-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
     }
 
-    /* Settings sub-links are indented under their group. */
-    #sidebar-group-settings .nav-item {
-        height: 36px;
-        padding-left: 46px;
-        font-size: var(--text-body);
+    .nav-item[aria-disabled='true'] {
+        cursor: default;
+        color: rgba(226, 238, 248, 0.4);
+    }
+
+    .nav-item[aria-disabled='true']:hover {
+        background: none;
+    }
+
+    /* Heading that folds its group of links */
+    .nav-section {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 4px;
+        width: 100%;
+        height: 32px;
+        margin-top: 8px;
+        padding: 0 8px 0 14px;
+        border: 0;
+        border-radius: 8px;
+        background: none;
+        color: rgba(165, 243, 252, 0.6);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-align: left;
+        text-transform: uppercase;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: color 150ms, background-color 150ms;
+    }
+
+    .nav-section:hover,
+    .nav-section[data-active='true'] {
+        color: #a5f3fc;
+    }
+
+    .nav-section:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-section:focus-visible {
+        outline: 2px solid var(--color-aqua);
+        outline-offset: -2px;
+    }
+
+    .nav-badge {
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: rgba(251, 191, 36, 0.16);
+        color: #fcd34d;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
 
     @media (min-width: 1024px) {
@@ -1382,16 +1441,20 @@
             padding: 0;
         }
 
-        /* The current page is hidden inside the group, so mark the group itself. */
-        :where([data-collapsed='true']) .nav-item[data-active='true']::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            bottom: 10px;
-            left: 0;
-            width: 3px;
-            border-radius: 0 3px 3px 0;
-            background: var(--color-aqua);
+        /* Collapsed, a heading shrinks to a divider between its groups. */
+        :where([data-collapsed='true']) .nav-section {
+            width: auto;
+            height: 1px;
+            margin: 10px 8px;
+            padding: 0;
+            overflow: hidden;
+            border-radius: 0;
+            background: rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+        }
+
+        :where([data-collapsed='true']) .nav-section > * {
+            display: none;
         }
     }
 

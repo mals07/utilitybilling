@@ -56,6 +56,10 @@ class BillingTest extends TestCase
         parent::setUp();
 
         [$this->owner, $this->company] = $this->ownerWithCompany();
+
+        // The billing code runs for a signed-in user, so it sees only the owner's company.
+
+        $this->actingAs($this->owner);
         $this->company->update(['due_date_days' => 15]);
 
         // 0–10 @ 10.00, 11–20 @ 25.00, 21+ @ 35.00, minimum 10 cu.m. — the company's Residential Rate.
@@ -97,7 +101,7 @@ class BillingTest extends TestCase
         $installation = WorkOrder::factory()->forCustomer($customer, WorkOrderType::NewInstallation)->completed()->create();
         WorkOrderReading::query()->create([
             'company_id' => $this->company->id, 'customer_id' => $customer->id, 'work_order_id' => $installation->id,
-            'meter_number' => $customer->meter_number, 'kind' => ReadingKind::Initial, 'reading' => '0', 'read_on' => now()->subMonths(4)->toDateString(),
+            'meter_number' => $customer->meter_number, 'kind' => ReadingKind::Initial, 'reading' => '0', 'read_on' => now()->subMonthsNoOverflow(4)->toDateString(),
         ]);
 
         return $customer;
@@ -204,7 +208,7 @@ class BillingTest extends TestCase
         $this->assertSame(GenerateBillsPage::BATCH_SIZE, Invoice::query()->count());
 
         // Changing the month mid-run doesn't change what the run bills.
-        $page->set('period', now()->subMonth()->format('Y-m'))
+        $page->set('period', now()->subMonthNoOverflow()->format('Y-m'))
             ->call('generateBatch')
             ->assertSet('run', null)
             ->assertDispatched('flash', fn (string $name, array $params): bool => str_contains($params['message'], $customers->count().' bills generated'));
@@ -249,7 +253,7 @@ class BillingTest extends TestCase
     public function test_the_next_bill_starts_from_the_last_reading_and_rejects_a_lower_one(): void
     {
         $customer = $this->customer();
-        $this->bill($customer, now()->subMonth()->format('Y-m'), '15');
+        $this->bill($customer, now()->subMonthNoOverflow()->format('Y-m'), '15');
 
         $next = BillingRun::compute($customer, now()->format('Y-m'), '27', false, now()->toDateString());
         $this->assertSame(15.0, $next['previous']);
@@ -264,9 +268,9 @@ class BillingTest extends TestCase
         $customer = $this->customer();
         $this->assertSame(10.0, BillingRun::compute($customer, now()->format('Y-m'), '', true, now()->toDateString())['billed']);
 
-        $this->bill($customer, now()->subMonths(3)->format('Y-m'), '12');
-        $this->bill($customer, now()->subMonths(2)->format('Y-m'), '30');
-        $this->bill($customer, now()->subMonth()->format('Y-m'), '51');
+        $this->bill($customer, now()->subMonthsNoOverflow(3)->format('Y-m'), '12');
+        $this->bill($customer, now()->subMonthsNoOverflow(2)->format('Y-m'), '30');
+        $this->bill($customer, now()->subMonthNoOverflow()->format('Y-m'), '51');
 
         // 12, 18 and 21 cu.m. → 17 cu.m. average
         $estimate = BillingRun::compute($customer, now()->format('Y-m'), '', true, now()->toDateString());
@@ -277,7 +281,7 @@ class BillingTest extends TestCase
     public function test_a_meter_replaced_during_the_month_is_billed_for_both_meters(): void
     {
         $customer = $this->customer();
-        $this->bill($customer, now()->subMonth()->format('Y-m'), '100');
+        $this->bill($customer, now()->subMonthNoOverflow()->format('Y-m'), '100');
 
         $replacement = WorkOrder::factory()->forCustomer($customer, WorkOrderType::MeterReplacement)->completed()->create();
         foreach ([['MTR-1', ReadingKind::Final, '108'], ['MTR-NEW', ReadingKind::Initial, '0']] as [$meter, $kind, $reading]) {
@@ -335,7 +339,7 @@ class BillingTest extends TestCase
     public function test_payments_go_to_the_oldest_bill_and_the_excess_becomes_advance_credit(): void
     {
         $customer = $this->customer();
-        $first = $this->bill($customer, now()->subMonth()->format('Y-m'), '15');     // 225.00
+        $first = $this->bill($customer, now()->subMonthNoOverflow()->format('Y-m'), '15');     // 225.00
         $second = $this->bill($customer, now()->format('Y-m'), '25');               // 10 cu.m. → 100.00
 
         Livewire::actingAs($this->owner)
@@ -366,7 +370,7 @@ class BillingTest extends TestCase
         $this->assertSame('75.00', $payment->unapplied_amount);
         $this->assertSame(['owed' => 0, 'credit' => 75_00], Ledger::summary($customer));
 
-        $third = $this->bill($customer, now()->addMonth()->format('Y-m'), '35', invoiceDate: now()->toDateString());
+        $third = $this->bill($customer, now()->addMonthNoOverflow()->format('Y-m'), '35', invoiceDate: now()->toDateString());
         $this->assertSame('100.00', $third->total_amount);
         $this->assertSame('25.00', $third->balance);
         $this->assertSame(InvoiceStatus::PartiallyPaid, $third->status);
@@ -433,9 +437,9 @@ class BillingTest extends TestCase
     public function test_overdue_bills_are_surcharged_on_the_next_bill_once(): void
     {
         $customer = $this->customer();
-        $overdue = $this->bill($customer, now()->subMonths(2)->format('Y-m'), '15', invoiceDate: now()->subDays(40)->toDateString());
+        $overdue = $this->bill($customer, now()->subMonthsNoOverflow(2)->format('Y-m'), '15', invoiceDate: now()->subDays(40)->toDateString());
 
-        $next = $this->bill($customer, now()->subMonth()->format('Y-m'), '25', invoiceDate: now()->toDateString());
+        $next = $this->bill($customer, now()->subMonthNoOverflow()->format('Y-m'), '25', invoiceDate: now()->toDateString());
 
         // 100.00 water + 2% of the 225.00 unpaid
         $this->assertSame('104.50', $next->total_amount);
@@ -451,7 +455,7 @@ class BillingTest extends TestCase
     {
         $this->company->update(['overdue_handling' => OverdueHandling::SameInvoice]);
         $customer = $this->customer();
-        $overdue = $this->bill($customer, now()->subMonth()->format('Y-m'), '15', invoiceDate: now()->subDays(40)->toDateString());
+        $overdue = $this->bill($customer, now()->subMonthNoOverflow()->format('Y-m'), '15', invoiceDate: now()->subDays(40)->toDateString());
 
         Livewire::actingAs($this->owner)
             ->test(InvoicesPage::class)
@@ -545,7 +549,7 @@ class BillingTest extends TestCase
     public function test_users_need_access_to_bill_record_and_void(): void
     {
         $customer = $this->customer();
-        $invoice = $this->bill($customer, now()->subMonth()->format('Y-m'), '15');
+        $invoice = $this->bill($customer, now()->subMonthNoOverflow()->format('Y-m'), '15');
         $viewer = $this->memberWithAccess($this->company, Page::Invoices, [Access::View]);
 
         Livewire::actingAs($viewer)
@@ -623,7 +627,7 @@ class BillingTest extends TestCase
             ->call('openInvoice', $invoice->id)
             ->assertDontSee('Adjust (credit / debit memo)');
 
-        $other = $this->bill($customer, now()->addMonth()->format('Y-m'), '25', invoiceDate: now()->toDateString());   // 100.00, 75.00 credit applied
+        $other = $this->bill($customer, now()->addMonthNoOverflow()->format('Y-m'), '25', invoiceDate: now()->toDateString());   // 100.00, 75.00 credit applied
         $this->assertSame('25.00', $other->balance);
 
         $memo = Adjustments::issue($other, AdjustmentType::Debit, AdjustmentReason::Undercharge, 'Missed 2 cu.m.', 50_00, now()->toDateString(), null, $this->owner);

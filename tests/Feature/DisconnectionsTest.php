@@ -45,6 +45,10 @@ class DisconnectionsTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-19 12:00', 'Asia/Manila'));
 
         [$this->owner, $this->company] = $this->ownerWithCompany();
+
+        // The billing code runs for a signed-in user, so it sees only the owner's company.
+
+        $this->actingAs($this->owner);
         $this->company->update(['disconnection_overdue_bills' => 2, 'disconnection_notice_days' => 5, 'disconnection_skip_days' => '6,7']);
     }
 

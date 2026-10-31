@@ -230,7 +230,8 @@ class ImportCustomersTest extends TestCase
 
     public function test_the_excel_template_reads_back_with_every_column(): void
     {
-        [, $company] = $this->ownerWithCompany();
+        [$owner, $company] = $this->ownerWithCompany();
+        $this->actingAs($owner);
         $this->lookups($company);
 
         ob_start();

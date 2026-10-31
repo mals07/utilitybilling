@@ -423,9 +423,70 @@ final class Guides
                         'body' => 'Type the number on the meter. The usage and bill preview appear below it, and unusual usage is flagged for review. Click Save and next to move to the next meter.',
                     ],
                     [
+                        'target' => 'p:has(> a[href*="/meter-readings/assignments"])',
+                        'title' => 'Meter reader app',
+                        'body' => "If your readers use the meter reader app: Reader assignments chooses who reads each cluster, and Discrepancies lists phone readings that need a supervisor's decision. Each has its own Guide me.",
+                    ],
+                    [
                         'target' => 'a[href*="/invoices/generate"]',
                         'title' => 'Generate the bills',
                         'body' => "When the month's readings are in, generate the bills from here.",
+                    ],
+                ],
+            ],
+            'reader-assignments' => [
+                'title' => 'Reader assignments',
+                'steps' => [
+                    [
+                        'target' => '#ra-period',
+                        'title' => 'Billing month',
+                        'body' => 'Assignments are made for each billing month. Pick the month your readers are about to read.',
+                    ],
+                    [
+                        'target' => 'div:has(> .table-scroller)',
+                        'title' => 'Clusters to read',
+                        'body' => 'Every cluster is listed with the number of connected meters still waiting for a reading this month.',
+                    ],
+                    [
+                        'target' => '[id^="ra-reader-"]',
+                        'title' => 'Pick the reader',
+                        'body' => "Choose a reader for each cluster. It saves straight away, and the reader's phone downloads that cluster's meters the next time it syncs. Choose Not assigned to take the cluster back. Only staff whose role can add meter readings are listed.",
+                    ],
+                    [
+                        'target' => null,
+                        'title' => 'Readings from other clusters',
+                        'body' => "If a reader reads a meter outside their clusters, the reading isn't saved. It is held on the Discrepancies page for a supervisor to review.",
+                    ],
+                ],
+            ],
+            'discrepancies' => [
+                'title' => 'Discrepancies',
+                'steps' => [
+                    [
+                        'target' => 'div:has(> [wire\:key^="filter-"])',
+                        'title' => 'Held, Info and Resolved',
+                        'body' => "Held readings weren't saved and wait for your decision. Info readings were saved, and are listed so you can check what differed. Resolved shows the decisions already made.",
+                    ],
+                    [
+                        'target' => '[wire\:click^="select("]',
+                        'title' => 'Open a reading',
+                        'body' => 'Click a customer to see the details. Each row shows who read the meter, what differs, and the bill the phone printed. When the list is empty, every reading from the phones matched.',
+                        'until' => 'aside[aria-label="Discrepancy details"]',
+                    ],
+                    [
+                        'target' => 'aside[aria-label="Discrepancy details"] ul',
+                        'title' => 'What differs',
+                        'body' => "Each finding compares the phone's figures with the billing data now, e.g. the meter was read twice, the meter was changed, or the rate changed after the bill was printed.",
+                    ],
+                    [
+                        'target' => '#discrepancy-note',
+                        'title' => 'Write a note',
+                        'body' => 'Say why you are deciding this way. A note is required and kept for the audit trail.',
+                    ],
+                    [
+                        'target' => 'aside[aria-label="Discrepancy details"] div:has(> [wire\:click^="resolve("])',
+                        'title' => 'Decide',
+                        'body' => "Accept as printed issues the invoice exactly as the customer received it. Re-bill issues it with today's figures under the same number, marked Corrected, so deliver a corrected bill. Reject saves nothing, and the meter must be read again. If no bill was printed, Save the reading saves it with the current figures.",
                     ],
                 ],
             ],

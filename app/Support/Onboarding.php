@@ -313,7 +313,7 @@ final class Onboarding
                     'key' => $page->value,
                     'title' => $page->label(),
                     'body' => self::pageSummary($page),
-                    'target' => $page->group() === 'settings' ? 'settings' : $page->value,
+                    'target' => $page->value,
                     'url' => route($page->value),
                 ];
             }

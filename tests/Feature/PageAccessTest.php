@@ -23,6 +23,52 @@ class PageAccessTest extends TestCase
         foreach (Page::cases() as $page) {
             $response->assertSee($page->label());
         }
+
+        $response->assertSeeInOrder([
+            'Customer Management', 'Customers',
+            'Readings &amp; Payments', 'Meter Readings', 'Invoices', 'Payments',
+            'Field Operations', 'Work Orders', 'Disconnections',
+            'Reports',
+            'System Administration', 'Company Setup', 'Users', 'Rates', 'Charges', 'Roles',
+        ], escape: false);
+    }
+
+    public function test_only_the_sidebar_group_holding_the_current_page_starts_open(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+
+        $html = $this->actingAs($owner)->get(route('customers'))->getContent();
+
+        $this->assertMatchesRegularExpression('/id="sidebar-group-customer-management" x-show="open"\s+class/', $html);
+        $this->assertMatchesRegularExpression('/id="sidebar-group-field-operations" x-show="open"\s+x-cloak/', $html);
+        $this->assertMatchesRegularExpression('/id="sidebar-group-system-administration" x-show="open"\s+x-cloak/', $html);
+    }
+
+    public function test_the_sidebar_group_last_left_open_reopens_outside_any_group(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        $this->withUnencryptedCookie('ub_sidebar_group', 'field-operations');
+
+        $dashboard = $this->actingAs($owner)->get(route('dashboard'))->getContent();
+
+        $this->assertMatchesRegularExpression('/id="sidebar-group-field-operations" x-show="open"\s+class/', $dashboard);
+        $this->assertMatchesRegularExpression('/id="sidebar-group-customer-management" x-show="open"\s+x-cloak/', $dashboard);
+
+        $customers = $this->actingAs($owner)->get(route('customers'))->getContent();
+
+        $this->assertMatchesRegularExpression('/id="sidebar-group-customer-management" x-show="open"\s+class/', $customers);
+        $this->assertMatchesRegularExpression('/id="sidebar-group-field-operations" x-show="open"\s+x-cloak/', $customers);
+    }
+
+    public function test_sidebar_headings_without_a_visible_page_are_hidden(): void
+    {
+        [, $company] = $this->ownerWithCompany();
+        $member = $this->memberWithAccess($company, Page::Rates, [Access::View]);
+
+        $this->actingAs($member)->get(route('dashboard'))
+            ->assertSee('System Administration')
+            ->assertDontSee('Customer Management')
+            ->assertDontSee('Field Operations');
     }
 
     public function test_users_without_a_company_are_sent_to_the_setup_wizard(): void

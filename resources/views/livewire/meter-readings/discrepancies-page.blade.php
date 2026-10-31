@@ -4,7 +4,7 @@
 @use('App\Support\Format')
 @use('App\Support\Money')
 
-<x-page title="Discrepancies">
+<x-page title="Discrepancies" guide="discrepancies">
     <div>
         <x-flash class="mb-4" />
 

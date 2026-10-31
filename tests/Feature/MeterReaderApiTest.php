@@ -14,6 +14,7 @@ use App\Models\InvoiceNumberBlock;
 use App\Models\InvoiceNumberGap;
 use App\Support\Billing\BillingRun;
 use App\Support\Billing\MeterReadings;
+use App\Support\CurrentCompany;
 use App\Support\Reader\RoutePackages;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Feature\Concerns\UsesMeterReaderApp;
@@ -279,7 +280,7 @@ class MeterReaderApiTest extends TestCase
     {
         $this->routeCustomer();
         [, $otherCompany] = $this->ownerWithCompany();
-        Customer::factory()->for($otherCompany)->connected()->create(['cluster_type_id' => $this->cluster->id]);
+        CurrentCompany::acrossAll(fn (): Customer => Customer::factory()->for($otherCompany)->connected()->create(['cluster_type_id' => $this->cluster->id]));
 
         $package = $this->downloadPackage($this->registerDevice());
 

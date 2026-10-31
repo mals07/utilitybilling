@@ -26,7 +26,7 @@
             <button type="button" onclick="window.print()" class="form-button form-button-sm min-w-32">Print / Save as PDF</button>
         </div>
 
-        <main class="print-sheet mx-auto mb-8 max-w-[800px] border border-table-line bg-card px-8 py-8 text-[13px]">
+        <main class="print-sheet mx-auto mb-8 max-w-[800px] border border-table-line bg-card px-8 py-8 text-[12px]">
             <x-print-letterhead :company="$company" :title="$title">{{ $heading ?? '' }}</x-print-letterhead>
 
             {{ $slot }}

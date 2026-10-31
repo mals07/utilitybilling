@@ -6,9 +6,18 @@
 
     // Users without a company may always open Company Setup, since that is where they create it.
     $visible = fn (Page $page): bool => $user->canAccessPage($page) || ($page === Page::CompanySetup && ! $company);
-    $mainLinks = array_filter(Page::inGroup('main'), $visible);
-    $settingsLinks = array_filter(Page::inGroup('settings'), $visible);
-    $settingsActive = collect($settingsLinks)->contains(fn (Page $page): bool => request()->routeIs($page->value));
+    $sections = array_map(fn (array $pages): array => array_filter($pages, $visible), Page::sections());
+
+    // Reports has no pages yet, so it sits before System Administration as a placeholder (null).
+    $sections = array_slice($sections, 0, -1, true) + ['Reports' => null] + array_slice($sections, -1, 1, true);
+
+    // One group is open at a time: the one holding the current page, else the one the user last left open.
+    $currentGroup = collect($sections)
+        ->filter(fn (?array $pages): bool => collect($pages ?? [])->contains(fn (Page $page): bool => request()->routeIs($page->value)))
+        ->keys()
+        ->map(fn (string $heading): string => Str::slug($heading))
+        ->first();
+    $openGroup = $currentGroup ?? request()->cookie('ub_sidebar_group');
     $collapsed = request()->cookie('ub_sidebar') === 'collapsed';
     $logoUrl = $company?->assetUrl('logo');
 @endphp
@@ -33,7 +42,6 @@
             x-data="{
                 collapsed: @js($collapsed),
                 mobileOpen: false,
-                settingsOpen: @js($settingsActive),
                 isDesktop: () => window.matchMedia('(min-width: 1024px)').matches,
                 remember(value) {
                     this.collapsed = value;
@@ -43,14 +51,12 @@
                     if (this.isDesktop()) this.remember(! this.collapsed);
                     else this.mobileOpen = ! this.mobileOpen;
                 },
-                toggleSettings() {
-                    // While collapsed the links are hidden, so expand the sidebar to show them.
-                    if (this.collapsed && this.isDesktop()) {
-                        this.remember(false);
-                        this.settingsOpen = true;
-                        return;
-                    }
-                    this.settingsOpen = ! this.settingsOpen;
+                openGroup: @js($openGroup),
+                setGroup(group, open, remember = true) {
+                    // Opening a group closes the others.
+                    this.openGroup = open ? group : null;
+                    if (! remember) return;
+                    document.cookie = `ub_sidebar_group=${this.openGroup ?? ''}; path=/; max-age=31536000; samesite=lax`;
                 },
             }"
             x-bind:data-collapsed="collapsed"
@@ -99,7 +105,7 @@
                     id="sidebar"
                     aria-label="Sidebar"
                     x-bind:data-open="mobileOpen"
-                    class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-sidebar bg-[image:var(--gradient-navy)] text-white shadow-[4px_0_24px_-12px_rgba(11,37,69,0.6)] transition-transform duration-200 data-[open=true]:translate-x-0 lg:static lg:z-auto lg:w-52 lg:shrink-0 lg:translate-x-0 lg:transition-[width] lg:sidebar-collapsed:w-[72px]"
+                    class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-sidebar bg-[image:var(--gradient-navy)] text-white shadow-[4px_0_24px_-12px_rgba(11,37,69,0.6)] transition-transform duration-200 data-[open=true]:translate-x-0 lg:static lg:z-auto lg:w-60 lg:shrink-0 lg:translate-x-0 lg:transition-[width] lg:sidebar-collapsed:w-[72px]"
                 >
                     <div class="flex h-full flex-col lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)]">
                         {{-- Company brand; only the logo shows while collapsed. --}}
@@ -143,49 +149,63 @@
                                 <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">Dashboard</span>
                             </a>
 
-                            @foreach ($mainLinks as $page)
-                                <a
-                                    href="{{ route($page->value) }}"
-                                    class="nav-item"
-                                    data-tour="{{ $page->value }}"
-                                    @if (request()->routeIs($page->value)) aria-current="page" @endif
-                                    x-bind:title="collapsed ? @js($page->label()) : null"
-                                >
-                                    <x-icon :name="match ($page) { Page::Customers => 'user', Page::WorkOrders => 'stack', Page::MeterReadings => 'gauge', Page::Invoices => 'receipt', Page::Payments => 'cash', Page::Disconnections => 'warning', default => 'home' }" />
-                                    <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">{{ $page->label() }}</span>
-                                </a>
-                            @endforeach
+                            {{--
+                                Each heading folds its links away, and opening one closes the others. The group holding
+                                the current page starts open (else the one last left open), and the tour opens whichever
+                                group holds the link it points at. While the sidebar is collapsed every icon shows and
+                                headings become dividers.
+                            --}}
+                            @foreach ($sections as $heading => $pages)
+                                @php
+                                    $group = Str::slug($heading);
+                                    $groupId = 'sidebar-group-'.$group;
+                                    $groupActive = collect($pages ?? [])->contains(fn (Page $page): bool => request()->routeIs($page->value));
+                                    $groupOpen = $group === $openGroup;
+                                @endphp
 
-                            @if ($settingsLinks !== [])
-                                <div class="mt-3 border-t border-white/10 pt-3">
-                                    <button
-                                        type="button"
-                                        class="nav-item"
-                                        data-tour="settings"
-                                        data-active="{{ $settingsActive ? 'true' : 'false' }}"
-                                        x-bind:aria-expanded="settingsOpen.toString()"
-                                        aria-controls="sidebar-group-settings"
-                                        x-bind:title="collapsed ? 'Settings' : null"
-                                        x-on:click="toggleSettings()"
+                                @if ($pages !== [])
+                                    <div
+                                        x-data="{ group: @js($group), get open() { return this.openGroup === this.group; } }"
+                                        x-on:tour-highlight.window="if ($el.querySelector(`[data-tour='${$event.detail.target}']`)) setGroup(group, true, false)"
+                                        class="flex shrink-0 flex-col"
                                     >
-                                        <x-icon name="gear" />
-                                        <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">Settings</span>
-                                        <x-icon name="chevron-down" :size="16" class="transition-transform duration-150 lg:sidebar-collapsed:hidden" x-bind:class="settingsOpen && 'rotate-180'" />
-                                    </button>
+                                        <button
+                                            type="button"
+                                            class="nav-section"
+                                            data-active="{{ $groupActive ? 'true' : 'false' }}"
+                                            x-bind:aria-expanded="open.toString()"
+                                            aria-controls="{{ $groupId }}"
+                                            x-on:click="setGroup(group, ! open)"
+                                        >
+                                            <span class="flex-1 truncate">{{ $heading }}</span>
+                                            <x-icon name="chevron-down" :size="14" class="transition-transform duration-150" x-bind:class="open && 'rotate-180'" />
+                                        </button>
 
-                                    <div id="sidebar-group-settings" x-show="settingsOpen" @unless ($settingsActive) x-cloak @endunless class="mt-1 flex flex-col gap-0.5 lg:sidebar-collapsed:hidden">
-                                        @foreach ($settingsLinks as $page)
-                                            <a
-                                                href="{{ route($page->value) }}"
-                                                class="nav-item"
-                                                @if (request()->routeIs($page->value)) aria-current="page" @endif
-                                            >
-                                                <span class="truncate">{{ $page->label() }}</span>
-                                            </a>
-                                        @endforeach
+                                        <div id="{{ $groupId }}" x-show="open" @unless ($groupOpen) x-cloak @endunless class="flex flex-col gap-1 lg:sidebar-collapsed:flex!">
+                                            @if ($pages === null)
+                                                <span class="nav-item" aria-disabled="true" x-bind:title="collapsed ? 'Reports (coming soon)' : null">
+                                                    <x-icon name="chart" />
+                                                    <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">Reports</span>
+                                                    <span class="nav-badge lg:sidebar-collapsed:hidden">Soon</span>
+                                                </span>
+                                            @else
+                                                @foreach ($pages as $page)
+                                                    <a
+                                                        href="{{ route($page->value) }}"
+                                                        class="nav-item"
+                                                        data-tour="{{ $page->value }}"
+                                                        @if (request()->routeIs($page->value)) aria-current="page" @endif
+                                                        x-bind:title="collapsed ? @js($page->label()) : null"
+                                                    >
+                                                        <x-icon :name="$page->icon()" />
+                                                        <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">{{ $page->label() }}</span>
+                                                    </a>
+                                                @endforeach
+                                            @endif
+                                        </div>
                                     </div>
-                                </div>
-                            @endif
+                                @endif
+                            @endforeach
                         </nav>
 
                         <div class="border-t border-white/10 px-3 py-4 lg:sidebar-collapsed:px-2">

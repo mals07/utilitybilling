@@ -23,6 +23,7 @@ use App\Support\Billing\BillingException;
 use App\Support\Billing\BillingRun;
 use App\Support\Billing\Ledger;
 use App\Support\Billing\MeterReadings;
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -44,6 +45,10 @@ class MeterReadingsTest extends TestCase
         parent::setUp();
 
         [$this->owner, $this->company] = $this->ownerWithCompany();
+
+        // The billing code runs for a signed-in user, so it sees only the owner's company.
+
+        $this->actingAs($this->owner);
 
         // 0–10 @ 10.00, 11+ @ 25.00, minimum 10 cu.m.; meters that can't be read are estimated.
         $this->rate = RateType::factory()->for($this->company)->create(['name' => 'Residential']);
@@ -67,7 +72,7 @@ class MeterReadingsTest extends TestCase
             ...$attributes,
         ]);
 
-        $this->workOrderReading($customer, ReadingKind::Initial, '0', now()->subMonths(6)->toDateString());
+        $this->workOrderReading($customer, ReadingKind::Initial, '0', now()->subMonthsNoOverflow(6)->toDateString());
 
         return $customer;
     }
@@ -83,9 +88,9 @@ class MeterReadingsTest extends TestCase
 
     private function bill(Customer $customer, int $monthsAgo, string $present): Invoice
     {
-        $date = now()->subMonths($monthsAgo)->toDateString();
+        $date = now()->subMonthsNoOverflow($monthsAgo)->toDateString();
 
-        return BillingRun::generate($customer, now()->subMonths($monthsAgo)->format('Y-m'), $present, false, $date, $date, $this->owner);
+        return BillingRun::generate($customer, now()->subMonthsNoOverflow($monthsAgo)->format('Y-m'), $present, false, $date, $date, $this->owner);
     }
 
     private function period(): string
@@ -121,7 +126,7 @@ class MeterReadingsTest extends TestCase
 
     public function test_another_companys_meter_cannot_be_read(): void
     {
-        $stranger = Customer::factory()->connected()->create(['meter_number' => 'MTR-9']);
+        $stranger = CurrentCompany::acrossAll(fn (): Customer => Customer::factory()->connected()->create(['meter_number' => 'MTR-9']));
 
         Livewire::actingAs($this->owner)
             ->test(MeterReadingsPage::class)
@@ -238,9 +243,9 @@ class MeterReadingsTest extends TestCase
 
         // No access last month: billed on the average of 10 and 20 cu.m.
         Livewire::actingAs($this->owner)->test(MeterReadingsPage::class)
-            ->set('period', now()->subMonth()->format('Y-m'))
+            ->set('period', now()->subMonthNoOverflow()->format('Y-m'))
             ->call('markEstimated', $customer->id, ReadingCode::NoAccess->value);
-        $estimate = $customer->meterReadings()->where('billing_period', now()->subMonth()->format('Y-m'))->sole();
+        $estimate = $customer->meterReadings()->where('billing_period', now()->subMonthNoOverflow()->format('Y-m'))->sole();
         $this->assertSame('15.000', $estimate->actual_consumption);
         $this->assertNull($estimate->present_reading);
         BillingRun::generateFor($estimate, now()->toDateString(), $this->owner);
@@ -255,7 +260,7 @@ class MeterReadingsTest extends TestCase
     public function test_months_are_read_and_billed_in_order(): void
     {
         $customer = $this->customer();
-        MeterReadings::save($customer, now()->subMonth()->format('Y-m'), '10', ReadingCode::Normal, now()->toDateString(), $this->owner);
+        MeterReadings::save($customer, now()->subMonthNoOverflow()->format('Y-m'), '10', ReadingCode::Normal, now()->toDateString(), $this->owner);
 
         $this->expectException(BillingException::class);
         $this->expectExceptionMessage('reading isn\'t billed yet. Bill it on Generate Bills first.');

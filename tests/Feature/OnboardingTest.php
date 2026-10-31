@@ -200,6 +200,7 @@ class OnboardingTest extends TestCase
     public function test_finishing_the_last_step_completes_setup(): void
     {
         [$owner, $company] = $this->ownerInSetup('payment');
+        $this->actingAs($owner);
         $customer = Customer::factory()->for($company)->connected()->create();
         Ledger::recordPayment($customer, ['paid_on' => '2026-10-21', 'amount' => '1500.00', 'method' => 'cash', 'reference_number' => null, 'notes' => null], $owner);
 
@@ -254,6 +255,7 @@ class OnboardingTest extends TestCase
     public function test_customer_example_fills_a_pending_customer_that_saves(): void
     {
         [$owner, $company] = $this->ownerInSetup('customer');
+        $this->actingAs($owner);
         $this->finishRequiredSteps($company);
 
         Livewire::actingAs($owner)->test(CustomersPage::class)
@@ -374,8 +376,8 @@ class OnboardingTest extends TestCase
         $keys = array_column(Onboarding::tour($owner), 'key');
 
         $this->assertSame([
-            'dashboard', 'customers', 'work-orders', 'meter-readings', 'invoices', 'payments', 'disconnections',
-            'company', 'rates', 'charges', 'users', 'roles', 'finish',
+            'dashboard', 'customers', 'meter-readings', 'invoices', 'payments', 'work-orders', 'disconnections',
+            'company', 'users', 'rates', 'charges', 'roles', 'finish',
         ], $keys);
     }
 

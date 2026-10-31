@@ -44,6 +44,9 @@ trait UsesMeterReaderApp
     protected function setUpMeterReaderApp(): void
     {
         [$this->owner, $this->company] = $this->ownerWithCompany();
+        // The tests' own setup and checks run as the owner, so they see only this company's records.
+        // Each API request still signs in as its device's reader.
+        $this->actingAs($this->owner);
         $this->company->update(['due_date_days' => 15]);
         $this->today = BillingRun::today($this->company);
         $this->period = substr($this->today, 0, 7);

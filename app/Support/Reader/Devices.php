@@ -6,6 +6,7 @@ use App\Enums\Access;
 use App\Enums\Page;
 use App\Models\Device;
 use App\Models\User;
+use App\Support\CurrentCompany;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -102,7 +103,8 @@ final class Devices
         return match (true) {
             $user->isDeactivated() => 'This account has been deactivated. Contact your administrator to restore access.',
             ! $user->hasCompany() => 'Your account isn\'t part of a company yet.',
-            ! $user->canAccessPage(Page::MeterReadings, Access::Add) => 'Your role doesn\'t allow entering meter readings. Ask your administrator for access.',
+            // Called before anyone is signed in, so the role is read as the user's own company.
+            ! CurrentCompany::as($user->company, fn (): bool => $user->canAccessPage(Page::MeterReadings, Access::Add)) => 'Your role doesn\'t allow entering meter readings. Ask your administrator for access.',
             default => null,
         };
     }
