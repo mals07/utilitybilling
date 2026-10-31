@@ -8,7 +8,7 @@ use App\Models\Department;
 use App\Models\MeterType;
 
 /**
- * The company lookup lists on the Operation Setup tab, in display order.
+ * The company lookup lists on the Operation Setup tab, in display order. Cluster types are shown as Zones.
  */
 enum LookupType: string
 {
@@ -22,14 +22,14 @@ enum LookupType: string
         return match ($this) {
             self::AccountTypes => 'Account Type',
             self::MeterTypes => 'Meter Type',
-            self::ClusterTypes => 'Cluster Type',
+            self::ClusterTypes => 'Zone',
             self::Departments => 'Department',
         };
     }
 
     public function heading(): string
     {
-        return $this === self::Departments ? 'Departments' : $this->label();
+        return in_array($this, [self::Departments, self::ClusterTypes], true) ? $this->plural() : $this->label();
     }
 
     public function plural(): string

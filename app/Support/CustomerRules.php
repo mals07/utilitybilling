@@ -199,7 +199,7 @@ final class CustomerRules
         $messages['status.enum'] = 'Select a status.';
         $selection('chargeTypeId', 'Select a charge type.');
         $selection('rateTypeId', 'Select a rate.');
-        $selection('clusterTypeId', 'Select a cluster type.');
+        $selection('clusterTypeId', 'Select a zone.');
         $address('home');
         if ($withBilling) {
             $address('billing');
@@ -246,7 +246,7 @@ final class CustomerRules
             $errors['accountTypeId'] = 'Select an account type from the list.';
         }
         if (! $lookup(ClusterType::class, 'clusterTypeId', $existing?->cluster_type_id)) {
-            $errors['clusterTypeId'] = 'Select a cluster type from the list.';
+            $errors['clusterTypeId'] = 'Select a zone from the list.';
         }
         if (! $company->chargeTypes()->whereKey((int) $values['chargeTypeId'])->exists()) {
             $errors['chargeTypeId'] = 'Select a charge type from the list.';

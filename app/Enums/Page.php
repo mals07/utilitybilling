@@ -16,6 +16,15 @@ enum Page: string
     case Payments = 'payments';
     case WorkOrders = 'work-orders';
     case Disconnections = 'disconnections';
+    case CollectionsReport = 'reports.collections';
+    case AgingReport = 'reports.aging';
+    case BillingReport = 'reports.billing';
+    case AdjustmentsReport = 'reports.adjustments';
+    case EfficiencyReport = 'reports.collection-efficiency';
+    case ConsumptionReport = 'reports.consumption';
+    case ReadingsReport = 'reports.readings';
+    case DisconnectionsReport = 'reports.disconnections';
+    case WorkOrdersReport = 'reports.work-orders';
     case CompanySetup = 'company';
     case Users = 'users';
     case Rates = 'rates';
@@ -31,6 +40,15 @@ enum Page: string
             self::Invoices => 'Invoices',
             self::Payments => 'Payments',
             self::Disconnections => 'Disconnections',
+            self::CollectionsReport => 'Daily Collections',
+            self::AgingReport => 'Receivables Aging',
+            self::BillingReport => 'Billing Register',
+            self::AdjustmentsReport => 'Voids & Adjustments',
+            self::EfficiencyReport => 'Collection Efficiency',
+            self::ConsumptionReport => 'Water Consumption',
+            self::ReadingsReport => 'Reading Progress',
+            self::DisconnectionsReport => 'Disconnection Report',
+            self::WorkOrdersReport => 'Work Order Report',
             self::CompanySetup => 'Company Setup',
             self::Rates => 'Rates',
             self::Charges => 'Charges',
@@ -48,6 +66,9 @@ enum Page: string
             self::Customers => 'Customer Management',
             self::MeterReadings, self::Invoices, self::Payments => 'Readings & Payments',
             self::WorkOrders, self::Disconnections => 'Field Operations',
+            self::CollectionsReport, self::AgingReport, self::BillingReport, self::AdjustmentsReport,
+            self::EfficiencyReport, self::ConsumptionReport, self::ReadingsReport, self::DisconnectionsReport,
+            self::WorkOrdersReport => 'Reports',
             self::CompanySetup, self::Users, self::Rates, self::Charges, self::Roles => 'System Administration',
         };
     }
@@ -61,12 +82,25 @@ enum Page: string
             self::Payments => 'cash',
             self::WorkOrders => 'stack',
             self::Disconnections => 'warning',
+            self::CollectionsReport => 'cash',
+            self::AgingReport, self::EfficiencyReport => 'chart',
+            self::BillingReport => 'receipt',
+            self::AdjustmentsReport => 'shield',
+            self::ConsumptionReport => 'gauge',
+            self::ReadingsReport => 'check',
+            self::DisconnectionsReport => 'warning',
+            self::WorkOrdersReport => 'stack',
             self::CompanySetup => 'building',
             self::Users => 'users',
             self::Rates => 'tag',
             self::Charges => 'document',
             self::Roles => 'shield',
         };
+    }
+
+    public function isReport(): bool
+    {
+        return $this->section() === 'Reports';
     }
 
     /**
@@ -83,5 +117,15 @@ enum Page: string
         }
 
         return $sections;
+    }
+
+    /**
+     * The report pages, in sidebar order.
+     *
+     * @return list<self>
+     */
+    public static function reports(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $page): bool => $page->isReport()));
     }
 }

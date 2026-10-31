@@ -55,7 +55,7 @@ final class SyncValidator
             ->where('user_id', $device->user_id)
             ->exists();
         if (! $assigned) {
-            $findings[] = self::blocking(SyncCheck::Assignment, "The customer's cluster isn't assigned to {$device->user->name} for ".BillingRun::periodLabel($period).'.');
+            $findings[] = self::blocking(SyncCheck::Assignment, "The customer's zone isn't assigned to {$device->user->name} for ".BillingRun::periodLabel($period).'.');
         }
 
         $findings = [...$findings, ...self::clockFindings($item, $batch)];

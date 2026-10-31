@@ -43,9 +43,9 @@
                     <input id="mr-read-on" aria-required="true" type="date" max="{{ $today }}" wire:model.blur="readOn" class="form-control form-control-sm w-40 !text-body">
                 </div>
                 <div>
-                    <label for="mr-cluster" class="mb-1 block text-caption font-semibold text-ink-strong">Cluster</label>
+                    <label for="mr-cluster" class="mb-1 block text-caption font-semibold text-ink-strong">Zone</label>
                     <select id="mr-cluster" wire:model.live="clusterId" class="form-control form-control-sm w-44 !text-body">
-                        <option value="">All clusters</option>
+                        <option value="">All zones</option>
                         @foreach ($clusters as $id => $name)
                             <option value="{{ $id }}" wire:key="cluster-{{ $id }}">{{ $name }}</option>
                         @endforeach

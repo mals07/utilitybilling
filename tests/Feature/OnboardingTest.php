@@ -376,7 +376,7 @@ class OnboardingTest extends TestCase
         $keys = array_column(Onboarding::tour($owner), 'key');
 
         $this->assertSame([
-            'dashboard', 'customers', 'meter-readings', 'invoices', 'payments', 'work-orders', 'disconnections',
+            'dashboard', 'customers', 'meter-readings', 'invoices', 'payments', 'work-orders', 'disconnections', 'reports',
             'company', 'users', 'rates', 'charges', 'roles', 'finish',
         ], $keys);
     }

@@ -9,6 +9,8 @@ use App\Http\Controllers\InvoicePrintController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\MemoPrintController;
 use App\Http\Controllers\ReceiptPrintController;
+use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\ReportPrintController;
 use App\Http\Controllers\RestartOnboardingController;
 use App\Http\Controllers\StatementController;
 use App\Http\Controllers\VerifyEmailController;
@@ -32,11 +34,13 @@ use App\Livewire\MeterReadings\ReadingAssignmentsPage;
 use App\Livewire\Onboarding\Welcome;
 use App\Livewire\Payments\PaymentsPage;
 use App\Livewire\Rates\RatesPage;
+use App\Livewire\Reports\ReportPage;
 use App\Livewire\Roles\RolesPage;
 use App\Livewire\Setup\SetupWizard;
 use App\Livewire\Users\DevicesPage;
 use App\Livewire\Users\UsersPage;
 use App\Livewire\WorkOrders\WorkOrdersPage;
+use App\Support\Reports\Reports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -102,6 +106,21 @@ Route::middleware(['auth', 'verified.email'])->group(function () {
         Route::get('/customers/{customer}/statement', StatementController::class)
             ->whereNumber('customer')
             ->name('customers.statement');
+        foreach (Page::reports() as $report) {
+            Route::livewire(Reports::path($report), ReportPage::class)
+                ->defaults('report', $report->value)
+                ->middleware('page:'.$report->value)
+                ->name($report->value);
+            Route::get(Reports::path($report).'/print', ReportPrintController::class)
+                ->defaults('report', $report->value)
+                ->middleware('page:'.$report->value)
+                ->name($report->value.'.print');
+            Route::get(Reports::path($report).'/export', ReportExportController::class)
+                ->defaults('report', $report->value)
+                ->middleware('page:'.$report->value)
+                ->name($report->value.'.export');
+        }
+
         Route::livewire('/rates', RatesPage::class)->middleware('page:'.Page::Rates->value)->name('rates');
         Route::livewire('/charges', ChargesPage::class)->middleware('page:'.Page::Charges->value)->name('charges');
         Route::livewire('/users', UsersPage::class)->middleware('page:'.Page::Users->value)->name('users');

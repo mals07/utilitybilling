@@ -8,12 +8,9 @@
     $visible = fn (Page $page): bool => $user->canAccessPage($page) || ($page === Page::CompanySetup && ! $company);
     $sections = array_map(fn (array $pages): array => array_filter($pages, $visible), Page::sections());
 
-    // Reports has no pages yet, so it sits before System Administration as a placeholder (null).
-    $sections = array_slice($sections, 0, -1, true) + ['Reports' => null] + array_slice($sections, -1, 1, true);
-
     // One group is open at a time: the one holding the current page, else the one the user last left open.
     $currentGroup = collect($sections)
-        ->filter(fn (?array $pages): bool => collect($pages ?? [])->contains(fn (Page $page): bool => request()->routeIs($page->value)))
+        ->filter(fn (array $pages): bool => collect($pages)->contains(fn (Page $page): bool => request()->routeIs($page->value)))
         ->keys()
         ->map(fn (string $heading): string => Str::slug($heading))
         ->first();
@@ -159,7 +156,7 @@
                                 @php
                                     $group = Str::slug($heading);
                                     $groupId = 'sidebar-group-'.$group;
-                                    $groupActive = collect($pages ?? [])->contains(fn (Page $page): bool => request()->routeIs($page->value));
+                                    $groupActive = collect($pages)->contains(fn (Page $page): bool => request()->routeIs($page->value));
                                     $groupOpen = $group === $openGroup;
                                 @endphp
 
@@ -182,26 +179,18 @@
                                         </button>
 
                                         <div id="{{ $groupId }}" x-show="open" @unless ($groupOpen) x-cloak @endunless class="flex flex-col gap-1 lg:sidebar-collapsed:flex!">
-                                            @if ($pages === null)
-                                                <span class="nav-item" aria-disabled="true" x-bind:title="collapsed ? 'Reports (coming soon)' : null">
-                                                    <x-icon name="chart" />
-                                                    <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">Reports</span>
-                                                    <span class="nav-badge lg:sidebar-collapsed:hidden">Soon</span>
-                                                </span>
-                                            @else
-                                                @foreach ($pages as $page)
-                                                    <a
-                                                        href="{{ route($page->value) }}"
-                                                        class="nav-item"
-                                                        data-tour="{{ $page->value }}"
-                                                        @if (request()->routeIs($page->value)) aria-current="page" @endif
-                                                        x-bind:title="collapsed ? @js($page->label()) : null"
-                                                    >
-                                                        <x-icon :name="$page->icon()" />
-                                                        <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">{{ $page->label() }}</span>
-                                                    </a>
-                                                @endforeach
-                                            @endif
+                                            @foreach ($pages as $page)
+                                                <a
+                                                    href="{{ route($page->value) }}"
+                                                    class="nav-item"
+                                                    data-tour="{{ $page->value }}"
+                                                    @if (request()->routeIs($page->value)) aria-current="page" @endif
+                                                    x-bind:title="collapsed ? @js($page->label()) : null"
+                                                >
+                                                    <x-icon :name="$page->icon()" />
+                                                    <span class="flex-1 truncate lg:sidebar-collapsed:sr-only">{{ $page->label() }}</span>
+                                                </a>
+                                            @endforeach
                                         </div>
                                     </div>
                                 @endif

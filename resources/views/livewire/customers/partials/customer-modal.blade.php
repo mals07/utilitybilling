@@ -166,7 +166,7 @@
                     @include('livewire.customers.partials.select', ['key' => 'status', 'label' => 'Status', 'placeholder' => 'Select Status', 'choices' => $statuses])
                     @include('livewire.customers.partials.select', ['key' => 'chargeTypeId', 'label' => 'Charges Type', 'placeholder' => 'Select Charge Type', 'choices' => $options['chargeTypes'], 'hint' => 'Add charge types on the Charges page.'])
                     @include('livewire.customers.partials.select', ['key' => 'rateTypeId', 'label' => 'Rates', 'placeholder' => 'Select Rate', 'choices' => $options['rateTypes'], 'hint' => 'Add rate types on the Rates page.'])
-                    @include('livewire.customers.partials.select', ['key' => 'clusterTypeId', 'label' => 'Cluster Type', 'placeholder' => 'Select Cluster Type', 'choices' => $options['clusterTypes'], 'hint' => $setupHint])
+                    @include('livewire.customers.partials.select', ['key' => 'clusterTypeId', 'label' => 'Zone', 'placeholder' => 'Select Zone', 'choices' => $options['clusterTypes'], 'hint' => $setupHint])
                 </div>
             </section>
 

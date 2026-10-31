@@ -78,20 +78,20 @@ final class Onboarding
             'lists' => [
                 'title' => 'Lookup lists',
                 'nav' => 'Lookup lists',
-                'intro' => 'Customers and meters are grouped with these lists. Every customer needs an account type and a cluster, and every meter a meter type.',
+                'intro' => 'Customers and meters are grouped with these lists. Every customer needs an account type and a zone, and every meter a meter type.',
                 'howTo' => [
                     'Type a name in a list and click Add.',
-                    'Add at least one account type, meter type and cluster type. Departments are optional.',
+                    'Add at least one account type, meter type and zone. Departments are optional.',
                     'You can rename, deactivate or add more later in Company Setup.',
                 ],
                 'example' => [
                     ['Account types', 'Residential, Commercial, Government'],
                     ['Meter types', '1/2" Brass, 3/4" Brass'],
-                    ['Cluster types', 'Zone 1, Zone 2'],
+                    ['Zones', 'Zone 1, Zone 2'],
                     ['Departments', 'Billing, Field Operations'],
                 ],
                 'exampleButton' => 'Add these example lists',
-                'notDone' => 'Add at least one account type, meter type and cluster type.',
+                'notDone' => 'Add at least one account type, meter type and zone.',
             ],
             'rates' => [
                 'title' => 'Water rates',
@@ -155,7 +155,7 @@ final class Onboarding
                 'intro' => 'Add a real customer who is waiting for a water connection. New customers start as Pending until their meter is installed.',
                 'howTo' => [
                     'Click Add Customer.',
-                    'Fill in their name and address, and pick their account type, rate, charge type and cluster.',
+                    'Fill in their name and address, and pick their account type, rate, charge type and zone.',
                     'Leave the status as Pending and click Save.',
                 ],
                 'example' => [
@@ -307,16 +307,27 @@ final class Onboarding
             'url' => route('dashboard'),
         ]];
 
+        $reportsShown = false;
         foreach (Page::cases() as $page) {
-            if ($user->canAccessPage($page)) {
-                $stops[] = [
-                    'key' => $page->value,
-                    'title' => $page->label(),
-                    'body' => self::pageSummary($page),
-                    'target' => $page->value,
-                    'url' => route($page->value),
-                ];
+            if (! $user->canAccessPage($page)) {
+                continue;
             }
+
+            // The reports share one stop, at the first report the user may open.
+            if ($page->isReport()) {
+                if ($reportsShown) {
+                    continue;
+                }
+                $reportsShown = true;
+            }
+
+            $stops[] = [
+                'key' => $page->isReport() ? 'reports' : $page->value,
+                'title' => $page->isReport() ? 'Reports' : $page->label(),
+                'body' => self::pageSummary($page),
+                'target' => $page->value,
+                'url' => route($page->value),
+            ];
         }
 
         $stops[] = [
@@ -342,7 +353,10 @@ final class Onboarding
             Page::Invoices => 'Generate monthly bills from approved readings, print invoices, and issue debit or credit memos to correct a bill.',
             Page::Payments => 'Post payments against open bills, oldest first, and print the official receipt.',
             Page::Disconnections => 'Customers with too many overdue bills. Print notices of disconnection, and create the Disconnection work order once the deadline passes unpaid.',
-            Page::CompanySetup => 'Your company profile and logo, billing headers and footers, due dates, tax, and the lookup lists for account types, meter types, clusters and departments.',
+            Page::CollectionsReport, Page::AgingReport, Page::BillingReport, Page::AdjustmentsReport,
+            Page::EfficiencyReport, Page::ConsumptionReport, Page::ReadingsReport, Page::DisconnectionsReport,
+            Page::WorkOrdersReport => 'Daily collections, receivables aging, the billing register, voids and memos, collection efficiency, water consumption, reading progress, disconnections and work orders. Filter by dates and zone, then print or export to Excel.',
+            Page::CompanySetup => 'Your company profile and logo, billing headers and footers, due dates, tax, and the lookup lists for account types, meter types, zones and departments.',
             Page::Rates => 'Rate types and their consumption ranges, which decide how much a bill charges for the water used.',
             Page::Charges => 'Fees and charges, such as installation or reconnection fees, added to work orders and bills.',
             Page::Users => 'Invite staff by email, assign their roles and departments, and grant temporary special access.',

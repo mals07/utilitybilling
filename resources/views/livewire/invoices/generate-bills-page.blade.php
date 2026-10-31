@@ -29,9 +29,9 @@
                 @enderror
             </div>
             <div>
-                <label for="bill-cluster" class="mb-1 block text-caption font-semibold text-ink-strong">Cluster</label>
+                <label for="bill-cluster" class="mb-1 block text-caption font-semibold text-ink-strong">Zone</label>
                 <select id="bill-cluster" wire:model.live="clusterId" class="form-control !h-[34px] !text-body" @disabled($run)>
-                    <option value="">All clusters</option>
+                    <option value="">All zones</option>
                     @foreach ($clusters as $id => $name)
                         <option value="{{ $id }}" wire:key="cluster-{{ $id }}">{{ $name }}</option>
                     @endforeach

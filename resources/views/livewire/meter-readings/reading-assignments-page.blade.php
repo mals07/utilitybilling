@@ -8,7 +8,7 @@
 
         <div class="mt-3 flex flex-wrap items-end justify-between gap-3">
             <p class="max-w-xl text-body text-label">
-                Choose who reads each cluster with the meter reader app. A reader's phone downloads the meters of their clusters, and readings of other clusters are held for review.
+                Choose who reads each zone with the meter reader app. A reader's phone downloads the meters of their zones, and readings of other zones are held for review.
             </p>
             <div>
                 <label for="ra-period" class="mb-1 block text-caption font-semibold text-ink-strong">Billing month<x-required-mark /></label>
@@ -21,7 +21,7 @@
                 <table class="w-full text-body">
                     <thead>
                         <tr class="border-b border-table-line text-left text-caption text-label">
-                            <th scope="col" class="px-4 py-3 font-medium">Cluster</th>
+                            <th scope="col" class="px-4 py-3 font-medium">Zone</th>
                             <th scope="col" class="px-4 py-3 text-right font-medium">Meters to read</th>
                             <th scope="col" class="w-72 px-4 py-3 font-medium">Reader</th>
                         </tr>
@@ -48,7 +48,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-3 py-10 text-center text-body text-label">No clusters yet. Add them in Company Setup → Operation Setup.</td>
+                                <td colspan="3" class="px-3 py-10 text-center text-body text-label">No zones yet. Add them in Company Setup → Operation Setup.</td>
                             </tr>
                         @endforelse
                     </tbody>

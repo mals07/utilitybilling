@@ -11,7 +11,7 @@
         'history' => 6,
         default => 7,
     };
-    // The Cluster column hides on narrow screens; it follows the optional Select and Notice columns and Customer.
+    // The Zone column hides on narrow screens; it follows the optional Select and Notice columns and Customer.
     $hideClusterOnPhones = match (2 + ($selectable ? 1 : 0) + ($noticeTab ? 1 : 0)) {
         2 => 'max-md:[&_tr>*:nth-child(2)]:hidden',
         3 => 'max-md:[&_tr>*:nth-child(3)]:hidden',
@@ -67,9 +67,9 @@
                 </button>
             @endforeach
             <div class="ml-auto flex flex-wrap items-center gap-2">
-                <label for="dc-cluster" class="sr-only">Cluster</label>
+                <label for="dc-cluster" class="sr-only">Zone</label>
                 <select id="dc-cluster" wire:model.live="clusterId" class="form-control form-control-sm w-44 !text-body">
-                    <option value="">All clusters</option>
+                    <option value="">All zones</option>
                     @foreach ($clusters as $id => $name)
                         <option value="{{ $id }}" wire:key="cluster-{{ $id }}">{{ $name }}</option>
                     @endforeach
@@ -187,7 +187,7 @@
                             <th scope="col" class="w-px">Notice</th>
                         @endif
                         <th scope="col">Customer</th>
-                        <th scope="col">Cluster</th>
+                        <th scope="col">Zone</th>
                         @if ($tab === 'eligible' || $tab === 'hold')
                             <th scope="col" class="cell-right">Overdue bills</th>
                             <th scope="col" class="cell-right">Overdue amount</th>

@@ -46,7 +46,7 @@
                         <p>{{ $customer->meter_number }}</p>
                     @endif
                     @if ($customer->clusterType)
-                        <p class="text-label">Cluster</p>
+                        <p class="text-label">Zone</p>
                         <p>{{ $customer->clusterType->name }}</p>
                     @endif
                 </section>

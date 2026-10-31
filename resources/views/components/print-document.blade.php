@@ -1,8 +1,8 @@
 @use('App\Support\Format')
 
-@props(['company', 'title'])
+@props(['company', 'title', 'landscape' => false])
 
-{{-- A printable document (bill, receipt, statement): the company letterhead, the document, and a Print button. --}}
+{{-- A printable document (bill, receipt, statement, report): the company letterhead, the document, and a Print button. Wide reports print in landscape. --}}
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -12,7 +12,7 @@
         <title>{{ $title }} | {{ $company->company_name }}</title>
         @vite(['resources/css/app.css'])
         <style>
-            @page { size: A4; margin: 14mm; }
+            @page { size: A4{{ $landscape ? ' landscape' : '' }}; margin: {{ $landscape ? '10mm' : '14mm' }}; }
             @media print {
                 .no-print { display: none !important; }
                 body { background: #fff; }
@@ -21,12 +21,12 @@
         </style>
     </head>
     <body class="bg-panel font-sans text-ink">
-        <div class="no-print mx-auto flex max-w-[800px] items-center justify-between gap-3 px-4 py-3">
+        <div class="no-print mx-auto flex {{ $landscape ? 'max-w-[1120px]' : 'max-w-[800px]' }} items-center justify-between gap-3 px-4 py-3">
             <button type="button" onclick="history.length > 1 ? history.back() : window.close()" class="link-button">← Back</button>
             <button type="button" onclick="window.print()" class="form-button form-button-sm min-w-32">Print / Save as PDF</button>
         </div>
 
-        <main class="print-sheet mx-auto mb-8 max-w-[800px] border border-table-line bg-card px-8 py-8 text-[12px]">
+        <main class="print-sheet mx-auto mb-8 {{ $landscape ? 'max-w-[1120px]' : 'max-w-[800px]' }} border border-table-line bg-card px-8 py-8 text-[12px]">
             <x-print-letterhead :company="$company" :title="$title">{{ $heading ?? '' }}</x-print-letterhead>
 
             {{ $slot }}

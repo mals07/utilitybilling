@@ -148,9 +148,9 @@ final class Guides
                         'body' => 'The kinds of meters you install, e.g. 1/2" Brass. Set the number of dials so the system knows when a meter rolls over to zero.',
                     ],
                     [
-                        'target' => 'section[aria-label="Cluster Types"]',
-                        'title' => 'Cluster types',
-                        'body' => 'Areas or routes, e.g. Zone 1. Meters can be read and billed one cluster at a time.',
+                        'target' => 'section[aria-label="Zones"]',
+                        'title' => 'Zones',
+                        'body' => 'Areas or routes, e.g. Zone 1. Meters can be read and billed one zone at a time.',
                     ],
                     [
                         'target' => 'section[aria-label="Departments"]',
@@ -282,7 +282,7 @@ final class Guides
                     [
                         'target' => ':has(> div > #customer-accountTypeId)',
                         'title' => 'How they are billed',
-                        'body' => 'Account type, rate and charge type decide how the customer is billed; the cluster groups them by area. A new customer stays Pending until their meter is installed.',
+                        'body' => 'Account type, rate and charge type decide how the customer is billed; the zone groups them by area. A new customer stays Pending until their meter is installed.',
                         'requires' => '#customer-firstName',
                     ],
                     [
@@ -408,7 +408,7 @@ final class Guides
                     ],
                     [
                         'target' => '#mr-cluster',
-                        'title' => 'Cluster',
+                        'title' => 'Zone',
                         'body' => 'Narrow the list to one area or route, the way your meter readers walk it.',
                     ],
                     [
@@ -425,7 +425,7 @@ final class Guides
                     [
                         'target' => 'p:has(> a[href*="/meter-readings/assignments"])',
                         'title' => 'Meter reader app',
-                        'body' => "If your readers use the meter reader app: Reader assignments chooses who reads each cluster, and Discrepancies lists phone readings that need a supervisor's decision. Each has its own Guide me.",
+                        'body' => "If your readers use the meter reader app: Reader assignments chooses who reads each zone, and Discrepancies lists phone readings that need a supervisor's decision. Each has its own Guide me.",
                     ],
                     [
                         'target' => 'a[href*="/invoices/generate"]',
@@ -444,18 +444,18 @@ final class Guides
                     ],
                     [
                         'target' => 'div:has(> .table-scroller)',
-                        'title' => 'Clusters to read',
-                        'body' => 'Every cluster is listed with the number of connected meters still waiting for a reading this month.',
+                        'title' => 'Zones to read',
+                        'body' => 'Every zone is listed with the number of connected meters still waiting for a reading this month.',
                     ],
                     [
                         'target' => '[id^="ra-reader-"]',
                         'title' => 'Pick the reader',
-                        'body' => "Choose a reader for each cluster. It saves straight away, and the reader's phone downloads that cluster's meters the next time it syncs. Choose Not assigned to take the cluster back. Only staff whose role can add meter readings are listed.",
+                        'body' => "Choose a reader for each zone. It saves straight away, and the reader's phone downloads that zone's meters the next time it syncs. Choose Not assigned to take the zone back. Only staff whose role can add meter readings are listed.",
                     ],
                     [
                         'target' => null,
-                        'title' => 'Readings from other clusters',
-                        'body' => "If a reader reads a meter outside their clusters, the reading isn't saved. It is held on the Discrepancies page for a supervisor to review.",
+                        'title' => 'Readings from other zones',
+                        'body' => "If a reader reads a meter outside their zones, the reading isn't saved. It is held on the Discrepancies page for a supervisor to review.",
                     ],
                 ],
             ],
@@ -530,7 +530,7 @@ final class Guides
                     ],
                     [
                         'target' => '#bill-cluster',
-                        'title' => 'Cluster',
+                        'title' => 'Zone',
                         'body' => 'Bill one area at a time, or all of them.',
                     ],
                     [
@@ -550,7 +550,7 @@ final class Guides
                     ],
                     [
                         'target' => '#dc-cluster',
-                        'title' => 'Cluster',
+                        'title' => 'Zone',
                         'body' => 'Work one area at a time.',
                     ],
                     [
