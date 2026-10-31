@@ -15,6 +15,15 @@
             Open numbers are invoice numbers reserved for a phone that aren't on an invoice yet: unused, or on bills it printed but hasn't synced. A lost phone's open numbers are the bills to look for.
         </p>
 
+        @if (file_exists(public_path('downloads/meter-reader.apk')))
+            <div class="mt-4 flex max-w-2xl flex-wrap items-center gap-3 rounded-md border border-table-line px-4 py-3">
+                <p class="min-w-0 flex-1 text-body text-ink-soft">
+                    To set up a reader's Android phone, open this page on the phone, download the app and install it. The phone may ask to allow installing apps from the browser.
+                </p>
+                <a href="{{ asset('downloads/meter-reader.apk') }}" download class="form-button form-button-sm">Download the app</a>
+            </div>
+        @endif
+
         <div class="mt-4 overflow-hidden rounded-md border border-table-line">
             <div class="table-scroller">
                 <table class="w-full text-body">

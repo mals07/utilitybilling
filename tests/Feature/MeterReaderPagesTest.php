@@ -46,6 +46,20 @@ class MeterReaderPagesTest extends TestCase
         return SyncItem::query()->withoutGlobalScopes()->sole();
     }
 
+    public function test_both_pages_offer_their_step_by_step_guide(): void
+    {
+        foreach (['meter-readings.assignments' => 'reader-assignments', 'meter-readings.discrepancies' => 'discrepancies'] as $route => $guide) {
+            $this->actingAs($this->owner)->get(route($route))
+                ->assertOk()
+                ->assertSee('Guide me')
+                ->assertSee("'guide-start', '{$guide}'", false);
+
+            $this->actingAs($this->owner)->getJson(route('guides.show', $guide))
+                ->assertOk()
+                ->assertJsonPath('steps.0.target', $guide === 'reader-assignments' ? '#ra-period' : 'div:has(> [wire\:key^="filter-"])');
+        }
+    }
+
     public function test_assigning_a_cluster_gives_it_to_the_chosen_reader(): void
     {
         $cluster = ClusterType::factory()->create(['company_id' => $this->company->id, 'name' => 'Purok 2']);
@@ -143,6 +157,15 @@ class MeterReaderPagesTest extends TestCase
         Livewire::actingAs($this->owner)->test(DevicesPage::class)
             ->assertSee('000001–000010')
             ->assertSee('9 of 10 not on an invoice');
+    }
+
+    public function test_the_devices_page_links_to_the_app_download(): void
+    {
+        $this->assertFileExists(public_path('downloads/meter-reader.apk'));
+
+        Livewire::actingAs($this->owner)->test(DevicesPage::class)
+            ->assertSee(asset('downloads/meter-reader.apk'))
+            ->assertSee('Download the app');
     }
 
     public function test_the_devices_page_needs_access_to_users(): void

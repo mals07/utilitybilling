@@ -24,6 +24,9 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
+# The meter reader app download (downloads/meter-reader.apk): Android installs it from this type.
+AddType application/vnd.android.package-archive .apk
+
 # The host writes PHP errors to error_log in this folder; never serve it.
 <Files "error_log">
     Require all denied
