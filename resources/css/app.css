@@ -1424,6 +1424,53 @@
         outline-offset: -2px;
     }
 
+    /* Links inside a group read as children: indented on a guide line, smaller and dimmer than Dashboard. */
+    .nav-group {
+        position: relative;
+        gap: 2px;
+        margin: 2px 0 6px 14px;
+        padding-left: 8px;
+    }
+
+    .nav-group::before {
+        content: '';
+        position: absolute;
+        top: 4px;
+        bottom: 4px;
+        left: 0;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .nav-group .nav-item {
+        gap: 10px;
+        height: 36px;
+        padding: 0 10px;
+        color: rgba(226, 238, 248, 0.62);
+        font-size: var(--text-caption);
+    }
+
+    .nav-group .nav-item > svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .nav-group .nav-item:hover,
+    .nav-group .nav-item[aria-current='page'] {
+        color: #ffffff;
+    }
+
+    .nav-group .nav-item[aria-disabled='true'] {
+        color: rgba(226, 238, 248, 0.4);
+    }
+
+    /* The current page's marker sits on the guide line. */
+    .nav-group .nav-item[aria-current='page']::before {
+        top: 8px;
+        bottom: 8px;
+        left: -9px;
+    }
+
     .nav-badge {
         padding: 1px 7px;
         border-radius: 999px;
@@ -1455,6 +1502,33 @@
 
         :where([data-collapsed='true']) .nav-section > * {
             display: none;
+        }
+
+        /* Collapsed to icons, group links match Dashboard again. */
+        :where([data-collapsed='true']) .nav-group {
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+        }
+
+        :where([data-collapsed='true']) .nav-group::before {
+            display: none;
+        }
+
+        :where([data-collapsed='true']) .nav-group .nav-item {
+            height: 42px;
+            padding: 0;
+        }
+
+        :where([data-collapsed='true']) .nav-group .nav-item > svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        :where([data-collapsed='true']) .nav-group .nav-item[aria-current='page']::before {
+            top: 10px;
+            bottom: 10px;
+            left: 0;
         }
     }
 

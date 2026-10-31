@@ -178,7 +178,7 @@
                                             <x-icon name="chevron-down" :size="14" class="transition-transform duration-150" x-bind:class="open && 'rotate-180'" />
                                         </button>
 
-                                        <div id="{{ $groupId }}" x-show="open" @unless ($groupOpen) x-cloak @endunless class="flex flex-col gap-1 lg:sidebar-collapsed:flex!">
+                                        <div id="{{ $groupId }}" x-show="open" @unless ($groupOpen) x-cloak @endunless class="nav-group flex flex-col lg:sidebar-collapsed:flex!">
                                             @foreach ($pages as $page)
                                                 <a
                                                     href="{{ route($page->value) }}"
