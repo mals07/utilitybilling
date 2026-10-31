@@ -102,6 +102,16 @@ class Customer extends Model
     }
 
     /**
+     * Credit and debit memos issued against the customer's invoices.
+     *
+     * @return HasMany<InvoiceAdjustment, $this>
+     */
+    public function invoiceAdjustments(): HasMany
+    {
+        return $this->hasMany(InvoiceAdjustment::class);
+    }
+
+    /**
      * @return HasMany<MeterReading, $this>
      */
     public function meterReadings(): HasMany

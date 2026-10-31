@@ -3,18 +3,35 @@
 namespace Tests\Feature;
 
 use App\Enums\Access;
+use App\Enums\AdjustmentReason;
+use App\Enums\AdjustmentType;
 use App\Enums\CustomerStatus;
+use App\Enums\DisconnectionNoticeStatus;
+use App\Enums\InvoiceKind;
+use App\Enums\InvoiceStatus;
+use App\Enums\MeterReadingStatus;
 use App\Enums\Page;
+use App\Enums\PaymentMethod;
+use App\Enums\ReadingCode;
+use App\Enums\WorkOrderType;
 use App\Livewire\Customers\CustomersPage;
 use App\Models\AccountType;
 use App\Models\ChargeType;
 use App\Models\ClusterType;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\DisconnectionNotice;
+use App\Models\Invoice;
+use App\Models\InvoiceAdjustment;
+use App\Models\MeterReading;
+use App\Models\Payment;
 use App\Models\RateType;
+use App\Models\RolePermission;
+use App\Models\WorkOrder;
 use Database\Factories\CompanyFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -216,5 +233,108 @@ class CustomersPageTest extends TestCase
             ->set('search', '0007')
             ->assertSee('Pedro')
             ->assertDontSee('Juana');
+    }
+
+    public function test_history_lists_the_customers_records_latest_first_with_voids_as_their_own_entries(): void
+    {
+        [$owner, $company] = $this->ownerWithCompany();
+        $customer = Customer::factory()->for($company)->connected()->create();
+        $otherCustomer = Customer::factory()->for($company)->connected()->create();
+
+        $this->travelTo(Carbon::parse('2026-10-01 09:00'));
+        $order = WorkOrder::factory()->forCustomer($customer, WorkOrderType::LeakRepair)->create();
+        $order->log($owner, 'submitted', 'Submitted and assigned to Ben.');
+
+        $this->travelTo(Carbon::parse('2026-10-02 09:00'));
+        MeterReading::query()->create([
+            'company_id' => $company->id, 'customer_id' => $customer->id, 'billing_period' => '2026-10', 'status' => MeterReadingStatus::Ready,
+            'reading_code' => ReadingCode::Normal, 'previous_reading' => '100', 'present_reading' => '112', 'consumption' => '12', 'read_on' => '2026-10-02',
+        ]);
+
+        $this->travelTo(Carbon::parse('2026-10-03 09:00'));
+        $invoice = Invoice::createNumbered($company, [
+            'customer_id' => $customer->id, 'kind' => InvoiceKind::Monthly, 'billing_period' => '2026-10', 'invoice_date' => '2026-10-03',
+            'due_date' => '2026-10-18', 'total_amount' => '500.00', 'balance' => '500.00', 'status' => InvoiceStatus::Unpaid,
+        ]);
+
+        $this->travelTo(Carbon::parse('2026-10-04 09:00'));
+        $memo = InvoiceAdjustment::createNumbered($company, [
+            'type' => AdjustmentType::Credit, 'invoice_id' => $invoice->id, 'customer_id' => $customer->id,
+            'reason_category' => AdjustmentReason::LeakAdjustment, 'reason' => 'Leak on site', 'amount' => '50.00', 'issued_on' => '2026-10-04',
+        ]);
+
+        $this->travelTo(Carbon::parse('2026-10-05 09:00'));
+        $payment = Payment::createNumbered($company, [
+            'customer_id' => $customer->id, 'paid_on' => '2026-10-05', 'amount' => '450.00', 'unapplied_amount' => '0.00', 'method' => PaymentMethod::Cash,
+        ]);
+
+        $this->travelTo(Carbon::parse('2026-10-06 09:00'));
+        $payment->update(['voided_at' => now(), 'void_reason' => 'Bounced check', 'voided_by_id' => $owner->id]);
+
+        $this->travelTo(Carbon::parse('2026-10-20 09:00'));
+        $notice = DisconnectionNotice::createNumbered($company, [
+            'customer_id' => $customer->id, 'status' => DisconnectionNoticeStatus::Pending, 'overdue_bills' => 1,
+            'overdue_amount' => '450.00', 'oldest_due_date' => '2026-10-18', 'issued_on' => '2026-10-20', 'deadline' => '2026-10-27',
+        ]);
+
+        $otherCustomersBill = Invoice::createNumbered($company, [
+            'customer_id' => $otherCustomer->id, 'kind' => InvoiceKind::Monthly, 'billing_period' => '2026-10',
+            'invoice_date' => '2026-10-20', 'due_date' => '2026-11-04', 'total_amount' => '300.00', 'balance' => '300.00', 'status' => InvoiceStatus::Unpaid,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(CustomersPage::class)
+            ->call('openHistory', $customer->id)
+            ->assertSee('Customer History')
+            ->assertSeeInOrder([
+                "Disconnection notice {$notice->notice_number} issued",
+                "Payment {$payment->receipt_number} voided",
+                'Bounced check',
+                "Payment {$payment->receipt_number} received",
+                "Credit Memo {$memo->label()} on invoice {$invoice->invoice_number}",
+                "Invoice {$invoice->invoice_number} issued",
+                'Meter reading for October 2026',
+                "Work order {$order->order_number}",
+                'Leak Repair',
+                'Submitted and assigned to Ben.',
+            ])
+            ->assertDontSee("Invoice {$otherCustomersBill->invoice_number} issued")
+            ->call('closeHistory')
+            ->assertDontSee('Customer History');
+    }
+
+    public function test_history_shows_only_the_sections_whose_pages_the_user_may_view(): void
+    {
+        [, $company] = $this->ownerWithCompany();
+        $member = $this->memberWithAccess($company, Page::Customers, [Access::View]);
+        RolePermission::query()->create(['role_id' => $member->role_id, 'page' => Page::Payments->value, 'can_add' => false, 'can_edit' => false, 'can_view' => true, 'can_delete' => false]);
+        $customer = Customer::factory()->for($company)->connected()->create();
+        $invoice = Invoice::createNumbered($company, [
+            'customer_id' => $customer->id, 'kind' => InvoiceKind::Monthly, 'billing_period' => '2026-10', 'invoice_date' => '2026-10-03',
+            'due_date' => '2026-10-18', 'total_amount' => '500.00', 'balance' => '500.00', 'status' => InvoiceStatus::Unpaid,
+        ]);
+        $payment = Payment::createNumbered($company, [
+            'customer_id' => $customer->id, 'paid_on' => '2026-10-05', 'amount' => '450.00', 'unapplied_amount' => '0.00', 'method' => PaymentMethod::Cash,
+        ]);
+
+        Livewire::actingAs($member)
+            ->test(CustomersPage::class)
+            ->call('openHistory', $customer->id)
+            ->assertSee("Payment {$payment->receipt_number} received")
+            ->assertDontSee("Invoice {$invoice->invoice_number} issued")
+            ->assertSee('have access to them: work orders, invoices and memos, meter readings, disconnection notices.');
+    }
+
+    public function test_another_companys_customer_history_cannot_be_opened(): void
+    {
+        [$owner] = $this->ownerWithCompany();
+        $stranger = Customer::factory()->create(['first_name' => 'Imelda', 'last_name' => 'Outsider']);
+
+        Livewire::actingAs($owner)
+            ->test(CustomersPage::class)
+            ->call('openHistory', $stranger->id)
+            ->assertSet('historyCustomerId', null)
+            ->assertDontSee('Customer History')
+            ->assertDontSee('Outsider');
     }
 }

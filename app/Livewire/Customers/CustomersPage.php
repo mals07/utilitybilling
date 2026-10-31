@@ -8,6 +8,7 @@ use App\Enums\Page;
 use App\Livewire\Concerns\GuardsPageAccess;
 use App\Livewire\Concerns\ParsesIds;
 use App\Models\Customer;
+use App\Support\CustomerHistory;
 use App\Support\CustomerRules;
 use App\Support\ImageType;
 use App\Support\Locations;
@@ -27,7 +28,7 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 /**
- * Customers: the customers table and the Add/Update Customer modals.
+ * Customers: the customers table, the Add/Update Customer modals and the customer history drawer.
  */
 #[Layout('layouts.app')]
 #[Title('Customers')]
@@ -59,6 +60,11 @@ class CustomersPage extends Component
     public string $customer = '';
 
     public bool $adding = false;
+
+    /**
+     * The customer whose history is open in the side drawer.
+     */
+    public ?int $historyCustomerId = null;
 
     /**
      * @var array<string, string>
@@ -110,6 +116,15 @@ class CustomersPage extends Component
         return $id === null ? null : $this->company()->customers()->find($id);
     }
 
+    /**
+     * The customer whose history is open, if they are one of the company's.
+     */
+    #[Computed]
+    public function historyCustomer(): ?Customer
+    {
+        return $this->historyCustomerId === null ? null : $this->company()->customers()->find($this->historyCustomerId);
+    }
+
     /* ---------------------------- Opening/closing ---------------------------- */
 
     public function openAdd(): void
@@ -124,6 +139,22 @@ class CustomersPage extends Component
         $this->adding = false;
         $this->customer = (string) $id;
         $this->fillFromCustomer();
+    }
+
+    public function openHistory(int $id): void
+    {
+        $this->historyCustomerId = $id;
+        unset($this->historyCustomer);
+
+        if ($this->historyCustomer === null) {
+            $this->historyCustomerId = null;
+        }
+    }
+
+    public function closeHistory(): void
+    {
+        $this->historyCustomerId = null;
+        unset($this->historyCustomer);
     }
 
     public function closeModal(): void
@@ -488,6 +519,7 @@ class CustomersPage extends Component
             ->orderBy('id');
 
         $selected = $this->selected;
+        $historyCustomer = $this->historyCustomer;
         $modalOpen = $this->adding || $selected !== null;
 
         return view('livewire.customers.customers-page', [
@@ -505,6 +537,10 @@ class CustomersPage extends Component
             },
             // Where the map opens when nothing is pinned: the company's city.
             'mapArea' => implode(', ', array_filter([$company->city?->name, $company->province?->name, $company->country?->name])),
+            'historyCustomer' => $historyCustomer,
+            'history' => $historyCustomer === null ? [] : CustomerHistory::for($historyCustomer, $this->user()),
+            'hiddenHistorySections' => $historyCustomer === null ? [] : CustomerHistory::hiddenSections($this->user()),
+            'timezone' => $company->timezone,
             'access' => $this->access,
         ]);
     }

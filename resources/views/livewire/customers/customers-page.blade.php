@@ -30,8 +30,7 @@
                     @foreach ($customers as $item)
                         <tr
                             wire:key="customer-{{ $item->id }}"
-                            wire:click="openCustomer({{ $item->id }})"
-                            @class(['row-clickable', 'row-selected' => $item->id === $selected?->id])
+                            @class(['row-selected' => $item->id === $selected?->id || $item->id === $historyCustomer?->id])
                         >
                             <td>
                                 <span class="block font-medium text-ink-strong">{{ $item->first_name }} {{ $item->last_name }}</span>
@@ -53,10 +52,65 @@
                             <td class="cell-center">
                                 <span class="status-pill {{ $item->status->colorClass() }}">{{ $item->status->label() }}</span>
                             </td>
-                            <td class="cell-actions">
-                                <button type="button" class="icon-button" wire:click.stop="openCustomer({{ $item->id }})" aria-label="Update {{ $item->first_name }} {{ $item->last_name }}">
-                                    <x-icon name="pencil" :size="14" />
+                            {{-- Row menu. It is fixed-positioned so the table's scroll box doesn't clip it. --}}
+                            <td
+                                class="cell-actions"
+                                x-data="{
+                                    open: false,
+                                    top: 0,
+                                    left: 0,
+                                    toggle() {
+                                        const box = this.$refs.trigger.getBoundingClientRect();
+                                        this.top = box.bottom + 4;
+                                        this.left = box.right;
+                                        this.open = ! this.open;
+                                    },
+                                }"
+                                x-on:click.outside="open = false"
+                                x-on:keydown.escape.window="if (open) { $event.preventDefault(); open = false; $refs.trigger.focus(); }"
+                                x-on:scroll.window.capture="open = false"
+                                x-on:resize.window="open = false"
+                            >
+                                <button
+                                    type="button"
+                                    x-ref="trigger"
+                                    class="icon-button"
+                                    x-on:click="toggle()"
+                                    aria-haspopup="menu"
+                                    x-bind:aria-expanded="open.toString()"
+                                    aria-label="Options for {{ $item->first_name }} {{ $item->last_name }}"
+                                >
+                                    <x-icon name="menu" :size="16" />
                                 </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    x-transition.opacity.duration.100ms
+                                    role="menu"
+                                    class="fixed z-50 min-w-40 -translate-x-full rounded-xl border border-table-line bg-card p-1 text-left shadow-dialog"
+                                    x-bind:style="`top: ${top}px; left: ${left}px`"
+                                >
+                                    <button
+                                        type="button"
+                                        role="menuitem"
+                                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-ink-strong hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
+                                        x-on:click="open = false"
+                                        wire:click="openCustomer({{ $item->id }})"
+                                    >
+                                        <x-icon name="pencil" :size="14" />
+                                        Edit<span class="sr-only"> {{ $item->first_name }} {{ $item->last_name }}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        role="menuitem"
+                                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-ink-strong hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
+                                        x-on:click="open = false"
+                                        wire:click="openHistory({{ $item->id }})"
+                                    >
+                                        <x-icon name="document" :size="14" />
+                                        Show History<span class="sr-only"> of {{ $item->first_name }} {{ $item->last_name }}</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -76,5 +130,9 @@
 
     @if ($modalOpen)
         @include('livewire.customers.partials.customer-modal')
+    @endif
+
+    @if ($historyCustomer)
+        @include('livewire.customers.partials.history-drawer')
     @endif
 </x-page>
